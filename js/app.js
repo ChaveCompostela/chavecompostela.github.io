@@ -25,13 +25,19 @@ async function start(){
 }
 function show(t){ cur = t; $('#sec').value = t; listar(); }
 
+function celda(r, k, ty){
+  const v = fmt(r[k], ty);
+  if (ty === 'u') return /^https?:\/\//.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">📍 Ver</a>` : esc(v);
+  return esc(v);
+}
 function listar(){
   const c = T[cur], rows = D[cur] || [];
-  $('#main').innerHTML = `<div class="bar"><h2>${c.t} (${rows.length})</h2><button class="pri" onclick="abrirForm(null)">+ Nuevo</button></div>` +
-    rows.map((r, i) => `<div class="card"><b>${esc(c.l(r))}</b>
-      ${c.f.map(f => { const v = fmt(r[f[0]], f[2]); return v ? `<p class="mut">${esc(f[1])}: ${esc(v)}</p>` : ''; }).join('')}
-      <div class="acc">${cur === 'partidos' ? `<button class="pri" onclick="abrir(${r.id})">Abrir mesas</button>` : ''}
-      <button onclick="abrirForm(${i})">Editar</button><button class="del" onclick="borrar(${i})">Borrar</button></div></div>`).join('');
+  const cols = c.f.filter(f => !c.c || c.c.includes(f[0]));
+  $('#main').innerHTML = `<div class="bar"><h2>${c.t} (${rows.length})</h2><button class="pri" onclick="abrirForm(null)">+ Nuevo</button></div>
+    <div class="tw"><table><thead><tr><th></th>${cols.map(f => `<th>${esc(f[1].replace(/\s*\(.*\)/, ''))}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map((r, i) => `<tr><td class="ac">${cur === 'partidos' ? `<button class="ic pri" onclick="abrir(${r.id})">Mesas</button>` : ''}<button class="ic" onclick="abrirForm(${i})" aria-label="Editar">✏️</button><button class="ic del" onclick="borrar(${i})" aria-label="Borrar">🗑️</button></td>
+    ${cols.map(f => `<td>${celda(r, f[0], f[2])}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length + 1}" class="mut">Sin registros</td></tr>`}
+    </tbody></table></div>`;
 }
 
 function sheet(h){
