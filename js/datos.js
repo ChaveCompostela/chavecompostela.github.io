@@ -10,7 +10,7 @@ const T = {
   jugadores:{t:'Jugadores',c:['nombre','apellidos','id_club'],f:[['nombre','Nombre','t'],['apellidos','Apellidos','t'],['id_club','Club (vacío = sin club)','r:clubs'],['activo','Activo','b']],l:r=>`${r.nombre} ${r.apellidos||''}`.trim()},
   instalaciones:{t:'Instalaciones',c:['nombre','localidad','num_pistas','url_localizacion'],f:[['nombre','Nombre','t'],['direccion','Dirección','t'],['localidad','Localidad','t'],['num_pistas','Nº pistas','n'],['id_club','Club','r:clubs'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
   eventos:{t:'Eventos',c:['nombre','fecha_inicio','fecha_fin','id_instalacion','url_localizacion'],f:[['nombre','Nombre','t'],['descripcion','Descripción','t'],['fecha_inicio','Inicio','dt'],['fecha_fin','Fin','dt'],['id_instalacion','Instalación','r:instalaciones'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
-  parejas:{t:'Parejas',f:[['id_jugador_a','Jugador A','r:jugadores'],['id_jugador_b','Jugador B','r:jugadores']],l:r=>`${lab('jugadores',r.id_jugador_a)} + ${lab('jugadores',r.id_jugador_b)}`},
+  parejas:{t:'Parejas',x:[['Club',r=>{const c=clubPar(r);return c?lab('clubs',c):'';}]],f:[['id_jugador_a','Jugador A','r:jugadores'],['id_jugador_b','Jugador B','r:jugadores']],l:r=>`${lab('jugadores',r.id_jugador_a)} + ${lab('jugadores',r.id_jugador_b)}`},
   partidos:{t:'Partidos',c:['fecha_hora','id_club_local','id_club_visitante','estado'],f:[['id_jornada','Jornada','r:jornadas'],['id_evento','Evento','r:eventos'],['id_instalacion','Instalación','r:instalaciones'],['fecha_hora','Fecha y hora','dt'],['id_club_local','Club local (vacío = sin club)','r:clubs'],['id_club_visitante','Club visitante (vacío = sin club)','r:clubs'],['estado','Estado','e:programado|en_juego|finalizado|suspendido']],
     l:r=>`#${r.id} · ${r.id_club_local?lab('clubs',r.id_club_local):'sin club'} vs ${r.id_club_visitante?lab('clubs',r.id_club_visitante):'sin club'}`},
   enfrentamientos:{t:'Mesas (avanzado)',f:[['id_partido','Partido','r:partidos'],['numero','Nº mesa','n']],l:r=>`${lab('partidos',r.id_partido)} · mesa ${r.numero}`},
@@ -20,6 +20,11 @@ const T = {
 const ORDEN = ['partidos','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas','jornadas','enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento'];
 
 const D = {};
+// Club de una pareja: el de sus jugadores si es el mismo club; si no (sin club u ocasional) → null
+const clubPar = p => {
+  const a = D.jugadores?.find(j => j.id === p.id_jugador_a), b = D.jugadores?.find(j => j.id === p.id_jugador_b);
+  return a && b && a.id_club && a.id_club === b.id_club ? a.id_club : null;
+};
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const pkOf = t => T[t].pk || ['id'];

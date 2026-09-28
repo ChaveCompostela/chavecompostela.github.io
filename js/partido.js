@@ -19,6 +19,25 @@ const sel = (id, l, ph) => `<select id="${id}">${opciones(l, ph)}</select>`;
 const sinJugadores = l => D.jugadores.some(j => j.activo !== false && (clubDe(l) ? j.id_club === clubDe(l) : !j.id_club))
   ? '' : `<p class="err">No hay jugadores para «${esc(nombreLado(l))}». Añádelos en la sección Jugadores.</p>`;
 
+function parejasLado(l){
+  const club = clubDe(l) || null;
+  return D.parejas.filter(p => clubPar(p) === club)
+    .sort((x, y) => lab('parejas', x.id).localeCompare(lab('parejas', y.id)));
+}
+// Selector: pareja ya creada del club (o sin club) + opción de formar una nueva con dos jugadores
+function selPareja(pre, l){
+  return `<label>Pareja ya creada<select id="${pre}_p"><option value="">— elegir —</option>${parejasLado(l).map(p =>
+      `<option value="${p.id}">${esc(lab('parejas', p.id))}</option>`).join('')}</select></label>
+    <p class="mut">o forma una nueva:</p>
+    <div class="add">${sel(pre + '_1', l, 'Jugador 1')}${sel(pre + '_2', l, 'Jugador 2')}</div>`;
+}
+function leerPareja(pre){
+  const idp = +$('#' + pre + '_p').value;
+  if (idp) { const p = D.parejas.find(x => x.id === idp); return { id: p.id, a: p.id_jugador_a, b: p.id_jugador_b }; }
+  const a = +$('#' + pre + '_1').value, b = +$('#' + pre + '_2').value;
+  return a && b && a !== b ? { a, b } : null;
+}
+
 function detalle(){
   const p = D.partidos.find(x => x.id === pid);
   const mesas = D.enfrentamientos.filter(e => e.id_partido === pid);
@@ -28,9 +47,9 @@ function detalle(){
     ${mesas.map(mesaHtml).join('')}
     <div class="card"><h3>Nueva mesa: pareja contra pareja</h3>
       <b>Local · ${esc(nombreLado('local'))}</b>${sinJugadores('local')}
-      <div class="add">${sel('nl1', 'local', 'Jugador 1')}${sel('nl2', 'local', 'Jugador 2')}</div>
-      <b>Visitante · ${esc(nombreLado('visitante'))}</b>${sinJugadores('visitante')}
-      <div class="add">${sel('nv1', 'visitante', 'Jugador 1')}${sel('nv2', 'visitante', 'Jugador 2')}</div>
+      ${selPareja('nl', 'local')}
+      <hr><b>Visitante · ${esc(nombreLado('visitante'))}</b>${sinJugadores('visitante')}
+      ${selPareja('nv', 'visitante')}
       <button class="pri" style="width:100%;margin-top:10px" onclick="crearMesa()">Crear mesa</button></div>`;
 }
 
@@ -48,8 +67,8 @@ function mesaHtml(e){
       return `<div class="pareja">${js}<button class="del" onclick="quitarPareja(${x.id})">Quitar pareja</button></div>`;
     }).join('');
     return `<h3>${l === 'local' ? 'Local' : 'Visitante'} · ${esc(nombreLado(l))}</h3>${ps}
-      <details><summary>+ Otra pareja de este bando</summary><div class="add">${sel(`a_${e.id}_${l}`, l, 'Jugador 1')}${sel(`b_${e.id}_${l}`, l, 'Jugador 2')}
-      <button onclick="addPareja(${e.id},'${l}')">Añadir pareja</button></div></details>`;
+      <details><summary>+ Otra pareja de este bando</summary>${selPareja(`x${e.id}${l}`, l)}
+      <button style="width:100%" onclick="addPareja(${e.id},'${l}')">Añadir pareja</button></details>`;
   };
   return `<div class="card"><div class="bar"><h2>Mesa ${e.numero}</h2><button class="del" onclick="borrarMesa(${e.id})">Borrar mesa</button></div>
     <p class="mut">${esc(nom('local'))} <b>vs</b> ${esc(nom('visitante'))}</p>${lado('local')}${lado('visitante')}</div>`;
@@ -65,18 +84,18 @@ async function parejaDe(a, b){
 }
 
 async function crearMesa(){
-  const v = ['nl1', 'nl2', 'nv1', 'nv2'].map(i => +$('#' + i).value);
-  if (v.includes(0)) return msg('Elige los cuatro jugadores.');
-  if (new Set(v).size < 4) return msg('Un jugador no puede aparecer dos veces en la misma mesa.');
+  const L = leerPareja('nl'), V = leerPareja('nv');
+  if (!L || !V) return msg('En cada bando elige una pareja ya creada o forma una nueva con dos jugadores distintos.');
+  if (new Set([L.a, L.b, V.a, V.b]).size < 4) return msg('Un jugador no puede aparecer dos veces en la misma mesa.');
   let mesa = null;
   try {
     const n = Math.max(0, ...D.enfrentamientos.filter(e => e.id_partido === pid).map(e => e.numero)) + 1;
     const r = await sb.from('enfrentamientos').insert({ id_partido: pid, numero: n }).select().single();
     if (r.error) throw new Error(r.error.message);
     mesa = r.data;
-    for (const [l, a, b] of [['local', v[0], v[1]], ['visitante', v[2], v[3]]]) {
-      const p = await parejaDe(a, b);
-      const { error } = await sb.from('enfrentamiento_parejas').insert({ id_enfrentamiento: mesa.id, id_pareja: p.id, lado: l });
+    for (const [l, x] of [['local', L], ['visitante', V]]) {
+      const id = x.id ?? (await parejaDe(x.a, x.b)).id;
+      const { error } = await sb.from('enfrentamiento_parejas').insert({ id_enfrentamiento: mesa.id, id_pareja: id, lado: l });
       if (error) throw new Error(error.message);
     }
     msg(''); refrescar();
@@ -93,11 +112,11 @@ async function borrarMesa(id){
   refrescar();
 }
 async function addPareja(e, l){
-  const a = +$(`#a_${e}_${l}`).value, b = +$(`#b_${e}_${l}`).value;
-  if (!a || !b || a === b) return msg('Elige dos jugadores distintos');
+  const x = leerPareja(`x${e}${l}`);
+  if (!x) return msg('Elige una pareja ya creada o dos jugadores distintos.');
   try {
-    const p = await parejaDe(a, b);
-    const { error } = await sb.from('enfrentamiento_parejas').insert({ id_enfrentamiento: e, id_pareja: p.id, lado: l });
+    const id = x.id ?? (await parejaDe(x.a, x.b)).id;
+    const { error } = await sb.from('enfrentamiento_parejas').insert({ id_enfrentamiento: e, id_pareja: id, lado: l });
     if (error) throw new Error(error.message);
     msg(''); refrescar();
   } catch (err) { msg('Error: ' + err.message); }
