@@ -18,7 +18,7 @@ async function entrar(e){
 async function salir(){ await sb.auth.signOut(); loginView(); }
 
 async function start(){
-  $('#app').innerHTML = `<header><select id="sec" onchange="show(this.value)">
+  $('#app').innerHTML = `<header><img class="logo-s" src="icons/logo-chave.svg" alt="Chave"><select id="sec" onchange="show(this.value)">
     ${ORDEN.map(k => `<option value="${k}">${T[k].t}</option>`).join('')}</select>
     <button onclick="salir()">Salir</button></header><p id="msg"></p><main id="main">Cargando…</main>`;
   await loadAll();
