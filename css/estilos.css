@@ -1,18 +1,20 @@
-:root{color-scheme:light dark;--bd:#8885;--ac:#1d6fa5;--mut:#888}
+:root{color-scheme:light dark;--bd:#8885;--ac:#1d6fa5;--mut:#888;--bg:#fff;--fg:#111}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1c1e;--fg:#f2f2f7}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   padding:0 max(12px,env(safe-area-inset-right)) env(safe-area-inset-bottom) max(12px,env(safe-area-inset-left));
-  background:Canvas;color:CanvasText}
+  background:var(--bg);color:var(--fg)}
 #app{max-width:720px;margin:0 auto}
 h1{font-size:20px;margin:16px 0}
 h2{font-size:18px;margin:0}
 h3{font-size:16px;margin:12px 0 6px}
-header{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 0 8px;background:Canvas}
+header{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 0 8px;background:var(--bg)}
 header select{flex:1}
 button,input,select{font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1px solid var(--bd);
-  border-radius:10px;background:Canvas;color:CanvasText;max-width:100%}
-option{background:Canvas;color:CanvasText}
+  border-radius:10px;background:var(--bg);color:var(--fg);max-width:100%}
+option,optgroup{background-color:var(--bg);color:var(--fg)}
+select{-webkit-appearance:menulist;appearance:auto}
 input,select{width:100%}
 input[type=checkbox]{width:26px;min-height:26px}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -28,8 +30,8 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;margin:10px 0}
 .add{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .add button{grid-column:1/-1}
 .err,#msg{color:#d33;min-height:1.2em;margin:4px 0}
-.sheet{position:fixed;inset:0;z-index:10;background:Canvas;overflow-y:auto;-webkit-overflow-scrolling:touch;
+.sheet{position:fixed;inset:0;z-index:10;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;
   padding:calc(12px + env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))}
 .sheet .in{max-width:720px;margin:0 auto}
-.sheet .bar{position:sticky;bottom:0;background:Canvas;padding:8px 0}
+.sheet .bar{position:sticky;bottom:0;background:var(--bg);padding:8px 0}
 .sheet .bar button{flex:1}
