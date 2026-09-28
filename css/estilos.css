@@ -51,3 +51,4 @@ button.ic{min-height:40px;min-width:40px;padding:4px 8px}
 a{color:var(--ac)}
 .logo{display:block;width:150px;max-width:50%;height:auto;margin:20px auto 0}
 .c{text-align:center}
+.logo-s{height:40px;width:auto;flex:none;align-self:center}
