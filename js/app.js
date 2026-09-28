@@ -17,23 +17,44 @@ async function entrar(e){
 }
 async function salir(){ await sb.auth.signOut(); loginView(); }
 
-const ICONOS = { partidos:'🎯', jornadas:'📋', eventos:'📅', jugadores:'🧑', clubs:'🛡️', parejas:'👥', instalaciones:'📍',
-  temporadas:'🗓️', ligas:'🏆', copias:'💾', enfrentamientos:'🧩', enfrentamiento_parejas:'🔗', chaves_enfrentamiento:'🔢' };
-const MENU = ['partidos','jornadas','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas','copias'];
-const MENU_AVANZADO = ['enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento'];
+// Iconos de línea con estilo uniforme; heredan el color del texto
+const ICONOS = {
+  partidos:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  jornadas:'<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
+  eventos:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  jugadores:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  clubs:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  parejas:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  instalaciones:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>',
+  temporadas:'<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
+  ligas:'<circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/>',
+  enfrentamientos:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
+  enfrentamiento_parejas:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  chaves_enfrentamiento:'<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
+  copias:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>'
+};
+const icono = k => `<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONOS[k]}</svg>`;
+const MENU = ['partidos','jornadas','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas'];
+const MENU_AVANZADO = ['enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento','copias'];
 const nombreSeccion = k => k === 'copias' ? 'Copia de seguridad' : T[k].t.replace(' (avanzado)', '');
 
 async function start(){
-  $('#app').innerHTML = `<header><img class="logo-s" src="icons/logo-chave.svg" alt="Chave" onclick="vistaInicio()">
-    <button onclick="vistaInicio()">🏠 Inicio</button><span style="flex:1"></span>
-    <button onclick="salir()">Salir</button></header><p id="msg"></p><main id="main">Cargando…</main>`;
+  $('#app').innerHTML = `<header><button class="inicio" onclick="vistaInicio()" aria-label="Inicio" title="Inicio"><img class="logo-s" src="icons/logo-chave.svg" alt=""></button>
+    <span style="flex:1"></span><button onclick="salir()">Salir</button></header><p id="msg"></p><main id="main">Cargando…</main>`;
   await loadAll();
   vistaInicio();
 }
 
+// Confirmación visual: la tarjeta se resalta un instante antes de abrir la sección
+function pulsar(b, k){
+  if (b.classList.contains('sel')) return;
+  b.classList.add('sel');
+  setTimeout(() => show(k), 200);
+}
+
 function vistaInicio(){
   cur = null; msg('');
-  const tarjeta = k => `<button class="tile" onclick="show('${k}')"><span class="ico">${ICONOS[k]}</span>
+  const tarjeta = k => `<button class="tile" onclick="pulsar(this,'${k}')"><span class="ico">${icono(k)}</span>
     <b>${esc(nombreSeccion(k))}</b>${D[k] ? `<small>${D[k].length}</small>` : ''}</button>`;
   $('#main').innerHTML = `<h2>¿Qué quieres gestionar?</h2><div class="rejilla">${MENU.map(tarjeta).join('')}</div>
     <h3>Avanzado</h3><div class="rejilla">${MENU_AVANZADO.map(tarjeta).join('')}</div>`;
