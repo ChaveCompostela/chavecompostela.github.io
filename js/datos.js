@@ -1,5 +1,5 @@
 // Modelo de datos de la interfaz.
-// Campos: [columna, etiqueta, tipo]  t=texto n=número d=fecha dt=fecha y hora b=sí/no r:tabla=referencia e:a|b=opciones
+// Campos: [columna, etiqueta, tipo]  t=texto n=número d=fecha dt=fecha y hora u=url con mapa b=sí/no r:tabla=referencia e:a|b=opciones
 const T = {
   temporadas:{t:'Temporadas',f:[['nombre','Nombre','t'],['fecha_inicio','Inicio','d'],['fecha_fin','Fin','d']],l:r=>r.nombre},
   categorias:{h:1,f:[],l:r=>r.nombre},
@@ -7,8 +7,8 @@ const T = {
   jornadas:{t:'Jornadas',f:[['id_liga','Liga','r:ligas'],['numero','Nº jornada','n'],['fecha','Fecha','d']],l:r=>`J${r.numero} · ${lab('ligas',r.id_liga)}`},
   clubs:{t:'Clubs',f:[['nombre','Nombre','t'],['localidad','Localidad','t'],['activo','Activo','b']],l:r=>r.nombre},
   jugadores:{t:'Jugadores',f:[['nombre','Nombre','t'],['apellidos','Apellidos','t'],['id_club','Club (vacío = sin club)','r:clubs'],['activo','Activo','b']],l:r=>`${r.nombre} ${r.apellidos||''}`.trim()},
-  instalaciones:{t:'Instalaciones',f:[['nombre','Nombre','t'],['direccion','Dirección','t'],['localidad','Localidad','t'],['num_pistas','Nº pistas','n'],['id_club','Club','r:clubs'],['url_localizacion','URL localización','t']],l:r=>r.nombre},
-  eventos:{t:'Eventos',f:[['nombre','Nombre','t'],['descripcion','Descripción','t'],['fecha_inicio','Inicio','dt'],['fecha_fin','Fin','dt'],['id_instalacion','Instalación','r:instalaciones'],['url_localizacion','URL localización','t']],l:r=>r.nombre},
+  instalaciones:{t:'Instalaciones',f:[['nombre','Nombre','t'],['direccion','Dirección','t'],['localidad','Localidad','t'],['num_pistas','Nº pistas','n'],['id_club','Club','r:clubs'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
+  eventos:{t:'Eventos',f:[['nombre','Nombre','t'],['descripcion','Descripción','t'],['fecha_inicio','Inicio','dt'],['fecha_fin','Fin','dt'],['id_instalacion','Instalación','r:instalaciones'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
   parejas:{t:'Parejas',f:[['id_jugador_a','Jugador A','r:jugadores'],['id_jugador_b','Jugador B','r:jugadores']],l:r=>`${lab('jugadores',r.id_jugador_a)} + ${lab('jugadores',r.id_jugador_b)}`},
   partidos:{t:'Partidos',f:[['id_jornada','Jornada','r:jornadas'],['id_evento','Evento','r:eventos'],['id_instalacion','Instalación','r:instalaciones'],['fecha_hora','Fecha y hora','dt'],['id_club_local','Club local (vacío = sin club)','r:clubs'],['id_club_visitante','Club visitante (vacío = sin club)','r:clubs'],['estado','Estado','e:programado|en_juego|finalizado|suspendido']],
     l:r=>`#${r.id} · ${r.id_club_local?lab('clubs',r.id_club_local):'sin club'} vs ${r.id_club_visitante?lab('clubs',r.id_club_visitante):'sin club'}`},

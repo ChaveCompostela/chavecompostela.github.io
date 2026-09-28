@@ -50,6 +50,8 @@ function field([k, label, ty], v){
       `<option value="${r.id}" ${r.id === v ? 'selected' : ''}>${esc(lab(t, r.id))}</option>`).join('')}</select></label>`; }
   if (ty.startsWith('e:')) return `<label>${label}<select id="${id}">${ty.slice(2).split('|').map(o =>
       `<option ${o === v ? 'selected' : ''}>${o}</option>`).join('')}</select></label>`;
+  if (ty === 'u') return `<label>${label}<div class="fila"><input id="${id}" type="url" inputmode="url" placeholder="Escribe un enlace o elige en el mapa" value="${esc(v ?? '')}">
+    <button type="button" onclick="abrirMapa('${id}')">📍 Mapa</button></div></label>`;
   const type = { t:'text', n:'number', d:'date', dt:'datetime-local' }[ty];
   const val = v == null ? '' : ty === 'dt' ? toLocal(v) : v;
   return `<label>${label}<input id="${id}" type="${type}" ${ty === 'n' ? 'inputmode="numeric"' : ''} value="${esc(val)}"></label>`;
