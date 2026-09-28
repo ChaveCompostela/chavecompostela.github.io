@@ -2,7 +2,8 @@
 let cur = 'partidos', edit = null;
 
 function loginView(){
-  $('#app').innerHTML = `<h1>Liga de chave · Administración</h1>
+  $('#app').innerHTML = `<img class="logo" src="icons/logo-chave.svg" alt="Chave">
+    <h1 class="c">Liga de chave · Administración</h1>
     <form class="card" onsubmit="entrar(event)">
       <label>Correo<input id="em" type="email" value="compostelachave@gmail.com" autocomplete="username" required></label>
       <label>Contraseña<input id="pw" type="password" autocomplete="current-password" required></label>
