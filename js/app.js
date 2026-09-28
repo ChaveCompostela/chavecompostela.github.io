@@ -36,7 +36,7 @@ function listar(){
   const cols = c.f.filter(f => !c.c || c.c.includes(f[0]));
   $('#main').innerHTML = `<div class="bar"><h2>${c.t} (${rows.length})</h2><button class="pri" onclick="abrirForm(null)">+ Nuevo</button></div>
     <div class="tw"><table><thead><tr><th></th>${cols.map(f => `<th>${esc(f[1].replace(/\s*\(.*\)/, ''))}</th>`).join('')}${(c.x || []).map(x => `<th>${esc(x[0])}</th>`).join('')}</tr></thead><tbody>
-    ${rows.map((r, i) => `<tr><td class="ac">${cur === 'partidos' ? `<button class="ic pri" onclick="abrir(${r.id})">Partidas</button>` : ''}<button class="ic" onclick="abrirForm(${i})" aria-label="Editar">✏️</button><button class="ic del" onclick="borrar(${i})" aria-label="Borrar">🗑️</button></td>
+    ${rows.map((r, i) => `<tr><td class="ac">${cur === 'partidos' ? `<button class="ic pri" onclick="abrir(${r.id})">Partidas</button>` : ''}${cur === 'jornadas' ? `<button class="ic pri" onclick="abrirJornada(${r.id})">Partidos</button>` : ''}<button class="ic" onclick="abrirForm(${i})" aria-label="Editar">✏️</button><button class="ic del" onclick="borrar(${i})" aria-label="Borrar">🗑️</button></td>
     ${cols.map(f => `<td>${celda(r, f[0], f[2])}</td>`).join('')}${(c.x || []).map(x => `<td>${esc(x[1](r))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${cols.length + (c.x || []).length + 1}" class="mut">Sin registros</td></tr>`}
     </tbody></table></div>`;
 }
@@ -85,6 +85,7 @@ async function guardar(){
   if (error) return msg('Error: ' + error.message);
   cerrar(); await loadTable(cur);
   if (cur === 'partidos' && !edit && data && data[0]) return abrir(data[0].id);   // tras crear un partido, ir directo a sus partidas
+  if (cur === 'jornadas' && !edit && data && data[0]) return abrirJornada(data[0].id);   // tras crear una jornada, ir directo a sus partidos
   listar();
 }
 

@@ -1,9 +1,10 @@
 // Pantalla de partido: cada partida enfrenta una pareja local contra una pareja visitante.
 // Los desplegables de jugadores se filtran por el club de cada bando (o jugadores sin club).
-let pid = null;
+let pid = null, origen = null;
 const TABLAS_PARTIDO = ['enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento','parejas','jugadores'];
 
-async function abrir(id){ pid = id; await refrescar(); }
+async function abrir(id, desdeJornada){ pid = id; origen = desdeJornada ? 'jornada' : null; await refrescar(); }
+function volver(){ origen === 'jornada' ? vistaJornada() : listar(); }
 async function refrescar(){ await Promise.all(TABLAS_PARTIDO.map(loadTable)); detalle(); }
 
 const clubDe = l => { const p = D.partidos.find(x => x.id === pid); return l === 'local' ? p.id_club_local : p.id_club_visitante; };
@@ -41,7 +42,7 @@ function leerPareja(pre){
 function detalle(){
   const p = D.partidos.find(x => x.id === pid);
   const partidas = D.enfrentamientos.filter(e => e.id_partido === pid);
-  $('#main').innerHTML = `<button onclick="listar()">← Partidos</button>
+  $('#main').innerHTML = `<button onclick="volver()">← ${origen === 'jornada' ? 'Jornada' : 'Partidos'}</button>
     <div class="bar"><h2>${esc(nombreLado('local'))} vs ${esc(nombreLado('visitante'))}</h2></div>
     <p class="mut">${esc(fmt(p.fecha_hora, 'dt'))} · ${esc(p.estado)}</p>
     ${partidas.map(partidaHtml).join('')}
