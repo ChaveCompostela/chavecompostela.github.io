@@ -19,12 +19,12 @@ async function salir(){ await sb.auth.signOut(); loginView(); }
 
 async function start(){
   $('#app').innerHTML = `<header><img class="logo-s" src="icons/logo-chave.svg" alt="Chave"><select id="sec" onchange="show(this.value)">
-    ${ORDEN.map(k => `<option value="${k}">${T[k].t}</option>`).join('')}</select>
+    ${ORDEN.map(k => `<option value="${k}">${T[k].t}</option>`).join('')}<option value="copias">Copia de seguridad</option></select>
     <button onclick="salir()">Salir</button></header><p id="msg"></p><main id="main">Cargando…</main>`;
   await loadAll();
   show(cur);
 }
-function show(t){ cur = t; $('#sec').value = t; listar(); }
+function show(t){ cur = t; $('#sec').value = t; if (t === 'copias') return vistaCopias(); listar(); }
 
 function celda(r, k, ty){
   const v = fmt(r[k], ty);
@@ -81,9 +81,11 @@ async function guardar(){
     o[k] = v;
   }
   const match = edit && Object.fromEntries(pkOf(cur).map(k => [k, edit[k]]));
-  const { error } = edit ? await sb.from(cur).update(o).match(match) : await sb.from(cur).insert(o);
+  const { data, error } = edit ? await sb.from(cur).update(o).match(match) : await sb.from(cur).insert(o).select();
   if (error) return msg('Error: ' + error.message);
-  cerrar(); await loadTable(cur); listar();
+  cerrar(); await loadTable(cur);
+  if (cur === 'partidos' && !edit && data && data[0]) return abrir(data[0].id);   // tras crear un partido, ir directo a sus mesas
+  listar();
 }
 
 async function borrar(i){
