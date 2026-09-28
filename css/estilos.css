@@ -40,3 +40,12 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;margin:10px 0}
 .fila h2{flex:1}
 .fila button{white-space:nowrap}
 #mapbox{height:50vh;min-height:280px;border-radius:12px;border:1px solid var(--bd)}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--bd);border-radius:12px}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--bd);white-space:nowrap;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+th{font-size:13px;color:var(--mut);font-weight:600}
+tbody tr:nth-child(even){background:#8881}
+tbody tr:last-child td{border-bottom:0}
+td.ac{display:flex;gap:4px;align-items:center;max-width:none;overflow:visible}
+button.ic{min-height:40px;min-width:40px;padding:4px 8px}
+a{color:var(--ac)}
