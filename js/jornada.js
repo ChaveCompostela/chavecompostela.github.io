@@ -17,6 +17,7 @@ function vistaJornada(){
       <button class="ic del" onclick="borrarPartidoJ(${p.id})" aria-label="Borrar">🗑️</button></td>
       <td>${club(p.id_club_local)}</td><td>${club(p.id_club_visitante)}</td>
       <td>${esc(fmt(p.fecha_hora, 'dt'))}</td><td>${esc(p.id_instalacion ? lab('instalaciones', p.id_instalacion) : '')}</td>
+      <td>${p.resultado_local != null && p.resultado_visitante != null ? p.resultado_local + ' - ' + p.resultado_visitante : ''}</td>
       <td>${D.enfrentamientos.filter(e => e.id_partido === p.id).length}</td></tr>`).join('');
   $('#main').innerHTML = `<button onclick="listar()">← Jornadas</button>
     <div class="bar"><h2>${esc(lab('jornadas', jid))}</h2></div>
@@ -28,8 +29,8 @@ function vistaJornada(){
       <label>Instalación (opcional)<select id="ji">${insts}</select></label>
       <button class="pri" style="width:100%" onclick="anadirPartidoJ()">+ Añadir partido</button></div>
     <h3>Partidos de la jornada (${ps.length})</h3>
-    <div class="tw"><table><thead><tr><th></th><th>Local</th><th>Visitante</th><th>Fecha</th><th>Instalación</th><th>Partidas</th></tr></thead>
-    <tbody>${filas || '<tr><td colspan="6" class="mut">Aún no hay partidos en esta jornada</td></tr>'}</tbody></table></div>
+    <div class="tw"><table><thead><tr><th></th><th>Local</th><th>Visitante</th><th>Fecha</th><th>Instalación</th><th>Resultado</th><th>Partidas</th></tr></thead>
+    <tbody>${filas || '<tr><td colspan="7" class="mut">Aún no hay partidos en esta jornada</td></tr>'}</tbody></table></div>
     ${libres.length ? `<p class="mut">Clubs sin partido en esta jornada: ${esc(libres.join(', '))}</p>` : ''}`;
 }
 

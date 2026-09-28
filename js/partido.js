@@ -45,6 +45,7 @@ function detalle(){
   $('#main').innerHTML = `<button onclick="volver()">← ${origen === 'jornada' ? 'Jornada' : 'Partidos'}</button>
     <div class="bar"><h2>${esc(nombreLado('local'))} vs ${esc(nombreLado('visitante'))}</h2></div>
     <p class="mut">${esc(fmt(p.fecha_hora, 'dt'))} · ${esc(p.estado)}</p>
+    <h3 id="resultado">${resultadoTxt(p)}</h3>
     ${partidas.map(partidaHtml).join('')}
     <div class="card"><h3>Nueva partida: pareja contra pareja</h3>
       <b>Local · ${esc(nombreLado('local'))}</b>${sinJugadores('local')}
@@ -72,7 +73,7 @@ function partidaHtml(e){
       <button style="width:100%" onclick="addPareja(${e.id},'${l}')">Añadir pareja</button></details>`;
   };
   return `<div class="card"><div class="bar"><h2>Partida ${e.numero}</h2><button class="del" onclick="borrarPartida(${e.id})">Borrar partida</button></div>
-    <p class="mut">${esc(nom('local'))} <b>vs</b> ${esc(nom('visitante'))}</p>${lado('local')}${lado('visitante')}</div>`;
+    <p class="mut">${esc(nom('local'))} <b>vs</b> ${esc(nom('visitante'))}</p>${marcadorHtml(e)}${lado('local')}${lado('visitante')}</div>`;
 }
 
 async function parejaDe(a, b){
@@ -135,4 +136,36 @@ async function setChaves(e, j, v){
     .upsert({ id_enfrentamiento: e, id_jugador: j, chaves: v === '' ? 0 : Number(v) }, { onConflict: 'id_enfrentamiento,id_jugador' });
   if (error) return msg(error.message);
   msg(''); loadTable('chaves_enfrentamiento');
+}
+
+// ---------- Marcador de cada partida y resultado final del partido ----------
+const resultadoTxt = p => p.resultado_local != null && p.resultado_visitante != null
+  ? `Resultado: ${p.resultado_local} - ${p.resultado_visitante}` : 'Resultado: pendiente';
+
+function marcadorHtml(e){
+  const v = x => x == null ? '' : x;
+  return `<div class="add"><label>Marcador local<input id="ml_${e.id}" type="number" inputmode="numeric" min="0" value="${v(e.marcador_local)}" onchange="guardarMarcador(${e.id})"></label>
+    <label>Marcador visitante<input id="mv_${e.id}" type="number" inputmode="numeric" min="0" value="${v(e.marcador_visitante)}" onchange="guardarMarcador(${e.id})"></label></div>`;
+}
+
+async function guardarMarcador(id){
+  const num = sel => $(sel).value === '' ? null : Number($(sel).value);
+  const { error } = await sb.from('enfrentamientos')
+    .update({ marcador_local: num('#ml_' + id), marcador_visitante: num('#mv_' + id) }).eq('id', id);
+  if (error) return msg(error.message);
+  await loadTable('enfrentamientos');
+  await recalcularResultado();
+}
+
+// El resultado (partidas ganadas por cada bando) se calcula con los marcadores; se puede corregir a mano editando el partido.
+async function recalcularResultado(){
+  const ps = D.enfrentamientos.filter(e => e.id_partido === pid && e.marcador_local != null && e.marcador_visitante != null);
+  if (!ps.length) return;
+  const rl = ps.filter(e => e.marcador_local > e.marcador_visitante).length;
+  const rv = ps.filter(e => e.marcador_visitante > e.marcador_local).length;
+  const { error } = await sb.from('partidos').update({ resultado_local: rl, resultado_visitante: rv }).eq('id', pid);
+  if (error) return msg(error.message);
+  await loadTable('partidos');
+  const el = $('#resultado'); if (el) el.textContent = resultadoTxt(D.partidos.find(x => x.id === pid));
+  msg('');
 }
