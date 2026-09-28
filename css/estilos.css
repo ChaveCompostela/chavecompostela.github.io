@@ -11,7 +11,8 @@ h3{font-size:16px;margin:12px 0 6px}
 header{position:sticky;top:0;z-index:5;display:flex;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 0 8px;background:Canvas}
 header select{flex:1}
 button,input,select{font:inherit;font-size:16px;min-height:44px;padding:8px 12px;border:1px solid var(--bd);
-  border-radius:10px;background:transparent;color:inherit;max-width:100%}
+  border-radius:10px;background:Canvas;color:CanvasText;max-width:100%}
+option{background:Canvas;color:CanvasText}
 input,select{width:100%}
 input[type=checkbox]{width:26px;min-height:26px}
 button{cursor:pointer;-webkit-tap-highlight-color:transparent}
