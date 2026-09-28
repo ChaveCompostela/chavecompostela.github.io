@@ -1,4 +1,4 @@
-// Pantalla de partido: cada mesa enfrenta una pareja local contra una pareja visitante.
+// Pantalla de partido: cada partida enfrenta una pareja local contra una pareja visitante.
 // Los desplegables de jugadores se filtran por el club de cada bando (o jugadores sin club).
 let pid = null;
 const TABLAS_PARTIDO = ['enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento','parejas','jugadores'];
@@ -40,20 +40,20 @@ function leerPareja(pre){
 
 function detalle(){
   const p = D.partidos.find(x => x.id === pid);
-  const mesas = D.enfrentamientos.filter(e => e.id_partido === pid);
+  const partidas = D.enfrentamientos.filter(e => e.id_partido === pid);
   $('#main').innerHTML = `<button onclick="listar()">← Partidos</button>
     <div class="bar"><h2>${esc(nombreLado('local'))} vs ${esc(nombreLado('visitante'))}</h2></div>
     <p class="mut">${esc(fmt(p.fecha_hora, 'dt'))} · ${esc(p.estado)}</p>
-    ${mesas.map(mesaHtml).join('')}
-    <div class="card"><h3>Nueva mesa: pareja contra pareja</h3>
+    ${partidas.map(partidaHtml).join('')}
+    <div class="card"><h3>Nueva partida: pareja contra pareja</h3>
       <b>Local · ${esc(nombreLado('local'))}</b>${sinJugadores('local')}
       ${selPareja('nl', 'local')}
       <hr><b>Visitante · ${esc(nombreLado('visitante'))}</b>${sinJugadores('visitante')}
       ${selPareja('nv', 'visitante')}
-      <button class="pri" style="width:100%;margin-top:10px" onclick="crearMesa()">Crear mesa</button></div>`;
+      <button class="pri" style="width:100%;margin-top:10px" onclick="crearPartida()">Crear partida</button></div>`;
 }
 
-function mesaHtml(e){
+function partidaHtml(e){
   const eps = D.enfrentamiento_parejas.filter(x => x.id_enfrentamiento === e.id);
   const parejaTxt = x => { const pa = D.parejas.find(y => y.id === x.id_pareja); return lab('jugadores', pa.id_jugador_a) + ' + ' + lab('jugadores', pa.id_jugador_b); };
   const nom = l => eps.filter(x => x.lado === l).map(parejaTxt).join(' / ') || '—';
@@ -70,7 +70,7 @@ function mesaHtml(e){
       <details><summary>+ Otra pareja de este bando</summary>${selPareja(`x${e.id}${l}`, l)}
       <button style="width:100%" onclick="addPareja(${e.id},'${l}')">Añadir pareja</button></details>`;
   };
-  return `<div class="card"><div class="bar"><h2>Mesa ${e.numero}</h2><button class="del" onclick="borrarMesa(${e.id})">Borrar mesa</button></div>
+  return `<div class="card"><div class="bar"><h2>Partida ${e.numero}</h2><button class="del" onclick="borrarPartida(${e.id})">Borrar partida</button></div>
     <p class="mut">${esc(nom('local'))} <b>vs</b> ${esc(nom('visitante'))}</p>${lado('local')}${lado('visitante')}</div>`;
 }
 
@@ -83,30 +83,30 @@ async function parejaDe(a, b){
   return r.data;
 }
 
-async function crearMesa(){
+async function crearPartida(){
   const L = leerPareja('nl'), V = leerPareja('nv');
   if (!L || !V) return msg('En cada bando elige una pareja ya creada o forma una nueva con dos jugadores distintos.');
-  if (new Set([L.a, L.b, V.a, V.b]).size < 4) return msg('Un jugador no puede aparecer dos veces en la misma mesa.');
-  let mesa = null;
+  if (new Set([L.a, L.b, V.a, V.b]).size < 4) return msg('Un jugador no puede aparecer dos veces en la misma partida.');
+  let partida = null;
   try {
     const n = Math.max(0, ...D.enfrentamientos.filter(e => e.id_partido === pid).map(e => e.numero)) + 1;
     const r = await sb.from('enfrentamientos').insert({ id_partido: pid, numero: n }).select().single();
     if (r.error) throw new Error(r.error.message);
-    mesa = r.data;
+    partida = r.data;
     for (const [l, x] of [['local', L], ['visitante', V]]) {
       const id = x.id ?? (await parejaDe(x.a, x.b)).id;
-      const { error } = await sb.from('enfrentamiento_parejas').insert({ id_enfrentamiento: mesa.id, id_pareja: id, lado: l });
+      const { error } = await sb.from('enfrentamiento_parejas').insert({ id_enfrentamiento: partida.id, id_pareja: id, lado: l });
       if (error) throw new Error(error.message);
     }
     msg(''); refrescar();
   } catch (e) {
-    if (mesa) await sb.from('enfrentamientos').delete().eq('id', mesa.id);
+    if (partida) await sb.from('enfrentamientos').delete().eq('id', partida.id);
     msg('Error: ' + e.message);
   }
 }
 
-async function borrarMesa(id){
-  if (!confirm('¿Borrar la mesa con sus parejas y chaves?')) return;
+async function borrarPartida(id){
+  if (!confirm('¿Borrar la partida con sus parejas y chaves?')) return;
   const { error } = await sb.from('enfrentamientos').delete().eq('id', id);
   if (error) return msg(error.message);
   refrescar();
@@ -122,7 +122,7 @@ async function addPareja(e, l){
   } catch (err) { msg('Error: ' + err.message); }
 }
 async function quitarPareja(id){
-  if (!confirm('¿Quitar esta pareja de la mesa (y sus chaves)?')) return;
+  if (!confirm('¿Quitar esta pareja de la partida (y sus chaves)?')) return;
   const x = D.enfrentamiento_parejas.find(y => y.id === id), pa = D.parejas.find(y => y.id === x.id_pareja);
   await sb.from('chaves_enfrentamiento').delete().eq('id_enfrentamiento', x.id_enfrentamiento).in('id_jugador', [pa.id_jugador_a, pa.id_jugador_b]);
   const { error } = await sb.from('enfrentamiento_parejas').delete().eq('id', id);
