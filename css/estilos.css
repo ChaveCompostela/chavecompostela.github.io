@@ -52,3 +52,4 @@ a{color:var(--ac)}
 .logo{display:block;width:150px;max-width:50%;height:auto;margin:20px auto 0}
 .c{text-align:center}
 .logo-s{height:40px;width:auto;flex:none;align-self:center}
+details summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--ac)}
