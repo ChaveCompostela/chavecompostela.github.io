@@ -11,7 +11,11 @@
 <link rel="stylesheet" href="css/estilos.css">
 </head>
 <body>
-<div id="app"></div>
+<div id="app"><p style="padding:16px">Cargando…</p></div>
+<script>
+window.onerror = function (m) { var a = document.getElementById('app');
+  if (a) a.innerHTML = '<p style="padding:16px;color:#d33">Error: ' + m + '</p>'; };
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/datos.js"></script>
