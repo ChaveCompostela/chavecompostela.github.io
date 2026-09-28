@@ -86,6 +86,12 @@ async function borrar(i){
 }
 
 (async () => {
-  const { data: { session } } = await sb.auth.getSession();
-  session ? start() : loginView();
+  if (ERR_CONFIG) {
+    $('#app').innerHTML = `<h1>Liga de chave · Administración</h1><p class="err">${esc(ERR_CONFIG)}</p>`;
+    return;
+  }
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    session ? start() : loginView();
+  } catch (e) { loginView(); }
 })();
