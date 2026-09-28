@@ -23,15 +23,15 @@ async function start(){
   await loadAll();
   show(cur);
 }
-function show(t){ cur = t; $('#sec').value = t; list(); }
+function show(t){ cur = t; $('#sec').value = t; listar(); }
 
-function list(){
+function listar(){
   const c = T[cur], rows = D[cur] || [];
-  $('#main').innerHTML = `<div class="bar"><h2>${c.t} (${rows.length})</h2><button class="pri" onclick="form(null)">+ Nuevo</button></div>` +
+  $('#main').innerHTML = `<div class="bar"><h2>${c.t} (${rows.length})</h2><button class="pri" onclick="abrirForm(null)">+ Nuevo</button></div>` +
     rows.map((r, i) => `<div class="card"><b>${esc(c.l(r))}</b>
       ${c.f.map(f => { const v = fmt(r[f[0]], f[2]); return v ? `<p class="mut">${esc(f[1])}: ${esc(v)}</p>` : ''; }).join('')}
       <div class="acc">${cur === 'partidos' ? `<button class="pri" onclick="abrir(${r.id})">Abrir mesas</button>` : ''}
-      <button onclick="form(${i})">Editar</button><button class="del" onclick="borrar(${i})">Borrar</button></div></div>`).join('');
+      <button onclick="abrirForm(${i})">Editar</button><button class="del" onclick="borrar(${i})">Borrar</button></div></div>`).join('');
 }
 
 function sheet(h){
@@ -55,7 +55,7 @@ function field([k, label, ty], v){
   return `<label>${label}<input id="${id}" type="${type}" ${ty === 'n' ? 'inputmode="numeric"' : ''} value="${esc(val)}"></label>`;
 }
 
-function form(i){
+function abrirForm(i){
   const c = T[cur]; edit = i == null ? null : D[cur][i];
   sheet(`<h2>${edit ? 'Editar' : 'Nuevo'} · ${c.t}</h2>${c.f.map(f => field(f, edit?.[f[0]])).join('')}
     <p class="err" id="smsg"></p>
@@ -74,7 +74,7 @@ async function guardar(){
   const match = edit && Object.fromEntries(pkOf(cur).map(k => [k, edit[k]]));
   const { error } = edit ? await sb.from(cur).update(o).match(match) : await sb.from(cur).insert(o);
   if (error) return msg('Error: ' + error.message);
-  cerrar(); await loadTable(cur); list();
+  cerrar(); await loadTable(cur); listar();
 }
 
 async function borrar(i){
@@ -82,7 +82,7 @@ async function borrar(i){
   if (!confirm('¿Borrar este registro? También se borrarán los datos que dependen de él.')) return;
   const { error } = await sb.from(cur).delete().match(Object.fromEntries(pkOf(cur).map(k => [k, r[k]])));
   if (error) return msg('Error: ' + error.message);
-  await loadAll(); list();
+  await loadAll(); listar();
 }
 
 (async () => {

@@ -8,7 +8,7 @@ async function refrescar(){ await Promise.all(TABLAS_PARTIDO.map(loadTable)); de
 function detalle(){
   const p = D.partidos.find(x => x.id === pid);
   const mesas = D.enfrentamientos.filter(e => e.id_partido === pid);
-  $('#main').innerHTML = `<button onclick="list()">← Partidos</button>
+  $('#main').innerHTML = `<button onclick="listar()">← Partidos</button>
     <div class="bar"><h2>${esc(T.partidos.l(p))}</h2></div>
     <p class="mut">${esc(fmt(p.fecha_hora,'dt'))} · ${esc(p.estado)}</p>
     ${mesas.map(mesaHtml).join('')}
