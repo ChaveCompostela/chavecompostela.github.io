@@ -35,3 +35,8 @@ label{display:flex;flex-direction:column;gap:4px;font-size:14px;margin:10px 0}
 .sheet .in{max-width:720px;margin:0 auto}
 .sheet .bar{position:sticky;bottom:0;background:var(--bg);padding:8px 0}
 .sheet .bar button{flex:1}
+.fila{display:flex;gap:8px;align-items:center;margin:8px 0}
+.fila>input{flex:1;min-width:0}
+.fila h2{flex:1}
+.fila button{white-space:nowrap}
+#mapbox{height:50vh;min-height:280px;border-radius:12px;border:1px solid var(--bd)}
