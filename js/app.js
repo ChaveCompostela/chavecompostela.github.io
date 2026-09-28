@@ -17,14 +17,28 @@ async function entrar(e){
 }
 async function salir(){ await sb.auth.signOut(); loginView(); }
 
+const ICONOS = { partidos:'🎯', jornadas:'📋', eventos:'📅', jugadores:'🧑', clubs:'🛡️', parejas:'👥', instalaciones:'📍',
+  temporadas:'🗓️', ligas:'🏆', copias:'💾', enfrentamientos:'🧩', enfrentamiento_parejas:'🔗', chaves_enfrentamiento:'🔢' };
+const MENU = ['partidos','jornadas','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas','copias'];
+const MENU_AVANZADO = ['enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento'];
+const nombreSeccion = k => k === 'copias' ? 'Copia de seguridad' : T[k].t.replace(' (avanzado)', '');
+
 async function start(){
-  $('#app').innerHTML = `<header><img class="logo-s" src="icons/logo-chave.svg" alt="Chave"><select id="sec" onchange="show(this.value)">
-    ${ORDEN.map(k => `<option value="${k}">${T[k].t}</option>`).join('')}<option value="copias">Copia de seguridad</option></select>
+  $('#app').innerHTML = `<header><img class="logo-s" src="icons/logo-chave.svg" alt="Chave" onclick="vistaInicio()">
+    <button onclick="vistaInicio()">🏠 Inicio</button><span style="flex:1"></span>
     <button onclick="salir()">Salir</button></header><p id="msg"></p><main id="main">Cargando…</main>`;
   await loadAll();
-  show(cur);
+  vistaInicio();
 }
-function show(t){ cur = t; $('#sec').value = t; if (t === 'copias') return vistaCopias(); listar(); }
+
+function vistaInicio(){
+  cur = null; msg('');
+  const tarjeta = k => `<button class="tile" onclick="show('${k}')"><span class="ico">${ICONOS[k]}</span>
+    <b>${esc(nombreSeccion(k))}</b>${D[k] ? `<small>${D[k].length}</small>` : ''}</button>`;
+  $('#main').innerHTML = `<h2>¿Qué quieres gestionar?</h2><div class="rejilla">${MENU.map(tarjeta).join('')}</div>
+    <h3>Avanzado</h3><div class="rejilla">${MENU_AVANZADO.map(tarjeta).join('')}</div>`;
+}
+function show(t){ cur = t; msg(''); if (t === 'copias') return vistaCopias(); listar(); }
 
 function celda(r, k, ty){
   const v = fmt(r[k], ty);
