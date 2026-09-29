@@ -45,13 +45,18 @@ img,svg{display:block}
 .btn-menu{flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff}
 .btn-menu svg *{fill:currentColor}
 .btn-menu:active{background:rgba(255,255,255,.15)}
-.cab-espazo{flex:none;width:40px}
-.marca{
-  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;
+/* Logo á esquerda, título centrado de verdade (as dúas franxas laterais miden o mesmo) */
+.logo-btn{
+  flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;color:#fff;
+}
+.logo-btn:active{background:rgba(255,255,255,.15)}
+.logo-btn .logo{height:30px;width:auto}
+.titulo-btn{
+  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
   padding:6px 4px;border-radius:10px;color:#fff;
 }
-.marca:active{background:rgba(255,255,255,.15)}
-.marca .logo{height:30px;width:auto;flex:none}
+.titulo-btn:active{background:rgba(255,255,255,.15)}
 .titulo{
   font-size:16px;font-weight:700;letter-spacing:.1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
