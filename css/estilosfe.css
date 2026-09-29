@@ -139,12 +139,19 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .novas-card{background:var(--superficie);border:1px solid var(--raia);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .novas-card:last-child{margin-bottom:0}
 .novas-tit{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--texto)}
-.novas-data{margin:0 0 2px;font-size:13px;font-weight:600;color:var(--granate)}
+.novas-fecha{
+  margin:20px 0 10px;padding-left:10px;font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--granate);
+  border-left:3px solid var(--granate);
+}
+.novas-fecha:first-child{margin-top:0}
+.novas-hora{margin:0 0 2px;font-size:13px;font-weight:600;color:var(--granate)}
 .novas-lugar{margin:0 0 6px;font-size:13px;color:var(--mut)}
 .novas-desc{margin:0 0 8px;font-size:14px;line-height:1.45;color:var(--texto)}
 .novas-mapa{font-size:13px;font-weight:600;color:var(--granate);text-decoration:none}
 @media (prefers-color-scheme:dark){
-  .novas-data{color:var(--ouro-claro)}
+  .novas-fecha{color:var(--ouro-claro);border-color:var(--ouro-claro)}
+  .novas-hora{color:var(--ouro-claro)}
   .novas-mapa{color:var(--ouro-claro)}
 }
 .erro{margin:0;padding:16px;background:var(--superficie);border:1px solid var(--raia);border-radius:12px;color:#b3261e;font-size:14px;text-align:center}
