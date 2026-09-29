@@ -3,12 +3,16 @@
 // Só lectura: esta app non crea, edita nin borra nada.
 
 function tarxetaEquipo(club, xogadores){
+  const iconaPeso = `<svg class="peso-icon" viewBox="0 0 26 12" width="22" height="10" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M6 12A6 6 0 1 0 6 0a6 6 0 0 0 0 12Zm0-3a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M20 12a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0-3a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
+  </svg>`;
   const nomes = xogadores
     .sort((a, b) => (a.nombre + (a.apellidos || '')).localeCompare(b.nombre + (b.apellidos || '')))
-    .map(j => `<li class="equipo-xogador">${escFe(j.nombre)} ${escFe(j.apellidos || '')}</li>`).join('');
+    .map(j => `<li class="equipo-xogador">${iconaPeso}<span>${escFe(j.nombre)} ${escFe(j.apellidos || '')}</span></li>`).join('');
   return `<div class="equipo-card">
     <button class="equipo-fila" aria-expanded="false">
-      <div>
+      <div class="equipo-info">
         <h3 class="equipo-nome">${escFe(club.nombre)}</h3>
         ${club.localidad ? `<span class="equipo-localidade">${escFe(club.localidad)}</span>` : ''}
       </div>
