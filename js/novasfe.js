@@ -24,8 +24,19 @@ function tarxetaEvento(ev, inst){
   const hora = horaFe(ev.fecha_inicio) + (ev.fecha_fin ? ' – ' + horaFe(ev.fecha_fin) : '');
   const nomeInstalacion = inst?.nombre || '';
   const direccion = inst?.direccion || '';
-  const ligazon = ev.url_localizacion
-    ? `<a class="novas-mapa" href="${escFe(ev.url_localizacion)}" target="_blank" rel="noopener">📍 Ver localización</a>` : '';
+  const url = ev.url_localizacion || '';
+
+  // Enderezo: se hai URL de mapa, o propio enderezo é a ligazón (sen liña extra debaixo).
+  // Só se amosa unha ligazón "Ver localización" solta cando hai URL pero non hai enderezo que amosar.
+  let liñaEnderezo = '';
+  if (direccion && url) {
+    liñaEnderezo = `<a class="novas-direccion" href="${escFe(url)}" target="_blank" rel="noopener">${escFe(direccion)}</a>`;
+  } else if (direccion) {
+    liñaEnderezo = `<p class="novas-direccion">${escFe(direccion)}</p>`;
+  } else if (url) {
+    liñaEnderezo = `<a class="novas-mapa" href="${escFe(url)}" target="_blank" rel="noopener">📍 Ver localización</a>`;
+  }
+
   return `<article class="novas-card">
     <h3 class="novas-tit">${escFe(ev.nombre)}</h3>
     <div class="novas-info">
@@ -33,8 +44,7 @@ function tarxetaEvento(ev, inst){
       ${nomeInstalacion ? `<span class="novas-lugar">${escFe(nomeInstalacion)}</span>` : ''}
     </div>
     ${ev.descripcion ? `<p class="novas-desc">${escFe(ev.descripcion)}</p>` : ''}
-    ${direccion ? `<p class="novas-direccion">${escFe(direccion)}</p>` : ''}
-    ${ligazon}
+    ${liñaEnderezo}
   </article>`;
 }
 
