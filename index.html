@@ -22,19 +22,18 @@
     </button>
     <div class="marca">
       <img src="icons/logo-chave.svg" alt="" class="logo">
-      <span class="titulo">Liga de chave<br>de Santiago</span>
+      <span class="titulo">Liga de chave de Santiago</span>
     </div>
-    <span class="cab-espazo" aria-hidden="true"></span>
-  </header>
 
-  <!-- Menú despregable -->
-  <div id="menu-fondo" class="menu-fondo" hidden></div>
-  <nav id="menu" class="menu" hidden>
-    <button class="menu-item" data-vista="marcador">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="7" y2="15"/><line x1="12" y1="8" x2="12" y2="15"/><line x1="17" y1="12" x2="17" y2="15"/></svg>
-      Marcador
-    </button>
-  </nav>
+    <!-- Menú despregable (ancorado á cabeceira, xusto baixo o botón) -->
+    <div id="menu-fondo" class="menu-fondo" hidden></div>
+    <nav id="menu" class="menu" hidden>
+      <button class="menu-item" data-vista="marcador">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><line x1="7" y1="10" x2="7" y2="15"/><line x1="12" y1="8" x2="12" y2="15"/><line x1="17" y1="12" x2="17" y2="15"/></svg>
+        Marcador
+      </button>
+    </nav>
+  </header>
 
   <!-- Contido -->
   <main id="contido">
@@ -44,57 +43,97 @@
       <p class="baleiro">Aínda non hai novas publicadas.</p>
     </section>
 
-    <section id="vista-partidos" class="vista" hidden>
+    <section id="vista-partidos" class="vista vista-liga" hidden>
       <h1 class="tit-vista">Partidos</h1>
-      <div class="liga">
-        <h2 class="tit-liga">Liga masculina</h2>
-        <p class="baleiro">Aínda non hai partidos programados.</p>
+      <div class="segmentado">
+        <button class="seg activa" data-liga="feminina">Feminina</button>
+        <button class="seg" data-liga="masculina">Masculina</button>
       </div>
-      <div class="liga">
-        <h2 class="tit-liga">Liga feminina</h2>
-        <p class="baleiro">Aínda non hai partidos programados.</p>
+      <div class="paneis-liga">
+        <div class="panel-liga" data-liga="feminina">
+          <div class="panel-scroll">
+            <p class="baleiro">Aínda non hai partidos programados.</p>
+          </div>
+        </div>
+        <div class="panel-liga" data-liga="masculina" hidden>
+          <div class="panel-scroll">
+            <p class="baleiro">Aínda non hai partidos programados.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="vista-clasificacion" class="vista" hidden>
+    <section id="vista-clasificacion" class="vista vista-liga" hidden>
       <h1 class="tit-vista">Clasificación</h1>
-      <div class="liga">
-        <h2 class="tit-liga">Liga masculina</h2>
-        <h3 class="tit-sub">Clasificación por equipos</h3>
-        <p class="baleiro">Aínda non hai clasificación dispoñible.</p>
-        <h3 class="tit-sub">Máximos chavistas</h3>
-        <p class="baleiro">Aínda non hai datos de chaves.</p>
+      <div class="segmentado">
+        <button class="seg activa" data-liga="feminina">Feminina</button>
+        <button class="seg" data-liga="masculina">Masculina</button>
       </div>
-      <div class="liga">
-        <h2 class="tit-liga">Liga feminina</h2>
-        <h3 class="tit-sub">Clasificación por equipos</h3>
-        <p class="baleiro">Aínda non hai clasificación dispoñible.</p>
-        <h3 class="tit-sub">Máximos chavistas</h3>
-        <p class="baleiro">Aínda non hai datos de chaves.</p>
+      <div class="paneis-liga">
+        <div class="panel-liga" data-liga="feminina">
+          <div class="split">
+            <div class="split-metade">
+              <h3 class="tit-sub">Clasificación por equipos</h3>
+              <div class="scroll-area"><p class="baleiro">Aínda non hai clasificación dispoñible.</p></div>
+            </div>
+            <div class="split-metade">
+              <h3 class="tit-sub">Máximas chavistas</h3>
+              <div class="scroll-area"><p class="baleiro">Aínda non hai datos de chaves.</p></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel-liga" data-liga="masculina" hidden>
+          <div class="split">
+            <div class="split-metade">
+              <h3 class="tit-sub">Clasificación por equipos</h3>
+              <div class="scroll-area"><p class="baleiro">Aínda non hai clasificación dispoñible.</p></div>
+            </div>
+            <div class="split-metade">
+              <h3 class="tit-sub">Máximos chavistas</h3>
+              <div class="scroll-area"><p class="baleiro">Aínda non hai datos de chaves.</p></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="vista-calendario" class="vista" hidden>
+    <section id="vista-calendario" class="vista vista-liga" hidden>
       <h1 class="tit-vista">Calendario</h1>
-      <div class="liga">
-        <h2 class="tit-liga">Liga masculina</h2>
-        <p class="baleiro">Aínda non hai xornadas publicadas.</p>
+      <div class="segmentado">
+        <button class="seg activa" data-liga="feminina">Feminina</button>
+        <button class="seg" data-liga="masculina">Masculina</button>
       </div>
-      <div class="liga">
-        <h2 class="tit-liga">Liga feminina</h2>
-        <p class="baleiro">Aínda non hai xornadas publicadas.</p>
+      <div class="paneis-liga">
+        <div class="panel-liga" data-liga="feminina">
+          <div class="panel-scroll">
+            <p class="baleiro">Aínda non hai xornadas publicadas.</p>
+          </div>
+        </div>
+        <div class="panel-liga" data-liga="masculina" hidden>
+          <div class="panel-scroll">
+            <p class="baleiro">Aínda non hai xornadas publicadas.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="vista-equipos" class="vista" hidden>
+    <section id="vista-equipos" class="vista vista-liga" hidden>
       <h1 class="tit-vista">Equipos</h1>
-      <div class="liga">
-        <h2 class="tit-liga">Liga masculina</h2>
-        <p class="baleiro">Aínda non hai equipos publicados.</p>
+      <div class="segmentado">
+        <button class="seg activa" data-liga="feminina">Feminina</button>
+        <button class="seg" data-liga="masculina">Masculina</button>
       </div>
-      <div class="liga">
-        <h2 class="tit-liga">Liga feminina</h2>
-        <p class="baleiro">Aínda non hai equipos publicados.</p>
+      <div class="paneis-liga">
+        <div class="panel-liga" data-liga="feminina">
+          <div class="panel-scroll">
+            <p class="baleiro">Aínda non hai equipos publicados.</p>
+          </div>
+        </div>
+        <div class="panel-liga" data-liga="masculina" hidden>
+          <div class="panel-scroll">
+            <p class="baleiro">Aínda non hai equipos publicados.</p>
+          </div>
+        </div>
       </div>
     </section>
 
