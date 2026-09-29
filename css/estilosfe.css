@@ -65,6 +65,7 @@ img,svg{display:block}
 /* Contido: ocupa todo o resto da pantalla */
 main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflow-y:auto}
 .vista{flex:1;min-height:0;display:flex;flex-direction:column}
+.vista[hidden]{display:none}
 .vista-liga{overflow:hidden}
 .tit-vista{flex:none;font-size:21px;margin:0 0 12px;color:var(--granate)}
 @media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
@@ -89,6 +90,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 /* Panel de cada liga: ocupa todo o alto restante */
 .paneis-liga{flex:1;min-height:0;display:flex;flex-direction:column}
 .panel-liga{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel-liga[hidden]{display:none}
 .panel-scroll{flex:1;min-height:0;overflow-y:auto}
 
 /* Clasificación: partida en dúas metades, cada unha co seu propio scroll */
