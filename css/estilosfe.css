@@ -150,6 +150,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .novas-lugar{flex:none;max-width:60%;font-size:13px;color:var(--mut);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .novas-desc{margin:0 0 8px;font-size:14px;line-height:1.45;color:var(--texto)}
 .novas-direccion{margin:0;font-size:12.5px;color:var(--mut)}
+a.novas-direccion{text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px}
 .novas-mapa{display:block;margin-top:4px;font-size:13px;font-weight:600;color:var(--granate);text-decoration:none;text-align:right}
 @media (prefers-color-scheme:dark){
   .novas-fecha{color:var(--ouro-claro);border-color:var(--ouro-claro)}
