@@ -71,20 +71,17 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 @media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
 
 /* Selector Feminina / Masculina */
-.segmentado{flex:none;display:flex;justify-content:center;gap:10px;margin:0 0 16px}
+/* Selector Feminina/Masculina: unha soa pastilla que ocupa todo o ancho, partida en dúas metades */
+.segmentado{flex:none;display:flex;gap:4px;background:var(--raia);border-radius:999px;padding:4px;margin:0 0 16px}
 .seg{
-  flex:none;min-width:120px;padding:9px 22px;border-radius:999px;
+  flex:1;padding:9px 0;border-radius:999px;border:0;
   font-size:14px;font-weight:700;text-align:center;
-  border:2px solid var(--granate);color:var(--granate);background:var(--superficie);
-  transition:transform .15s,box-shadow .15s;
+  color:var(--mut);background:transparent;
+  transition:background .15s,color .15s,box-shadow .15s;
 }
-.seg.activa{
-  background:var(--granate);color:#fff;border-color:var(--granate);
-  box-shadow:0 3px 10px rgba(122,31,53,.35);transform:scale(1.04);
-}
+.seg.activa{background:var(--granate);color:#fff;box-shadow:0 2px 6px rgba(122,31,53,.3)}
 @media (prefers-color-scheme:dark){
-  .seg{border-color:var(--ouro-claro);color:var(--ouro-claro)}
-  .seg.activa{background:var(--ouro-claro);color:#241e19;border-color:var(--ouro-claro);box-shadow:0 3px 10px rgba(228,198,90,.3)}
+  .seg.activa{background:var(--ouro-claro);color:#241e19;box-shadow:0 2px 6px rgba(228,198,90,.25)}
 }
 
 /* Panel de cada liga: ocupa todo o alto restante */
