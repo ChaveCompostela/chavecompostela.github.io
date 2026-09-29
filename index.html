@@ -15,10 +15,11 @@
 
   <!-- Cabeceira -->
   <header class="cab">
-    <div class="marca">
+    <span class="cab-espazo" aria-hidden="true"></span>
+    <button id="btn-info" class="marca" aria-haspopup="true" aria-expanded="false" aria-label="Información da app">
       <img src="icons/logo-chave.svg" alt="" class="logo">
-      <span class="titulo">Liga de chave de Santiago</span>
-    </div>
+      <span class="titulo">Chave Compostela</span>
+    </button>
     <button id="btn-menu" class="btn-menu" aria-label="Abrir menú" aria-haspopup="true" aria-expanded="false">
       <svg viewBox="0 0 24 24" width="24" height="24"><circle cx="3.5" cy="5" r="1.6"/><rect x="8" y="4.1" width="13" height="1.8" rx="0.9"/>
         <circle cx="3.5" cy="12" r="1.6"/><rect x="8" y="11.1" width="13" height="1.8" rx="0.9"/>
@@ -33,6 +34,12 @@
         Marcador
       </button>
     </nav>
+
+    <!-- Globo de información, ancorado baixo o título -->
+    <div id="globo-fondo" class="menu-fondo" hidden></div>
+    <div id="globo" class="globo" hidden role="tooltip">
+      Consulta o estado das ligas oficiais de Santiago, os clubs participantes e a axenda
+    </div>
   </header>
 
   <!-- Contido -->
