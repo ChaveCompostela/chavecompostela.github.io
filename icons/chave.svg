@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 480" width="100%" height="100%">
+  <defs>
+    <!-- Sombra suave arrojada con amplio margen -->
+    <filter id="chaveShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="3" dy="6" stdDeviation="5" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+
+    <!-- Filtro de textura de hierro forjado -->
+    <filter id="ironTexture" x="-20%" y="-20%" width="140%" height="140%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise" />
+      <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.07 0" in="noise" result="alphaNoise" />
+      <feComposite in="SourceGraphic" in2="alphaNoise" operator="arithmetic" k1="0" k2="1" k3="0.8" k4="0" />
+    </filter>
+
+    <!-- Gradiente metálico principal del cuerpo -->
+    <linearGradient id="chaveBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1b232c"/>
+      <stop offset="25%" stop-color="#344352"/>
+      <stop offset="55%" stop-color="#556677"/>
+      <stop offset="85%" stop-color="#283340"/>
+      <stop offset="100%" stop-color="#12171e"/>
+    </linearGradient>
+
+    <!-- Gradiente transversal para el nervio central de luz (con el brillo reducido) -->
+    <linearGradient id="volumetricHighlightGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="20%" stop-color="#ffffff" stop-opacity="0.015"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="80%" stop-color="#ffffff" stop-opacity="0.015"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Desenfoque lateral para fundir los bordes de manera totalmente orgánica -->
+    <filter id="lightVolumeBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4.8"/>
+    </filter>
+
+    <!-- Suavizado para la máscara vertical -->
+    <filter id="maskBlur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+
+    <!-- Máscara vertical: nacimiento fino arriba y desvanecimiento progresivo antes de la base -->
+    <linearGradient id="bladeLightMaskGrad" x1="0" y1="40" x2="0" y2="424" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="68%" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="80%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <mask id="smoothHighlightMask">
+      <rect x="0" y="0" width="350" height="480" fill="url(#bladeLightMaskGrad)" filter="url(#maskBlur)"/>
+    </mask>
+  </defs>
+
+  <g filter="url(#chaveShadow)">
+    <!-- 1. Silueta principal de la chave -->
+    <path d="M 171 40 
+             Q 175 36 179 40 
+             C 216 84, 236 144, 236 201 
+             C 236 258, 208 308, 198 338 
+             C 192 353, 195 368, 208 376 
+             Q 217 379, 217 384 
+             L 217 398 
+             Q 217 404, 209 404 
+             L 141 404 
+             Q 133 404, 133 398 
+             L 133 384 
+             Q 133 379, 142 376 
+             C 155 368, 158 353, 152 338 
+             C 142 308, 114 258, 114 201 
+             C 114 144, 134 84, 171 40 Z" 
+          fill="url(#chaveBodyGrad)" 
+          stroke="#11161d" 
+          stroke-width="1.2" 
+          stroke-linejoin="round"
+          filter="url(#ironTexture)" />
+
+    <!-- 2. Luz volumétrica con brillo rebajado y volumen anatómico optimizado -->
+    <path d="M 174 40 
+             Q 175 39 176 40 
+             C 193 90, 222 150, 220 201 
+             C 218 255, 195 308, 184 348 
+             C 179 358, 176 368, 175 375 
+             C 174 368, 171 358, 166 348 
+             C 155 308, 132 255, 130 201 
+             C 128 150, 157 90, 174 40 Z" 
+          fill="url(#volumetricHighlightGrad)" 
+          mask="url(#smoothHighlightMask)"
+          filter="url(#lightVolumeBlur)" />
+  </g>
+</svg>
