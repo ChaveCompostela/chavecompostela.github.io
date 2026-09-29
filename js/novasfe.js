@@ -20,8 +20,10 @@ function horaFe(iso){
   catch (e) { return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
 }
 
-function tarxetaEvento(ev, nomeInstalacion){
+function tarxetaEvento(ev, inst){
   const hora = horaFe(ev.fecha_inicio) + (ev.fecha_fin ? ' – ' + horaFe(ev.fecha_fin) : '');
+  const nomeInstalacion = inst?.nombre || '';
+  const direccion = inst?.direccion || '';
   const ligazon = ev.url_localizacion
     ? `<a class="novas-mapa" href="${escFe(ev.url_localizacion)}" target="_blank" rel="noopener">📍 Ver localización</a>` : '';
   return `<article class="novas-card">
@@ -31,6 +33,7 @@ function tarxetaEvento(ev, nomeInstalacion){
       ${nomeInstalacion ? `<span class="novas-lugar">${escFe(nomeInstalacion)}</span>` : ''}
     </div>
     ${ev.descripcion ? `<p class="novas-desc">${escFe(ev.descripcion)}</p>` : ''}
+    ${direccion ? `<p class="novas-direccion">${escFe(direccion)}</p>` : ''}
     ${ligazon}
   </article>`;
 }
@@ -42,14 +45,14 @@ async function cargarNovas(){
     const { data: eventos, error } = await sbfe.from('eventos').select('*').order('fecha_inicio', { ascending: false });
     if (error) throw new Error(error.message);
     if (!eventos.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai novas publicadas.</p>'; return; }
-    const { data: instalaciones } = await sbfe.from('instalaciones').select('id,nombre');
-    const nomeInst = id => instalaciones?.find(i => i.id === id)?.nombre || '';
+    const { data: instalaciones } = await sbfe.from('instalaciones').select('id,nombre,direccion');
+    const inst = id => instalaciones?.find(i => i.id === id) || null;
 
     let html = '', diaAnterior = null;
     for (const ev of eventos) {
       const dia = chaveDia(ev.fecha_inicio);
       if (dia !== diaAnterior) { html += `<h2 class="novas-fecha">${escFe(tituloDia(ev.fecha_inicio))}</h2>`; diaAnterior = dia; }
-      html += tarxetaEvento(ev, nomeInst(ev.id_instalacion));
+      html += tarxetaEvento(ev, inst(ev.id_instalacion));
     }
     cont.innerHTML = html;
   } catch (e) {

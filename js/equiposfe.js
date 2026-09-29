@@ -2,14 +2,16 @@
 // A liga de cada club vén do campo "Categoría" que se lle asigna no panel de administración.
 // Só lectura: esta app non crea, edita nin borra nada.
 
-function tarxetaEquipo(club, xogadores){
-  const iconaPeso = `<svg class="peso-icon" viewBox="0 0 26 12" width="22" height="10" fill="currentColor" aria-hidden="true">
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M6 12A6 6 0 1 0 6 0a6 6 0 0 0 0 12Zm0-3a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M20 12a6 6 0 1 0 0-12 6 6 0 0 0 0 12Zm0-3a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/>
-  </svg>`;
+// Icona e título do despregable segundo a liga
+const ICONA_XOGADOR = { feminina: 'icons/pesos13d.svg', masculina: 'icons/pesos23d.svg' };
+const TITULO_XOGADORES = { feminina: 'Xogadoras do club', masculina: 'Xogadores do club' };
+
+function tarxetaEquipo(club, xogadores, liga){
+  const icona = ICONA_XOGADOR[liga];
   const nomes = xogadores
     .sort((a, b) => (a.nombre + (a.apellidos || '')).localeCompare(b.nombre + (b.apellidos || '')))
-    .map(j => `<li class="equipo-xogador">${iconaPeso}<span>${escFe(j.nombre)} ${escFe(j.apellidos || '')}</span></li>`).join('');
+    .map(j => `<li class="equipo-xogador"><img class="peso-icon" src="${icona}" alt="" width="22" height="10">
+      <span>${escFe(j.nombre)} ${escFe(j.apellidos || '')}</span></li>`).join('');
   return `<div class="equipo-card">
     <button class="equipo-fila" aria-expanded="false">
       <div class="equipo-info">
@@ -18,17 +20,20 @@ function tarxetaEquipo(club, xogadores){
       </div>
       <svg class="equipo-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
-    <ul class="equipo-xogadores" hidden>
-      ${nomes || '<li class="equipo-xogador equipo-baleiro">Sen xogadores rexistrados.</li>'}
-    </ul>
+    <div class="equipo-despregable" hidden>
+      <h4 class="equipo-xog-titulo">${TITULO_XOGADORES[liga]}</h4>
+      <ul class="equipo-xogadores">
+        ${nomes || '<li class="equipo-xogador equipo-baleiro">Sen xogadores rexistrados.</li>'}
+      </ul>
+    </div>
   </div>`;
 }
 
-function pintarEquipos(cont, clubs, xogadoresPorClub){
+function pintarEquipos(cont, clubs, xogadoresPorClub, liga){
   if (!clubs.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai equipos publicados.</p>'; return; }
   cont.innerHTML = clubs
     .sort((a, b) => a.nombre.localeCompare(b.nombre))
-    .map(c => tarxetaEquipo(c, xogadoresPorClub.filter(j => j.id_club === c.id)))
+    .map(c => tarxetaEquipo(c, xogadoresPorClub.filter(j => j.id_club === c.id), liga))
     .join('');
 }
 
@@ -61,8 +66,8 @@ async function cargarEquipos(){
 
     const idFem = categorias.find(c => c.nombre === 'femenina')?.id;
     const idMasc = categorias.find(c => c.nombre === 'masculina')?.id;
-    pintarEquipos(contFem, clubs.filter(c => c.id_categoria === idFem), xogadores);
-    pintarEquipos(contMasc, clubs.filter(c => c.id_categoria === idMasc), xogadores);
+    pintarEquipos(contFem, clubs.filter(c => c.id_categoria === idFem), xogadores, 'feminina');
+    pintarEquipos(contMasc, clubs.filter(c => c.id_categoria === idMasc), xogadores, 'masculina');
   } catch (e) {
     const msg = `<p class="erro">Non se puideron cargar os equipos: ${escFe(e.message)}</p>`;
     contFem.innerHTML = contMasc.innerHTML = msg;
