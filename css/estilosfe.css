@@ -55,7 +55,7 @@ img,svg{display:block}
 /* Menú despregable, ancorado xusto baixo a cabeceira */
 .menu-fondo{position:fixed;inset:0;background:rgba(20,14,10,.35);z-index:19}
 .menu{
-  position:absolute;top:100%;left:14px;margin-top:6px;z-index:20;
+  position:absolute;top:100%;right:14px;margin-top:6px;z-index:20;
   background:var(--superficie);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
   min-width:190px;padding:6px;border:1px solid var(--raia);
 }
@@ -70,10 +70,21 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 @media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
 
 /* Selector Feminina / Masculina */
-.segmentado{flex:none;display:flex;gap:6px;background:var(--raia);padding:4px;border-radius:12px;margin:0 0 14px}
-.seg{flex:1;padding:9px 0;border-radius:9px;font-size:14px;font-weight:700;color:var(--mut);text-align:center}
-.seg.activa{background:var(--granate);color:#fff}
-@media (prefers-color-scheme:dark){.seg.activa{background:var(--ouro-claro);color:#241e19}}
+.segmentado{flex:none;display:flex;justify-content:center;gap:10px;margin:0 0 16px}
+.seg{
+  flex:none;min-width:120px;padding:9px 22px;border-radius:999px;
+  font-size:14px;font-weight:700;text-align:center;
+  border:2px solid var(--granate);color:var(--granate);background:var(--superficie);
+  transition:transform .15s,box-shadow .15s;
+}
+.seg.activa{
+  background:var(--granate);color:#fff;border-color:var(--granate);
+  box-shadow:0 3px 10px rgba(122,31,53,.35);transform:scale(1.04);
+}
+@media (prefers-color-scheme:dark){
+  .seg{border-color:var(--ouro-claro);color:var(--ouro-claro)}
+  .seg.activa{background:var(--ouro-claro);color:#241e19;border-color:var(--ouro-claro);box-shadow:0 3px 10px rgba(228,198,90,.3)}
+}
 
 /* Panel de cada liga: ocupa todo o alto restante */
 .paneis-liga{flex:1;min-height:0;display:flex;flex-direction:column}
