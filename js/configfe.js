@@ -1,7 +1,7 @@
 // Conexión de só lectura a Supabase para a app pública.
 // Project Settings → API no teu proxecto de Supabase. Usa SOLO a clave pública (anon/publishable).
-const SUPABASE_URL = 'https://tlpkxrwwdosrzqcqwybq.supabase.co';
-const SUPABASE_KEY = 'TU-ANON-KEY';
+const SUPABASE_URL = 'https://tlpkxrwwdosrzqcqwybq.supabase.co/';
+const SUPABASE_KEY = 'sb_publishable_C2pLthVQIIFVGAYJP4JPjw_5n1VwXIh';
 
 let sbfe = null, ERR_CONFIG_FE = '';
 if (typeof supabase === 'undefined') {
