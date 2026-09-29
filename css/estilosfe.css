@@ -71,17 +71,17 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 @media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
 
 /* Selector Feminina / Masculina */
-/* Selector Feminina/Masculina: unha soa pastilla que ocupa todo o ancho, partida en dúas metades */
-.segmentado{flex:none;display:flex;gap:4px;background:var(--raia);border-radius:999px;padding:4px;margin:0 0 16px}
+/* Selector Liga feminina/Liga masculina: rectángulo redondeado cun botón interior tamén redondeado */
+.segmentado{flex:none;display:flex;gap:4px;background:var(--raia);border-radius:20px;padding:4px;margin:0 0 16px}
 .seg{
-  flex:1;padding:9px 0;border-radius:999px;border:0;
+  flex:1;padding:9px 0;border-radius:16px;border:0;
   font-size:14px;font-weight:700;text-align:center;
   color:var(--mut);background:transparent;
-  transition:background .15s,color .15s,box-shadow .15s;
+  transition:background .15s,color .15s;
 }
-.seg.activa{background:var(--granate);color:#fff;box-shadow:0 2px 6px rgba(122,31,53,.3)}
+.seg.activa{background:var(--granate);color:#fff}
 @media (prefers-color-scheme:dark){
-  .seg.activa{background:var(--ouro-claro);color:#241e19;box-shadow:0 2px 6px rgba(228,198,90,.25)}
+  .seg.activa{background:var(--ouro-claro);color:#241e19}
 }
 
 /* Panel de cada liga: ocupa todo o alto restante */
