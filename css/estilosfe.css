@@ -145,8 +145,9 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   border-left:3px solid var(--granate);
 }
 .novas-fecha:first-child{margin-top:0}
-.novas-hora{margin:0 0 2px;font-size:13px;font-weight:600;color:var(--granate)}
-.novas-lugar{margin:0 0 6px;font-size:13px;color:var(--mut)}
+.novas-info{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 6px}
+.novas-hora{flex:none;font-size:13px;font-weight:600;color:var(--granate)}
+.novas-lugar{flex:none;max-width:60%;font-size:13px;color:var(--mut);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .novas-desc{margin:0 0 8px;font-size:14px;line-height:1.45;color:var(--texto)}
 .novas-mapa{font-size:13px;font-weight:600;color:var(--granate);text-decoration:none}
 @media (prefers-color-scheme:dark){
