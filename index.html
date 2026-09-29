@@ -48,7 +48,9 @@
 
     <section id="vista-novas" class="vista">
       <h1 class="tit-vista">Novas</h1>
-      <p class="baleiro">Aínda non hai novas publicadas.</p>
+      <div id="novas-lista">
+        <p class="baleiro">Cargando novas…</p>
+      </div>
     </section>
 
     <section id="vista-partidos" class="vista vista-liga" hidden>
@@ -177,6 +179,9 @@
   </nav>
 
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/configfe.js"></script>
+<script src="js/novasfe.js"></script>
 <script src="js/appfe.js"></script>
 </body>
 </html>
