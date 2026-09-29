@@ -26,8 +26,10 @@ function tarxetaEvento(ev, nomeInstalacion){
     ? `<a class="novas-mapa" href="${escFe(ev.url_localizacion)}" target="_blank" rel="noopener">📍 Ver localización</a>` : '';
   return `<article class="novas-card">
     <h3 class="novas-tit">${escFe(ev.nombre)}</h3>
-    <p class="novas-hora">${escFe(hora)}</p>
-    ${nomeInstalacion ? `<p class="novas-lugar">${escFe(nomeInstalacion)}</p>` : ''}
+    <div class="novas-info">
+      <span class="novas-hora">${escFe(hora)}</span>
+      ${nomeInstalacion ? `<span class="novas-lugar">${escFe(nomeInstalacion)}</span>` : ''}
+    </div>
     ${ev.descripcion ? `<p class="novas-desc">${escFe(ev.descripcion)}</p>` : ''}
     ${ligazon}
   </article>`;
