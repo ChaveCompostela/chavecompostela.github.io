@@ -6,7 +6,7 @@ const T = {
   categorias:{h:1,f:[],l:r=>r.nombre},
   ligas:{t:'Ligas',f:[['id_temporada','Temporada','r:temporadas'],['id_categoria','Categoría','r:categorias'],['nombre','Nombre','t']],l:r=>r.nombre},
   jornadas:{t:'Jornadas',f:[['id_liga','Liga','r:ligas'],['numero','Nº jornada','n'],['fecha','Fecha','d']],l:r=>`J${r.numero} · ${lab('ligas',r.id_liga)}`},
-  clubs:{t:'Clubs',f:[['nombre','Nombre','t'],['localidad','Localidad','t'],['activo','Activo','b']],l:r=>r.nombre},
+  clubs:{t:'Clubs',f:[['nombre','Nombre','t'],['localidad','Localidad','t'],['id_categoria','Categoría','r:categorias'],['activo','Activo','b']],l:r=>r.nombre},
   jugadores:{t:'Jugadores',c:['nombre','apellidos','id_club'],f:[['nombre','Nombre','t'],['apellidos','Apellidos','t'],['id_club','Club (vacío = sin club)','r:clubs'],['activo','Activo','b']],l:r=>`${r.nombre} ${r.apellidos||''}`.trim()},
   instalaciones:{t:'Instalaciones',c:['nombre','localidad','num_pistas','url_localizacion'],f:[['nombre','Nombre','t'],['direccion','Dirección','t'],['localidad','Localidad','t'],['num_pistas','Nº pistas','n'],['id_club','Club','r:clubs'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
   eventos:{t:'Eventos',c:['nombre','fecha_inicio','fecha_fin','id_instalacion','url_localizacion'],f:[['nombre','Nombre','t'],['descripcion','Descripción','t'],['fecha_inicio','Inicio','dt'],['fecha_fin','Fin','dt'],['id_instalacion','Instalación','r:instalaciones'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
