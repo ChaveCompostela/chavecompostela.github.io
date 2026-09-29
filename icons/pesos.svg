@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 260" width="260" height="260">
+  <defs>
+    <!-- Gradiente radial para simular el volumen abombado 3D (Luz desde arriba a la izquierda) -->
+    <radialGradient id="metal3D" cx="30%" cy="25%" r="75%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="12%" stop-color="#d9e1e8" />
+      <stop offset="35%" stop-color="#919ba6" />
+      <stop offset="68%" stop-color="#4a525a" />
+      <stop offset="88%" stop-color="#252a2e" />
+      <stop offset="100%" stop-color="#111315" />
+    </radialGradient>
+
+    <!-- Sombra de profundidad 3D para la base del disco -->
+    <filter id="sombra3D" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="4" dy="7" stdDeviation="4.5" flood-color="#000000" flood-opacity="0.55"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#sombra3D)">
+    <!-- PESO SUPERIOR IZQUIERDA (1 Círculo) -->
+    <g transform="translate(70, 70)">
+      <circle cx="0" cy="0" r="50" fill="url(#metal3D)" stroke="#1a1d20" stroke-width="0.8"/>
+      <!-- Surco grabado en relieve 3D (Luz inferior + Sombra superior) -->
+      <circle cx="0.5" cy="0.8" r="14" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="-0.5" cy="-0.5" r="14" fill="none" stroke="#121416" stroke-width="1.4" opacity="0.9"/>
+    </g>
+
+    <!-- PESO SUPERIOR DERECHA (1 Círculo) -->
+    <g transform="translate(190, 70)">
+      <circle cx="0" cy="0" r="50" fill="url(#metal3D)" stroke="#1a1d20" stroke-width="0.8"/>
+      <circle cx="0.5" cy="0.8" r="14" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="-0.5" cy="-0.5" r="14" fill="none" stroke="#121416" stroke-width="1.4" opacity="0.9"/>
+    </g>
+
+    <!-- PESO INFERIOR IZQUIERDA (2 Círculos) -->
+    <g transform="translate(70, 190)">
+      <circle cx="0" cy="0" r="50" fill="url(#metal3D)" stroke="#1a1d20" stroke-width="0.8"/>
+      <!-- Círculo Exterior -->
+      <circle cx="0.5" cy="0.8" r="28" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="-0.5" cy="-0.5" r="28" fill="none" stroke="#121416" stroke-width="1.4" opacity="0.9"/>
+      <!-- Círculo Interior -->
+      <circle cx="0.5" cy="0.8" r="14" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="-0.5" cy="-0.5" r="14" fill="none" stroke="#121416" stroke-width="1.4" opacity="0.9"/>
+    </g>
+
+    <!-- PESO INFERIOR DERECHA (2 Círculos) -->
+    <g transform="translate(190, 190)">
+      <circle cx="0" cy="0" r="50" fill="url(#metal3D)" stroke="#1a1d20" stroke-width="0.8"/>
+      <!-- Círculo Exterior -->
+      <circle cx="0.5" cy="0.8" r="28" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="-0.5" cy="-0.5" r="28" fill="none" stroke="#121416" stroke-width="1.4" opacity="0.9"/>
+      <!-- Círculo Interior -->
+      <circle cx="0.5" cy="0.8" r="14" fill="none" stroke="#ffffff" stroke-width="1.2" opacity="0.75"/>
+      <circle cx="-0.5" cy="-0.5" r="14" fill="none" stroke="#121416" stroke-width="1.4" opacity="0.9"/>
+    </g>
+  </g>
+</svg>
