@@ -7,7 +7,7 @@ const vistas = document.querySelectorAll('.vista');
 const btnMenu = document.getElementById('btn-menu');
 const menu = document.getElementById('menu');
 const menuFondo = document.getElementById('menu-fondo');
-const btnInfo = document.getElementById('btn-info');
+const btnInfo = [document.getElementById('btn-logo'), document.getElementById('btn-titulo')];
 const globo = document.getElementById('globo');
 const globoFondo = document.getElementById('globo-fondo');
 
@@ -42,16 +42,16 @@ menuFondo.addEventListener('click', pecharMenu);
 // Globo de información, ao premer no logo ou no título
 function abrirGlobo(){
   globo.hidden = false; globoFondo.hidden = false;
-  btnInfo.setAttribute('aria-expanded', 'true');
+  btnInfo.forEach(b => b.setAttribute('aria-expanded', 'true'));
 }
 function pecharGlobo(){
   globo.hidden = true; globoFondo.hidden = true;
-  btnInfo.setAttribute('aria-expanded', 'false');
+  btnInfo.forEach(b => b.setAttribute('aria-expanded', 'false'));
 }
-btnInfo.addEventListener('click', () => {
+btnInfo.forEach(b => b.addEventListener('click', () => {
   pecharMenu();
   globo.hidden ? abrirGlobo() : pecharGlobo();
-});
+}));
 globoFondo.addEventListener('click', pecharGlobo);
 
 // Selector Feminina / Masculina dentro de cada apartado (Partidos, Clasificación, Calendario, Equipos)
