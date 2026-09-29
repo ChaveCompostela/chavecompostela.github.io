@@ -2,7 +2,6 @@
 :root{
   color-scheme:light dark;
   --granate:#7a1f35;
-  --granate-esc:#5c1727;
   --ouro:#c9a227;
   --ouro-claro:#e4c65a;
   --fondo:#faf7f1;
@@ -23,16 +22,22 @@
   }
 }
 *{box-sizing:border-box}
+html,body{height:100%}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;font:16px/1.45 -apple-system,"SF Pro Text",Roboto,system-ui,sans-serif;background:var(--fondo);color:var(--texto)}
+body{margin:0;font:16px/1.45 -apple-system,"SF Pro Text",Roboto,system-ui,sans-serif;background:var(--fondo);color:var(--texto);overflow:hidden}
 button{font:inherit;background:none;border:0;color:inherit;-webkit-tap-highlight-color:transparent}
 img,svg{display:block}
 
-#app{max-width:600px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+/* A app ocupa toda a pantalla nunha soa columna: cabeceira, contido, pestañas */
+#app{
+  max-width:600px;margin:0 auto;
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;overflow:hidden;
+}
 
 /* Cabeceira */
 .cab{
-  position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:10px;
+  position:relative;flex:none;display:flex;align-items:center;gap:10px;
   padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
   background:var(--granate);color:#fff;
   box-shadow:0 1px 0 var(--ouro);
@@ -40,41 +45,55 @@ img,svg{display:block}
 .btn-menu{flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff}
 .btn-menu svg *{fill:currentColor}
 .btn-menu:active{background:rgba(255,255,255,.15)}
-.marca{flex:1;display:flex;align-items:center;gap:10px;min-width:0}
-.marca .logo{height:34px;width:auto;flex:none}
-.titulo{font-size:15px;font-weight:700;line-height:1.15;letter-spacing:.2px}
-.cab-espazo{width:40px;flex:none}
+.marca{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.marca .logo{height:32px;width:auto;flex:none}
+.titulo{
+  font-size:16px;font-weight:700;letter-spacing:.1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 
-/* Menú despregable */
+/* Menú despregable, ancorado xusto baixo a cabeceira */
 .menu-fondo{position:fixed;inset:0;background:rgba(20,14,10,.35);z-index:19}
 .menu{
-  position:fixed;top:calc(56px + env(safe-area-inset-top));left:10px;z-index:20;
+  position:absolute;top:100%;left:14px;margin-top:6px;z-index:20;
   background:var(--superficie);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
   min-width:190px;padding:6px;border:1px solid var(--raia);
 }
 .menu-item{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;text-align:left;font-size:15px;color:var(--texto)}
 .menu-item:active{background:var(--fondo)}
 
-/* Contido */
-main{flex:1;padding:16px 16px calc(88px + env(safe-area-inset-bottom))}
-.tit-vista{font-size:22px;margin:4px 0 14px;color:var(--granate)}
+/* Contido: ocupa todo o resto da pantalla */
+main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflow-y:auto}
+.vista{flex:1;min-height:0;display:flex;flex-direction:column}
+.vista-liga{overflow:hidden}
+.tit-vista{flex:none;font-size:21px;margin:0 0 12px;color:var(--granate)}
 @media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
-.liga{margin-bottom:26px}
-.liga:last-child{margin-bottom:0}
-.tit-liga{
-  font-size:14px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;
-  color:#fff;background:var(--granate);display:inline-block;padding:5px 12px;border-radius:999px;margin:0 0 10px;
-}
-.tit-sub{font-size:15px;font-weight:700;margin:14px 0 8px;color:var(--texto)}
-.tit-sub:first-of-type{margin-top:4px}
+
+/* Selector Feminina / Masculina */
+.segmentado{flex:none;display:flex;gap:6px;background:var(--raia);padding:4px;border-radius:12px;margin:0 0 14px}
+.seg{flex:1;padding:9px 0;border-radius:9px;font-size:14px;font-weight:700;color:var(--mut);text-align:center}
+.seg.activa{background:var(--granate);color:#fff}
+@media (prefers-color-scheme:dark){.seg.activa{background:var(--ouro-claro);color:#241e19}}
+
+/* Panel de cada liga: ocupa todo o alto restante */
+.paneis-liga{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel-liga{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel-scroll{flex:1;min-height:0;overflow-y:auto}
+
+/* Clasificación: partida en dúas metades, cada unha co seu propio scroll */
+.split{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.split-metade{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.split-metade + .split-metade{border-top:1px solid var(--raia);padding-top:12px}
+.tit-sub{flex:none;font-size:14px;font-weight:700;margin:0 0 8px;color:var(--texto)}
+.scroll-area{flex:1;min-height:0;overflow-y:auto}
+
 .baleiro{margin:0;padding:16px;background:var(--superficie);border:1px solid var(--raia);border-radius:12px;color:var(--mut);font-size:14px;text-align:center}
 
 /* Menú inferior */
 .tabs{
-  position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;
+  flex:none;display:flex;
   background:var(--superficie);border-top:1px solid var(--raia);
   padding:6px max(4px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));
-  max-width:600px;margin:0 auto;
 }
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;color:var(--mut)}
 .tab span{font-size:11px;font-weight:600}
