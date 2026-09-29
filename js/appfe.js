@@ -1,5 +1,5 @@
-// Esqueleto da aplicación: cambio de vista (pestañas inferiores + menú superior).
-// Sen conexión a datos por agora; cada vista amosa un contido de proba.
+// Esqueleto da aplicación: cambio de vista (pestañas inferiores + menú superior)
+// e selector Feminina / Masculina dentro de cada apartado. Sen conexión a datos por agora.
 
 const tabs = document.querySelectorAll('.tab');
 const menuItems = document.querySelectorAll('.menu-item');
@@ -32,3 +32,13 @@ function pecharMenu(){
 }
 btnMenu.addEventListener('click', () => menu.hidden ? abrirMenu() : pecharMenu());
 menuFondo.addEventListener('click', pecharMenu);
+
+// Selector Feminina / Masculina dentro de cada apartado (Partidos, Clasificación, Calendario, Equipos)
+document.querySelectorAll('.vista-liga').forEach(vista => {
+  const segs = vista.querySelectorAll('.seg');
+  const paneis = vista.querySelectorAll('.panel-liga');
+  segs.forEach(s => s.addEventListener('click', () => {
+    segs.forEach(x => x.classList.toggle('activa', x === s));
+    paneis.forEach(p => p.hidden = p.dataset.liga !== s.dataset.liga);
+  }));
+});
