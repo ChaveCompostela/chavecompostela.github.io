@@ -155,3 +155,22 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   .novas-mapa{color:var(--ouro-claro)}
 }
 .erro{margin:0;padding:16px;background:var(--superficie);border:1px solid var(--raia);border-radius:12px;color:#b3261e;font-size:14px;text-align:center}
+
+/* Equipos: tarxeta de club cun despregable cos seus xogadores */
+.equipo-card{background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.equipo-card:last-child{margin-bottom:0}
+.equipo-fila{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;color:inherit}
+.equipo-nome{margin:0 0 4px;font-size:15px;font-weight:700;color:var(--texto)}
+.equipo-localidade{display:inline-block;background:var(--raia);color:var(--granate);font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
+.equipo-chevron{flex:none;color:var(--mut);transition:transform .2s}
+.equipo-fila[aria-expanded="true"] .equipo-chevron{transform:rotate(180deg)}
+.equipo-xogadores{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px dashed var(--raia)}
+.equipo-xogadores[hidden]{display:none}
+.equipo-xogador{font-size:13.5px;color:var(--texto);padding:4px 0;display:flex;align-items:center;gap:7px}
+.equipo-xogador::before{content:"🏃";font-size:12px}
+.equipo-baleiro{color:var(--mut)}
+.equipo-baleiro::before{content:none}
+@media (prefers-color-scheme:dark){
+  .equipo-card{border-left-color:var(--ouro-claro)}
+  .equipo-localidade{color:var(--ouro-claro)}
+}
