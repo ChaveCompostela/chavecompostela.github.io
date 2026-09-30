@@ -21,7 +21,6 @@ function nomeClubP(clubs, id){
 
 // Resultado global do partido: só se está finalizado e ten ambos resultados
 function resultadoGlobalP(p){
-  if (p.estado !== 'finalizado') return null;
   if (p.resultado_local == null || p.resultado_visitante == null) return null;
   return `${p.resultado_local} - ${p.resultado_visitante}`;
 }
