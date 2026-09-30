@@ -40,8 +40,24 @@ function partidoTenDatos(partidoId, datos){
 }
 
 // ---------- Render: detalle dunha partida ----------
+function nomeXogadorP(id, datos){
+  const j = datos.jugadores.find(y => y.id === id);
+  return j ? `${j.nombre} ${j.apellidos || ''}`.trim() : `Xogador #${id}`;
+}
+
+function nomeParellaP(idPareja, datos){
+  const pa = datos.parejas.find(y => y.id === idPareja);
+  if (!pa) return '—';
+  return `${nomeXogadorP(pa.id_jugador_a, datos)} / ${nomeXogadorP(pa.id_jugador_b, datos)}`;
+}
+
 function partidaHtml(e, datos){
   const eps = datos.enfrentamiento_parejas.filter(x => x.id_enfrentamiento === e.id);
+
+  // Nome da(s) parella(s) de cada lado (pode haber máis dunha no mesmo enfrentamento)
+  const parellasLado = l => eps.filter(x => x.lado === l).map(x => nomeParellaP(x.id_pareja, datos));
+  const parLocal = parellasLado('local').join(' · ') || 'Sen parella';
+  const parVisit = parellasLado('visitante').join(' · ') || 'Sen parella';
 
   const lado = l => {
     const titulo = l === 'local' ? 'Local' : 'Visitante';
@@ -53,8 +69,7 @@ function partidaHtml(e, datos){
       const pa = datos.parejas.find(y => y.id === x.id_pareja);
       if (!pa) return [];
       return [pa.id_jugador_a, pa.id_jugador_b].map(id => {
-        const j = datos.jugadores.find(y => y.id === id);
-        const nome = j ? `${j.nombre} ${j.apellidos || ''}`.trim() : `Xogador #${id}`;
+        const nome = nomeXogadorP(id, datos);
         const c = datos.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
         const chaves = c && c.chaves != null ? `${c.chaves} chaves` : '—';
         return `<div class="partida-xog"><span>${escFe(nome)}</span><span class="chaves">${escFe(chaves)}</span></div>`;
@@ -64,11 +79,15 @@ function partidaHtml(e, datos){
   };
 
   const conMarcador = e.marcador_local != null && e.marcador_visitante != null;
-  const marcador = conMarcador ? `<p class="partida-marcador">${e.marcador_local} - ${e.marcador_visitante}</p>` : '';
+  const marcador = conMarcador ? `${e.marcador_local} - ${e.marcador_visitante}` : '-';
 
   return `<div class="partida-card">
     <h3 class="partida-tit">Partida ${e.numero}</h3>
-    ${marcador}
+    <div class="partida-vs">
+      <span class="partida-parella">${escFe(parLocal)}</span>
+      <span class="partida-marcador">${escFe(marcador)}</span>
+      <span class="partida-parella">${escFe(parVisit)}</span>
+    </div>
     ${lado('local')}${lado('visitante')}
   </div>`;
 }
