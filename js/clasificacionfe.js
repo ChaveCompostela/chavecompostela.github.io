@@ -2,8 +2,8 @@
 // e cos partidos xa finalizados. Reutiliza escFe e tempadaActual (de novasfe.js/calendariofe.js).
 // Só lectura: esta app non crea, edita nin borra nada.
 //
-// Puntos: cada partida gañada nun partido vale 2 puntos. Un partido finalizado 3-1
-// reparte 6 puntos ao equipo que gañou 3 partidas e 2 puntos ao que gañou 1.
+// Puntos: en cada partido, cada equipo suma tantos puntos coma partidas gañou nel.
+// Un partido finalizado 3-1 reparte 3 puntos ao que gañou 3 partidas e 1 ao que gañou 1.
 
 function filaEquipoClas(pos, nome, puntos){
   return `<div class="clas-fila">
@@ -39,8 +39,8 @@ function pintarClasChavistas(cont, filas, etiqueta){
 function puntosPorEquipo(partidosLiga, clubsLiga){
   const puntos = {};
   for (const p of partidosLiga) {
-    if (p.id_club_local) puntos[p.id_club_local] = (puntos[p.id_club_local] || 0) + p.resultado_local * 2;
-    if (p.id_club_visitante) puntos[p.id_club_visitante] = (puntos[p.id_club_visitante] || 0) + p.resultado_visitante * 2;
+    if (p.id_club_local) puntos[p.id_club_local] = (puntos[p.id_club_local] || 0) + p.resultado_local;
+    if (p.id_club_visitante) puntos[p.id_club_visitante] = (puntos[p.id_club_visitante] || 0) + p.resultado_visitante;
   }
   return clubsLiga
     .map(c => ({ nome: c.nombre, puntos: puntos[c.id] || 0 }))
