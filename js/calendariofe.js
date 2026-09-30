@@ -23,13 +23,20 @@ function filaPartido(p, clubs){
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
   const conResultado = p.resultado_local != null && p.resultado_visitante != null;
   const resultado = conResultado ? `${p.resultado_local} - ${p.resultado_visitante}` : '-';
-  return `<div class="partido-card">
-    ${hora ? `<p class="partido-hora">${escFe(hora)}</p>` : ''}
-    <div class="partido-fila">
-      <span class="partido-equipo partido-local">${escFe(nomeClubCal(clubs, p.id_club_local))}</span>
-      <span class="partido-resultado">${escFe(resultado)}</span>
-      <span class="partido-equipo partido-visitante">${escFe(nomeClubCal(clubs, p.id_club_visitante))}</span>
-    </div>
+
+  // O gañador vai en negriña, mantendo a mesma cor có perdedor (só cambia o peso da letra).
+  let claseLocal = 'partido-equipo partido-local';
+  let claseVisitante = 'partido-equipo partido-visitante';
+  if (conResultado && p.resultado_local !== p.resultado_visitante) {
+    if (p.resultado_local > p.resultado_visitante) claseLocal += ' partido-ganador';
+    else claseVisitante += ' partido-ganador';
+  }
+
+  return `<div class="partido-fila">
+    <span class="partido-hora">${escFe(hora)}</span>
+    <span class="${claseLocal}">${escFe(nomeClubCal(clubs, p.id_club_local))}</span>
+    <span class="partido-resultado">${escFe(resultado)}</span>
+    <span class="${claseVisitante}">${escFe(nomeClubCal(clubs, p.id_club_visitante))}</span>
   </div>`;
 }
 
@@ -55,7 +62,7 @@ function pintarCalendario(cont, xornadas, partidos, clubs){
       const lista = grupos[chave].slice().sort((a, b) => (a.fecha_hora || '').localeCompare(b.fecha_hora || ''));
       const titulo = chave === 'sen-data' ? 'Data por confirmar' : tituloDia(lista[0].fecha_hora);
       html += `<h3 class="calendario-data">${escFe(titulo)}</h3>`;
-      html += lista.map(p => filaPartido(p, clubs)).join('');
+      html += `<div class="partido-card">${lista.map(p => filaPartido(p, clubs)).join('')}</div>`;
     }
   }
   cont.innerHTML = html;
