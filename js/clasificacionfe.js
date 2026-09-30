@@ -1,6 +1,7 @@
-// Clasificación: puntos por equipo e máximos/máximas chavistas, só coa tempada en curso
-// e cos partidos xa finalizados. Reutiliza escFe e tempadaActual (de novasfe.js/calendariofe.js).
-// Só lectura: esta app non crea, edita nin borra nada.
+// Clasificación: puntos por equipo e máximos/máximas chavistas, só coa tempada en curso.
+// Un partido cóntase como xogado cando ten resultado (resultado_local/resultado_visitante
+// non nulos), igual có Calendario — non depende de que alguén cambie á man o Estado a "finalizado".
+// Reutiliza escFe e tempadaActual (de novasfe.js/calendariofe.js). Só lectura.
 //
 // Puntos: en cada partido, cada equipo suma tantos puntos coma partidas gañou nel.
 // Un partido finalizado 3-1 reparte 3 puntos ao que gañou 3 partidas e 1 ao que gañou 1.
@@ -85,7 +86,7 @@ async function cargarClasificacion(){
       sbfe.from('temporadas').select('*'),
       sbfe.from('ligas').select('*'),
       sbfe.from('jornadas').select('*'),
-      sbfe.from('partidos').select('*').eq('estado', 'finalizado'),
+      sbfe.from('partidos').select('*'),
       sbfe.from('clubs').select('*').eq('activo', true),
       sbfe.from('enfrentamientos').select('id,id_partido'),
       sbfe.from('chaves_enfrentamiento').select('*'),
