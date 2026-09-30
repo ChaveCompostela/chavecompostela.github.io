@@ -42,16 +42,16 @@ img,svg{display:block}
   background:var(--granate);color:#fff;
   box-shadow:0 1px 0 var(--ouro);
 }
-.btn-menu{flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff}
+.btn-menu{flex:none;width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff}
 .btn-menu svg *{fill:currentColor}
 .btn-menu:active{background:rgba(255,255,255,.15)}
 /* Logo á esquerda, título centrado de verdade (as dúas franxas laterais miden o mesmo) */
 .logo-btn{
-  flex:none;width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+  flex:none;width:46px;height:46px;display:flex;align-items:center;justify-content:center;
   border-radius:10px;color:#fff;
 }
 .logo-btn:active{background:rgba(255,255,255,.15)}
-.logo-btn .logo{height:30px;width:auto}
+.logo-btn .logo{height:40px;width:auto}
 .titulo-btn{
   flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
   padding:6px 4px;border-radius:10px;color:#fff;
@@ -173,7 +173,7 @@ a.novas-direccion{text-decoration:underline;text-decoration-style:dotted;text-un
 .equipo-xog-titulo{margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--granate)}
 .equipo-xogadores{list-style:none;margin:0;padding:0}
 .equipo-xogador{font-size:13.5px;color:var(--texto);padding:4px 0;display:flex;align-items:center;gap:8px}
-.equipo-xogador .peso-icon{flex:none;display:block}
+.equipo-xogador .peso-icon{flex:none;display:block;height:15px;width:auto}
 .equipo-baleiro{color:var(--mut)}
 @media (prefers-color-scheme:dark){
   .equipo-card{border-left-color:var(--ouro-claro)}
