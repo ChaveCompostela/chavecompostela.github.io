@@ -149,9 +149,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .novas-hora{flex:none;font-size:13px;font-weight:600;color:var(--granate)}
 .novas-lugar{flex:none;max-width:60%;font-size:13px;color:var(--mut);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .novas-desc{margin:0 0 8px;font-size:14px;line-height:1.45;color:var(--texto)}
-.novas-direccion{margin:0;font-size:12.5px;color:var(--mut)}
-a.novas-direccion{text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px}
-.novas-mapa{display:block;margin-top:4px;font-size:13px;font-weight:600;color:var(--granate);text-decoration:none;text-align:right}
+.novas-mapa-fila{margin:4px 0 0;text-align:right}
+.novas-mapa{display:inline-block;font-size:13px;font-weight:600;color:var(--granate);text-decoration:none}
 @media (prefers-color-scheme:dark){
   .novas-fecha{color:var(--ouro-claro);border-color:var(--ouro-claro)}
   .novas-hora{color:var(--ouro-claro)}
@@ -193,15 +192,16 @@ a.novas-direccion{text-decoration:underline;text-decoration-style:dotted;text-un
   text-transform:uppercase;letter-spacing:.04em;color:var(--mut);
   border-left:2px solid var(--raia);
 }
-.partido-card{background:var(--superficie);border:1px solid var(--raia);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.partido-card{background:var(--superficie);border:1px solid var(--raia);border-radius:12px;padding:2px 12px;margin-bottom:8px}
 .partido-card:last-child{margin-bottom:0}
-.partido-hora{margin:0 0 4px;font-size:12px;font-weight:600;color:var(--granate)}
-.partido-fila{display:flex;align-items:center;gap:8px}
-.partido-equipo{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partido-fila{display:flex;align-items:center;gap:8px;padding:9px 0}
+.partido-fila + .partido-fila{border-top:1px solid var(--raia)}
+.partido-hora{flex:none;width:40px;font-size:12px;color:var(--mut)}
+.partido-equipo{flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partido-equipo.partido-ganador{font-weight:800}
 .partido-local{text-align:right}
 .partido-visitante{text-align:left}
 .partido-resultado{flex:none;min-width:38px;text-align:center;font-size:14px;font-weight:800;color:var(--granate)}
 @media (prefers-color-scheme:dark){
-  .partido-hora{color:var(--ouro-claro)}
   .partido-resultado{color:var(--ouro-claro)}
 }
