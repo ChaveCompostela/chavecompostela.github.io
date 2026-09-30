@@ -202,6 +202,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partido-local{text-align:right}
 .partido-visitante{text-align:left}
 .partido-resultado{flex:none;min-width:38px;text-align:center;font-size:14px;font-weight:800;color:var(--granate)}
+.partido-resultado.partido-pendente{font-weight:600;color:var(--mut)}
 @media (prefers-color-scheme:dark){
   .partido-resultado{color:var(--ouro-claro)}
 }
@@ -262,7 +263,11 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-card:last-child{margin-bottom:0}
 .partida-tit{margin:0 0 6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--granate)}
 @media (prefers-color-scheme:dark){.partida-tit{color:var(--ouro-claro)}}
-.partida-marcador{font-size:14px;font-weight:800;color:var(--granate);text-align:center;margin:0 0 8px}
+.partida-vs{display:flex;align-items:center;gap:8px;margin:0 0 10px}
+.partida-parella{flex:1;min-width:0;font-size:13px;font-weight:700;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partida-vs .partida-parella:first-child{text-align:right}
+.partida-vs .partida-parella:last-child{text-align:left}
+.partida-marcador{flex:none;min-width:44px;text-align:center;font-size:14px;font-weight:800;color:var(--granate)}
 @media (prefers-color-scheme:dark){.partida-marcador{color:var(--ouro-claro)}}
 .partida-lado{margin:8px 0 0}
 .partida-lado + .partida-lado{margin-top:10px;padding-top:10px;border-top:1px dashed var(--raia)}
