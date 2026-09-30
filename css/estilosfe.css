@@ -230,7 +230,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   .clas-chaves{color:var(--ouro-claro)}
 }
 
-/* Partidos: selector de tempada + tarxeta pulsable + detalle */
+/* Partidos: selector de tempada */
 .fila-tempada{flex:none;display:flex;align-items:center;gap:10px;margin:0 0 12px}
 .fila-tempada label{font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
 .fila-tempada select{
@@ -239,37 +239,34 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   border:1px solid var(--raia);border-radius:10px;
 }
 
-.partido-tarxeta{
-  display:block;width:100%;text-align:left;cursor:pointer;
-  background:var(--superficie);border:1px solid var(--raia);border-radius:12px;
-  padding:2px 12px;margin-bottom:8px;color:inherit;
+/* Tarxeta de partido plegable (mesmo patrón ca .equipo-card) */
+.partido-card-partido{
+  background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
+  border-radius:12px;padding:0 12px;margin-bottom:8px;
 }
-.partido-tarxeta:last-child{margin-bottom:0}
-.partido-tarxeta:active{background:var(--fondo)}
-.partido-tarxeta .partido-fila{padding:10px 0}
-.partido-pendente{color:var(--mut);font-weight:700}
+.partido-card-partido:last-child{margin-bottom:0}
+.partido-fila-partido{
+  width:100%;display:flex;align-items:center;gap:8px;padding:11px 0;
+  text-align:left;color:inherit;background:none;border:0;
+}
+.partido-fila-partido:not([disabled]):active{opacity:.7}
+.partido-fila-partido[disabled]{cursor:default}
+.partido-chevron{flex:none;color:var(--mut);transition:transform .2s}
+.partido-fila-partido[disabled] .partido-chevron{opacity:.3}
+.partido-fila-partido[aria-expanded="true"] .partido-chevron{transform:rotate(180deg)}
+.partido-despregable{margin-top:2px;padding:10px 0 12px;border-top:1px dashed var(--raia)}
+.partido-despregable[hidden]{display:none}
 
-/* Detalle do partido */
-.detalle-cab{background:var(--superficie);border:1px solid var(--raia);border-radius:14px;padding:14px 16px;margin-bottom:14px}
-.detalle-enfront{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.detalle-club{flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.detalle-club.local{text-align:right}
-.detalle-marcador{flex:none;font-size:18px;font-weight:800;color:var(--granate)}
-@media (prefers-color-scheme:dark){.detalle-marcador{color:var(--ouro-claro)}}
-.detalle-meta{margin:0;font-size:12.5px;color:var(--mut);text-align:center}
-
-.detalle-volver{margin:0 0 12px;font-size:14px;font-weight:700;color:var(--granate)}
-@media (prefers-color-scheme:dark){.detalle-volver{color:var(--ouro-claro)}}
-
-.partida-card{background:var(--superficie);border:1px solid var(--raia);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+/* Partidas dentro do detalle */
+.partida-card{background:var(--fondo);border:1px solid var(--raia);border-radius:10px;padding:10px 12px;margin-bottom:8px}
 .partida-card:last-child{margin-bottom:0}
-.partida-tit{margin:0 0 8px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--granate)}
+.partida-tit{margin:0 0 6px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--granate)}
 @media (prefers-color-scheme:dark){.partida-tit{color:var(--ouro-claro)}}
+.partida-marcador{font-size:14px;font-weight:800;color:var(--granate);text-align:center;margin:0 0 8px}
+@media (prefers-color-scheme:dark){.partida-marcador{color:var(--ouro-claro)}}
 .partida-lado{margin:8px 0 0}
 .partida-lado + .partida-lado{margin-top:10px;padding-top:10px;border-top:1px dashed var(--raia)}
 .partida-lado-tit{margin:0 0 4px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
 .partida-xog{font-size:13.5px;color:var(--texto);padding:3px 0;display:flex;justify-content:space-between;gap:10px}
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
-.partida-marcador{font-size:14px;font-weight:800;color:var(--granate);text-align:center;margin:0}
-@media (prefers-color-scheme:dark){.partida-marcador{color:var(--ouro-claro)}}
