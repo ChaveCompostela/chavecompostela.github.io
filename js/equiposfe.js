@@ -10,7 +10,7 @@ function tarxetaEquipo(club, xogadores, liga){
   const icona = ICONA_XOGADOR[liga];
   const nomes = xogadores
     .sort((a, b) => (a.nombre + (a.apellidos || '')).localeCompare(b.nombre + (b.apellidos || '')))
-    .map(j => `<li class="equipo-xogador"><img class="peso-icon" src="${icona}" alt="" width="33" height="15">
+    .map(j => `<li class="equipo-xogador"><img class="peso-icon" src="${icona}" alt="">
       <span>${escFe(j.nombre)} ${escFe(j.apellidos || '')}</span></li>`).join('');
   return `<div class="equipo-card">
     <button class="equipo-fila" aria-expanded="false">
