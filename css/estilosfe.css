@@ -180,3 +180,28 @@ a.novas-direccion{text-decoration:underline;text-decoration-style:dotted;text-un
   .equipo-localidade{color:var(--ouro-claro)}
   .equipo-xog-titulo{color:var(--ouro-claro)}
 }
+
+/* Calendario: xornada (pastilla) > data (subtítulo) > partidos */
+.calendario-xornada{
+  display:inline-block;margin:18px 0 10px;padding:6px 16px;
+  font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  color:#fff;background:var(--granate);border-radius:999px;
+}
+.calendario-xornada:first-child{margin-top:0}
+.calendario-data{
+  margin:12px 0 8px;padding-left:9px;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--mut);
+  border-left:2px solid var(--raia);
+}
+.partido-card{background:var(--superficie);border:1px solid var(--raia);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.partido-card:last-child{margin-bottom:0}
+.partido-hora{margin:0 0 4px;font-size:12px;font-weight:600;color:var(--granate)}
+.partido-fila{display:flex;align-items:center;gap:8px}
+.partido-equipo{flex:1;min-width:0;font-size:14px;font-weight:700;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partido-local{text-align:right}
+.partido-visitante{text-align:left}
+.partido-resultado{flex:none;min-width:38px;text-align:center;font-size:14px;font-weight:800;color:var(--granate)}
+@media (prefers-color-scheme:dark){
+  .partido-hora{color:var(--ouro-claro)}
+  .partido-resultado{color:var(--ouro-claro)}
+}
