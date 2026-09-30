@@ -1,0 +1,275 @@
+/* Cores oficiais de Santiago de Compostela: bandeira granate co escudo en ouro */
+:root{
+  color-scheme:light dark;
+  --granate:#7a1f35;
+  --ouro:#c9a227;
+  --ouro-claro:#e4c65a;
+  --fondo:#faf7f1;
+  --superficie:#ffffff;
+  --texto:#2a2420;
+  --mut:#7a7168;
+  --raia:#e7e0d4;
+  --activo:var(--granate);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --fondo:#171310;
+    --superficie:#241e19;
+    --texto:#f3ede4;
+    --mut:#b3a89b;
+    --raia:#3a322b;
+    --activo:var(--ouro-claro);
+  }
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:16px/1.45 -apple-system,"SF Pro Text",Roboto,system-ui,sans-serif;background:var(--fondo);color:var(--texto);overflow:hidden}
+button{font:inherit;background:none;border:0;color:inherit;-webkit-tap-highlight-color:transparent}
+img,svg{display:block}
+
+/* A app ocupa toda a pantalla nunha soa columna: cabeceira, contido, pestañas */
+#app{
+  max-width:600px;margin:0 auto;
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* Cabeceira */
+.cab{
+  position:relative;flex:none;display:flex;align-items:center;gap:10px;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  background:var(--granate);color:#fff;
+  box-shadow:0 1px 0 var(--ouro);
+}
+.btn-menu{flex:none;width:46px;height:46px;display:flex;align-items:center;justify-content:center;border-radius:10px;color:#fff}
+.btn-menu svg *{fill:currentColor}
+.btn-menu:active{background:rgba(255,255,255,.15)}
+/* Logo á esquerda, título centrado de verdade (as dúas franxas laterais miden o mesmo) */
+.logo-btn{
+  flex:none;width:46px;height:46px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;color:#fff;
+}
+.logo-btn:active{background:rgba(255,255,255,.15)}
+.logo-btn .logo{height:40px;width:auto}
+.titulo-btn{
+  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
+  padding:6px 4px;border-radius:10px;color:#fff;
+}
+.titulo-btn:active{background:rgba(255,255,255,.15)}
+.titulo{
+  font-size:16px;font-weight:700;letter-spacing:.1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Globo de información, ancorado baixo o título */
+.globo{
+  position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:14px;z-index:20;
+  width:min(280px,calc(100% - 32px));
+  background:var(--superficie);color:var(--texto);
+  border:1px solid var(--raia);border-radius:14px;padding:14px 16px;
+  font-size:13.5px;line-height:1.45;text-align:center;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+}
+.globo::before{
+  content:"";position:absolute;top:-6px;left:50%;transform:translateX(-50%) rotate(45deg);
+  width:12px;height:12px;background:var(--superficie);
+  border-left:1px solid var(--raia);border-top:1px solid var(--raia);
+}
+
+/* Menú despregable, ancorado xusto baixo a cabeceira */
+.menu-fondo{position:fixed;inset:0;background:rgba(20,14,10,.35);z-index:19}
+.menu{
+  position:absolute;top:100%;right:14px;margin-top:6px;z-index:20;
+  background:var(--superficie);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
+  min-width:190px;padding:6px;border:1px solid var(--raia);
+}
+.menu-item{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;text-align:left;font-size:15px;color:var(--texto)}
+.menu-item:active{background:var(--fondo)}
+
+/* Contido: ocupa todo o resto da pantalla */
+main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflow-y:auto}
+.vista{flex:1;min-height:0;display:flex;flex-direction:column}
+.vista[hidden]{display:none}
+.vista-liga{overflow:hidden}
+.tit-vista{flex:none;font-size:21px;margin:0 0 12px;color:var(--granate)}
+@media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
+
+/* Selector Feminina / Masculina */
+/* Selector Liga feminina/Liga masculina: rectángulo redondeado cun botón interior tamén redondeado */
+.segmentado{flex:none;display:flex;gap:4px;background:var(--raia);border-radius:20px;padding:4px;margin:0 0 16px}
+.seg{
+  flex:1;padding:9px 0;border-radius:16px;border:0;
+  font-size:14px;font-weight:700;text-align:center;
+  color:var(--mut);background:transparent;
+  transition:background .15s,color .15s,box-shadow .15s,transform .15s;
+}
+.seg.activa{background:var(--granate);color:#fff;box-shadow:0 2px 6px rgba(122,31,53,.3);transform:scale(1.04)}
+@media (prefers-color-scheme:dark){
+  .seg.activa{background:var(--ouro-claro);color:#241e19;box-shadow:0 2px 6px rgba(228,198,90,.25)}
+}
+
+/* Panel de cada liga: ocupa todo o alto restante */
+.paneis-liga{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel-liga{flex:1;min-height:0;display:flex;flex-direction:column}
+.panel-liga[hidden]{display:none}
+.panel-scroll{flex:1;min-height:0;overflow-y:auto}
+
+/* Clasificación: partida en dúas metades, cada unha co seu propio scroll */
+.split{flex:1;min-height:0;display:flex;flex-direction:column;gap:12px}
+.split-metade{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.split-metade + .split-metade{border-top:1px solid var(--raia);padding-top:12px}
+.tit-sub{flex:none;font-size:14px;font-weight:700;margin:0 0 8px;color:var(--texto)}
+.scroll-area{flex:1;min-height:0;overflow-y:auto}
+
+.baleiro{margin:0;padding:16px;background:var(--superficie);border:1px solid var(--raia);border-radius:12px;color:var(--mut);font-size:14px;text-align:center}
+
+/* Menú inferior */
+.tabs{
+  flex:none;display:flex;
+  background:var(--superficie);border-top:1px solid var(--raia);
+  padding:6px max(4px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));
+}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px;color:var(--mut)}
+.tab span{font-size:11px;font-weight:600}
+.tab.activa{color:var(--activo)}
+.tab:active{background:var(--fondo)}
+
+/* Novas: entradas tomadas da táboa de eventos */
+.novas-card{background:var(--superficie);border:1px solid var(--raia);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.novas-card:last-child{margin-bottom:0}
+.novas-tit{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--texto)}
+.novas-fecha{
+  margin:20px 0 10px;padding-left:10px;font-size:13px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--granate);
+  border-left:3px solid var(--granate);
+}
+.novas-fecha:first-child{margin-top:0}
+.novas-info{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 6px}
+.novas-hora{flex:none;font-size:13px;font-weight:600;color:var(--granate)}
+.novas-lugar{flex:none;max-width:60%;font-size:13px;color:var(--mut);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.novas-desc{margin:0 0 8px;font-size:14px;line-height:1.45;color:var(--texto)}
+.novas-mapa-fila{margin:4px 0 0;text-align:right}
+.novas-mapa{display:inline-block;font-size:13px;font-weight:600;color:var(--granate);text-decoration:none}
+@media (prefers-color-scheme:dark){
+  .novas-fecha{color:var(--ouro-claro);border-color:var(--ouro-claro)}
+  .novas-hora{color:var(--ouro-claro)}
+  .novas-mapa{color:var(--ouro-claro)}
+}
+.erro{margin:0;padding:16px;background:var(--superficie);border:1px solid var(--raia);border-radius:12px;color:#b3261e;font-size:14px;text-align:center}
+
+/* Equipos: tarxeta de club cun despregable cos seus xogadores */
+.equipo-card{background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.equipo-card:last-child{margin-bottom:0}
+.equipo-fila{width:100%;display:flex;align-items:center;gap:10px;text-align:left;color:inherit}
+.equipo-info{flex:1;min-width:0;display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.equipo-nome{margin:0;font-size:15px;font-weight:700;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.equipo-localidade{flex:none;display:inline-block;background:var(--raia);color:var(--granate);font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
+.equipo-chevron{flex:none;color:var(--mut);transition:transform .2s}
+.equipo-fila[aria-expanded="true"] .equipo-chevron{transform:rotate(180deg)}
+.equipo-despregable{margin-top:12px;padding-top:10px;border-top:1px dashed var(--raia)}
+.equipo-despregable[hidden]{display:none}
+.equipo-xog-titulo{margin:0 0 6px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--granate)}
+.equipo-xogadores{list-style:none;margin:0;padding:0}
+.equipo-xogador{font-size:13.5px;color:var(--texto);padding:4px 0;display:flex;align-items:center;gap:8px}
+.equipo-xogador .peso-icon{flex:none;display:block;height:15px;width:auto}
+.equipo-baleiro{color:var(--mut)}
+@media (prefers-color-scheme:dark){
+  .equipo-card{border-left-color:var(--ouro-claro)}
+  .equipo-localidade{color:var(--ouro-claro)}
+  .equipo-xog-titulo{color:var(--ouro-claro)}
+}
+
+/* Calendario: xornada (pastilla) > data (subtítulo) > partidos */
+.calendario-xornada{
+  display:inline-block;margin:18px 0 10px;padding:6px 16px;
+  font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  color:#fff;background:var(--granate);border-radius:999px;
+}
+.calendario-xornada:first-child{margin-top:0}
+.calendario-data{
+  margin:12px 0 8px;padding-left:9px;font-size:12px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;color:var(--mut);
+  border-left:2px solid var(--raia);
+}
+.partido-card{background:var(--superficie);border:1px solid var(--raia);border-radius:12px;padding:2px 12px;margin-bottom:8px}
+.partido-card:last-child{margin-bottom:0}
+.partido-fila{display:flex;align-items:center;gap:8px;padding:9px 0}
+.partido-fila + .partido-fila{border-top:1px solid var(--raia)}
+.partido-hora{flex:none;width:40px;font-size:12px;color:var(--mut)}
+.partido-equipo{flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partido-equipo.partido-ganador{font-weight:800}
+.partido-local{text-align:right}
+.partido-visitante{text-align:left}
+.partido-resultado{flex:none;min-width:38px;text-align:center;font-size:14px;font-weight:800;color:var(--granate)}
+@media (prefers-color-scheme:dark){
+  .partido-resultado{color:var(--ouro-claro)}
+}
+
+/* Clasificación: cabeceira + filas, todas nunha soa tarxeta con scroll propio */
+.clas-cabeceira{
+  display:flex;align-items:center;gap:8px;padding:0 2px 6px;margin-bottom:4px;
+  border-bottom:1px solid var(--raia);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);
+}
+.clas-cabeceira span:first-child{flex:none;width:60px;white-space:nowrap}
+.clas-cabeceira span:nth-child(2){flex:1}
+.clas-cabeceira span:last-child{flex:none;text-align:right}
+.clas-fila{display:flex;align-items:center;gap:8px;padding:8px 2px}
+.clas-fila + .clas-fila{border-top:1px solid var(--raia)}
+.clas-pos{flex:none;width:60px;font-size:13px;font-weight:700;color:var(--mut)}
+.clas-nome{flex:1;min-width:0;font-size:14px;font-weight:600;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clas-puntos{flex:none;font-size:14px;font-weight:800;color:var(--granate)}
+.clas-fila-xog{align-items:center}
+.clas-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.clas-fila-xog .clas-nome{white-space:normal}
+.clas-club{font-size:11.5px;color:var(--mut)}
+.clas-chaves{flex:none;font-size:14px;font-weight:800;color:var(--granate)}
+@media (prefers-color-scheme:dark){
+  .clas-puntos{color:var(--ouro-claro)}
+  .clas-chaves{color:var(--ouro-claro)}
+}
+
+/* Partidos: selector de tempada + tarxeta pulsable + detalle */
+.fila-tempada{flex:none;display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.fila-tempada label{font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.fila-tempada select{
+  flex:1;min-width:0;font:inherit;font-size:14px;padding:8px 10px;
+  background:var(--superficie);color:var(--texto);
+  border:1px solid var(--raia);border-radius:10px;
+}
+
+.partido-tarxeta{
+  display:block;width:100%;text-align:left;cursor:pointer;
+  background:var(--superficie);border:1px solid var(--raia);border-radius:12px;
+  padding:2px 12px;margin-bottom:8px;color:inherit;
+}
+.partido-tarxeta:last-child{margin-bottom:0}
+.partido-tarxeta:active{background:var(--fondo)}
+.partido-tarxeta .partido-fila{padding:10px 0}
+.partido-pendente{color:var(--mut);font-weight:700}
+
+/* Detalle do partido */
+.detalle-cab{background:var(--superficie);border:1px solid var(--raia);border-radius:14px;padding:14px 16px;margin-bottom:14px}
+.detalle-enfront{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.detalle-club{flex:1;min-width:0;font-size:15px;font-weight:700;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detalle-club.local{text-align:right}
+.detalle-marcador{flex:none;font-size:18px;font-weight:800;color:var(--granate)}
+@media (prefers-color-scheme:dark){.detalle-marcador{color:var(--ouro-claro)}}
+.detalle-meta{margin:0;font-size:12.5px;color:var(--mut);text-align:center}
+
+.detalle-volver{margin:0 0 12px;font-size:14px;font-weight:700;color:var(--granate)}
+@media (prefers-color-scheme:dark){.detalle-volver{color:var(--ouro-claro)}}
+
+.partida-card{background:var(--superficie);border:1px solid var(--raia);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.partida-card:last-child{margin-bottom:0}
+.partida-tit{margin:0 0 8px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--granate)}
+@media (prefers-color-scheme:dark){.partida-tit{color:var(--ouro-claro)}}
+.partida-lado{margin:8px 0 0}
+.partida-lado + .partida-lado{margin-top:10px;padding-top:10px;border-top:1px dashed var(--raia)}
+.partida-lado-tit{margin:0 0 4px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut)}
+.partida-xog{font-size:13.5px;color:var(--texto);padding:3px 0;display:flex;justify-content:space-between;gap:10px}
+.partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
+@media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
+.partida-marcador{font-size:14px;font-weight:800;color:var(--granate);text-align:center;margin:0}
+@media (prefers-color-scheme:dark){.partida-marcador{color:var(--ouro-claro)}}
