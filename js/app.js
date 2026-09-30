@@ -56,7 +56,7 @@ function vistaInicio(){
   cur = null; msg('');
   const tarjeta = k => `<button class="tile" onclick="pulsar(this,'${k}')"><span class="ico">${icono(k)}</span>
     <b>${esc(nombreSeccion(k))}</b>${D[k] ? `<small>${D[k].length}</small>` : ''}</button>`;
-  $('#main').innerHTML = `<h2>¿Qué quieres gestionar?</h2><div class="rejilla">${MENU.map(tarjeta).join('')}</div>
+  $('#main').innerHTML = `<h2 class="c">Liga de chave de Santiago</h2><p class="mut c">¿Qué quieres gestionar?</p><div class="rejilla">${MENU.map(tarjeta).join('')}</div>
     <h3>Avanzado</h3><div class="rejilla">${MENU_AVANZADO.map(tarjeta).join('')}</div>`;
 }
 function show(t){ cur = t; msg(''); if (t === 'copias') return vistaCopias(); listar(); }
@@ -104,6 +104,38 @@ function abrirForm(i){
   sheet(`<h2>${edit ? 'Editar' : 'Nuevo'} · ${c.t}</h2>${c.f.map(f => field(f, edit?.[f[0]])).join('')}
     <p class="err" id="smsg"></p>
     <div class="bar"><button onclick="cerrar()">Cancelar</button><button class="pri" onclick="guardar()">Guardar</button></div>`);
+  if (cur === 'partidos') {
+    $('#f_id_jornada').addEventListener('change', actualizarClubsPartido);
+    actualizarClubsPartido();   // aplica el filtro también al editar un partido ya creado
+  }
+}
+
+// En el formulario de Partidos: al elegir la jornada, los desplegables de club local/visitante
+// solo muestran los clubs de la categoría (femenina/masculina) de la liga de esa jornada.
+function clubsFiltradosPorJornada(idJornada, valorActual){
+  const jornada = D.jornadas.find(j => j.id === Number(idJornada));
+  const liga = jornada && D.ligas.find(l => l.id === jornada.id_liga);
+  const idCategoria = liga?.id_categoria;
+  let lista = idCategoria != null ? D.clubs.filter(c => c.id_categoria === idCategoria) : D.clubs.slice();
+  // Si el valor ya guardado (al editar) no está en la lista filtrada, se mantiene para no perder el dato.
+  if (valorActual && !lista.some(c => c.id === Number(valorActual))) {
+    const extra = D.clubs.find(c => c.id === Number(valorActual));
+    if (extra) lista = lista.concat(extra);
+  }
+  return lista;
+}
+
+function actualizarClubsPartido(){
+  const idJornada = $('#f_id_jornada').value;
+  for (const campo of ['id_club_local', 'id_club_visitante']) {
+    const sel = $('#f_' + campo);
+    if (!sel) continue;
+    const valorActual = sel.value;
+    const lista = idJornada ? clubsFiltradosPorJornada(idJornada, valorActual) : D.clubs.slice();
+    sel.innerHTML = '<option value="">—</option>' + lista
+      .sort((a, b) => lab('clubs', a.id).localeCompare(lab('clubs', b.id)))
+      .map(c => `<option value="${c.id}" ${String(c.id) === valorActual ? 'selected' : ''}>${esc(lab('clubs', c.id))}</option>`).join('');
+  }
 }
 
 async function guardar(){
