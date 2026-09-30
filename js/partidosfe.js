@@ -79,13 +79,13 @@ function partidaHtml(e, datos){
   };
 
   const conMarcador = e.marcador_local != null && e.marcador_visitante != null;
-  const marcador = conMarcador ? `${e.marcador_local} - ${e.marcador_visitante}` : '-';
+  const marcador = conMarcador ? resultadoConGanador(e.marcador_local, e.marcador_visitante) : '-';
 
   return `<div class="partida-card">
     <h3 class="partida-tit">Partida ${e.numero}</h3>
     <div class="partida-vs">
       <span class="partida-parella">${escFe(parLocal)}</span>
-      <span class="partida-marcador">${escFe(marcador)}</span>
+      <span class="partida-marcador">${marcador}</span>
       <span class="partida-parella">${escFe(parVisit)}</span>
     </div>
     ${lado('local')}${lado('visitante')}
@@ -105,14 +105,8 @@ function tarxetaPartido(p, clubs, datos){
   const res = resultadoGlobalP(p);
   const abrible = partidoTenDatos(p.id, datos);
 
-  let cl = 'partido-equipo partido-local';
-  let cv = 'partido-equipo partido-visitante';
-  if (res && p.resultado_local !== p.resultado_visitante) {
-    if (p.resultado_local > p.resultado_visitante) cl += ' partido-ganador';
-    else cv += ' partido-ganador';
-  }
   const marcador = res
-    ? `<span class="partido-resultado">${escFe(res)}</span>`
+    ? `<span class="partido-resultado">${resultadoConGanador(p.resultado_local, p.resultado_visitante)}</span>`
     : `<span class="partido-resultado partido-pendente">-</span>`;
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
 
@@ -121,9 +115,9 @@ function tarxetaPartido(p, clubs, datos){
   return `<div class="partido-card-partido">
     <button class="partido-fila-partido" aria-expanded="false" ${abrible ? '' : 'disabled'}>
       <span class="partido-hora">${escFe(hora)}</span>
-      <span class="${cl}">${escFe(nomeClubP(clubs, p.id_club_local))}</span>
+      <span class="partido-equipo partido-local">${escFe(nomeClubP(clubs, p.id_club_local))}</span>
       ${marcador}
-      <span class="${cv}">${escFe(nomeClubP(clubs, p.id_club_visitante))}</span>
+      <span class="partido-equipo partido-visitante">${escFe(nomeClubP(clubs, p.id_club_visitante))}</span>
       ${chevron}
     </button>
     <div class="partido-despregable" hidden>${detallePartidoHtml(p, datos)}</div>

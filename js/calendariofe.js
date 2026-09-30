@@ -19,24 +19,26 @@ function nomeClubCal(clubs, id){
   return clubs.find(c => c.id === id)?.nombre || `Club #${id}`;
 }
 
+// Debuxa un resultado coa cifra do gañador destacada; a do perdedor queda coa cor normal
+// (a mesma cós nomes). Nun empate, as dúas cifras quedan coa cor normal. Compartida entre
+// o Calendario e os Partidos (equipos e partidas).
+function resultadoConGanador(numLocal, numVisitante){
+  if (numLocal == null || numVisitante == null) return '-';
+  const claseLocal = numLocal > numVisitante ? ' class="num-gan"' : '';
+  const claseVisit = numVisitante > numLocal ? ' class="num-gan"' : '';
+  return `<span${claseLocal}>${numLocal}</span> - <span${claseVisit}>${numVisitante}</span>`;
+}
+
 function filaPartido(p, clubs){
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
   const conResultado = p.resultado_local != null && p.resultado_visitante != null;
-  const resultado = conResultado ? `${p.resultado_local} - ${p.resultado_visitante}` : '-';
-
-  // O gañador vai en negriña, mantendo a mesma cor có perdedor (só cambia o peso da letra).
-  let claseLocal = 'partido-equipo partido-local';
-  let claseVisitante = 'partido-equipo partido-visitante';
-  if (conResultado && p.resultado_local !== p.resultado_visitante) {
-    if (p.resultado_local > p.resultado_visitante) claseLocal += ' partido-ganador';
-    else claseVisitante += ' partido-ganador';
-  }
+  const resultado = conResultado ? resultadoConGanador(p.resultado_local, p.resultado_visitante) : '-';
 
   return `<div class="partido-fila">
     <span class="partido-hora">${escFe(hora)}</span>
-    <span class="${claseLocal}">${escFe(nomeClubCal(clubs, p.id_club_local))}</span>
-    <span class="partido-resultado">${escFe(resultado)}</span>
-    <span class="${claseVisitante}">${escFe(nomeClubCal(clubs, p.id_club_visitante))}</span>
+    <span class="partido-equipo partido-local">${escFe(nomeClubCal(clubs, p.id_club_local))}</span>
+    <span class="partido-resultado">${resultado}</span>
+    <span class="partido-equipo partido-visitante">${escFe(nomeClubCal(clubs, p.id_club_visitante))}</span>
   </div>`;
 }
 
