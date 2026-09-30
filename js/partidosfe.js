@@ -6,6 +6,9 @@
 //
 // Depende de: novasfe.js (escFe, horaFe, tituloDia) e calendariofe.js (tempadaActual).
 
+// Mapa clave interna (data-liga do HTML) → nome real na táboa "categorias"
+const CATEGORIAS_PARTIDOS = { feminina: 'femenina', masculina: 'masculina' };
+
 let tempadaEscollida = null;
 let datosPartidos = null;
 
@@ -19,7 +22,7 @@ function nomeClubP(clubs, id){
   return clubs.find(c => c.id === id)?.nombre || `Club #${id}`;
 }
 
-// Resultado global do partido: só se está finalizado e ten ambos resultados
+// Resultado global do partido: móstrase sempre que exista, sen importar o estado
 function resultadoGlobalP(p){
   if (p.resultado_local == null || p.resultado_visitante == null) return null;
   return `${p.resultado_local} - ${p.resultado_visitante}`;
@@ -43,7 +46,9 @@ function partidaHtml(e, datos){
   const lado = l => {
     const titulo = l === 'local' ? 'Local' : 'Visitante';
     const ps = eps.filter(x => x.lado === l);
-    if (!ps.length) return `<div class="partida-lado"><h4 class="partida-lado-tit">${titulo}</h4><div class="partida-xog">—</div></div>`;
+    if (!ps.length) {
+      return `<div class="partida-lado"><h4 class="partida-lado-tit">${titulo}</h4><div class="partida-xog">—</div></div>`;
+    }
     const xog = ps.flatMap(x => {
       const pa = datos.parejas.find(y => y.id === x.id_pareja);
       if (!pa) return [];
@@ -89,7 +94,7 @@ function tarxetaPartido(p, clubs, datos){
   }
   const marcador = res
     ? `<span class="partido-resultado">${escFe(res)}</span>`
-    : `<span class="partido-resultado" style="color:var(--mut)">-</span>`;
+    : `<span class="partido-resultado partido-pendente">-</span>`;
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
 
   const chevron = `<svg class="partido-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
@@ -166,7 +171,8 @@ function encherSelectorTempadas(temporadas){
 function pintarLiga(datos, liga){
   const cont = contedorPartidos(liga);
   if (!cont) return;
-  const idCat = datos.categorias.find(c => c.nombre === liga)?.id;
+  const nomeCat = CATEGORIAS_PARTIDOS[liga];                          // 'femenina' / 'masculina'
+  const idCat = datos.categorias.find(c => c.nombre === nomeCat)?.id;
   const ligasTemp = datos.ligas.filter(l => l.id_temporada === tempadaEscollida && l.id_categoria === idCat);
   const idsLigas = new Set(ligasTemp.map(l => l.id));
   const xornadas = datos.xornadas.filter(x => idsLigas.has(x.id_liga));
@@ -193,7 +199,7 @@ document.addEventListener('click', e => {
 
 // ---------- Arranque ----------
 async function cargarPartidos(){
-  if (ERR_CONFIG_FE) {
+  if (typeof ERR_CONFIG_FE !== 'undefined' && ERR_CONFIG_FE) {
     for (const l of ['feminina','masculina']) {
       const c = contedorPartidos(l);
       if (c) c.innerHTML = `<p class="erro">${escFe(ERR_CONFIG_FE)}</p>`;
