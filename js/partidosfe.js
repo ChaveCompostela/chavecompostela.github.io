@@ -1,37 +1,87 @@
 // Partidos: lista de partidos da tempada escollida, agrupados por xornada.
-// Cada tarxeta mostra os dous clubs e, se o partido está finalizado, o resultado.
-// Ao pulsar unha tarxeta ábrese o detalle: partidas (pareja vs pareja), marcador
-// e chaves de cada xogador. Só lectura.
+// Cada partido é unha tarxeta plegable (mesmo patrón ca Equipos). Só se pode
+// abrir se hai algo que mostrar: algún enfrentamento con marcador ou con chaves.
+// Dentro ábrese a lista de partidas (pareja vs pareja), o marcador e as chaves
+// de cada xogador. Só lectura.
 //
-// Reutiliza escFe/horaFe/tituloDia/chaveDia (novasfe.js) e tempadaActual (calendariofe.js).
+// Depende de: novasfe.js (escFe, horaFe, tituloDia) e calendariofe.js (tempadaActual).
 
-let tempadaEscollida = null;   // id da tempada amosada actualmente
-let partidoAberto = null;      // id do partido en detalle, ou null na lista
-let datosPartidos = null;      // caché da última carga (evita refacer fetch ao abrir/pechar)
+let tempadaEscollida = null;
+let datosPartidos = null;
 
 // ---------- Utilidades ----------
-const CATEGORIAS_PARTIDOS = { feminina: 'femenina', masculina: 'masculina' };
-
 function contedorPartidos(liga){
   return document.getElementById('partidos-' + liga);
 }
 
-// Nome dun club a partir do id, ou 'Sen club'
-function nomeClub(clubs, id){
+function nomeClubP(clubs, id){
   if (!id) return 'Sen club';
   return clubs.find(c => c.id === id)?.nombre || `Club #${id}`;
 }
 
-// Texto do resultado global do partido, só se está finalizado e ten ambos resultados
-function resultadoGlobal(p){
+// Resultado global do partido: só se está finalizado e ten ambos resultados
+function resultadoGlobalP(p){
   if (p.estado !== 'finalizado') return null;
   if (p.resultado_local == null || p.resultado_visitante == null) return null;
   return `${p.resultado_local} - ${p.resultado_visitante}`;
 }
 
-// ---------- Lista ----------
-function tarxetaPartido(p, clubs, xornada){
-  const res = resultadoGlobal(p);
+// Un partido é abrible se ten algún enfrentamento con marcador ou con chaves rexistradas
+function partidoTenDatos(partidoId, datos){
+  const enf = datos.enfrentamientos.filter(e => e.id_partido === partidoId);
+  if (!enf.length) return false;
+  return enf.some(e => {
+    const tenMarcador = e.marcador_local != null || e.marcador_visitante != null;
+    const tenChaves = datos.chaves_enfrentamiento.some(c => c.id_enfrentamiento === e.id && c.chaves != null);
+    return tenMarcador || tenChaves;
+  });
+}
+
+// ---------- Render: detalle dunha partida ----------
+function partidaHtml(e, datos){
+  const eps = datos.enfrentamiento_parejas.filter(x => x.id_enfrentamiento === e.id);
+
+  const lado = l => {
+    const titulo = l === 'local' ? 'Local' : 'Visitante';
+    const ps = eps.filter(x => x.lado === l);
+    if (!ps.length) return `<div class="partida-lado"><h4 class="partida-lado-tit">${titulo}</h4><div class="partida-xog">—</div></div>`;
+    const xog = ps.flatMap(x => {
+      const pa = datos.parejas.find(y => y.id === x.id_pareja);
+      if (!pa) return [];
+      return [pa.id_jugador_a, pa.id_jugador_b].map(id => {
+        const j = datos.jugadores.find(y => y.id === id);
+        const nome = j ? `${j.nombre} ${j.apellidos || ''}`.trim() : `Xogador #${id}`;
+        const c = datos.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
+        const chaves = c && c.chaves != null ? `${c.chaves} chaves` : '—';
+        return `<div class="partida-xog"><span>${escFe(nome)}</span><span class="chaves">${escFe(chaves)}</span></div>`;
+      });
+    }).join('');
+    return `<div class="partida-lado"><h4 class="partida-lado-tit">${titulo}</h4>${xog}</div>`;
+  };
+
+  const conMarcador = e.marcador_local != null && e.marcador_visitante != null;
+  const marcador = conMarcador ? `<p class="partida-marcador">${e.marcador_local} - ${e.marcador_visitante}</p>` : '';
+
+  return `<div class="partida-card">
+    <h3 class="partida-tit">Partida ${e.numero}</h3>
+    ${marcador}
+    ${lado('local')}${lado('visitante')}
+  </div>`;
+}
+
+function detallePartidoHtml(partido, datos){
+  const partidas = datos.enfrentamientos
+    .filter(e => e.id_partido === partido.id)
+    .sort((a, b) => a.numero - b.numero);
+  if (!partidas.length) return '<p class="baleiro">Aínda non hai partidas rexistradas.</p>';
+  return partidas.map(e => partidaHtml(e, datos)).join('');
+}
+
+// ---------- Render: tarxeta dun partido ----------
+function tarxetaPartido(p, clubs, datos){
+  const res = resultadoGlobalP(p);
+  const abrible = partidoTenDatos(p.id, datos);
+
   let cl = 'partido-equipo partido-local';
   let cv = 'partido-equipo partido-visitante';
   if (res && p.resultado_local !== p.resultado_visitante) {
@@ -40,19 +90,25 @@ function tarxetaPartido(p, clubs, xornada){
   }
   const marcador = res
     ? `<span class="partido-resultado">${escFe(res)}</span>`
-    : `<span class="partido-resultado partido-pendente">-</span>`;
+    : `<span class="partido-resultado" style="color:var(--mut)">-</span>`;
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
-  return `<button class="partido-tarxeta" data-partido="${p.id}">
-    <div class="partido-fila">
+
+  const chevron = `<svg class="partido-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+  return `<div class="partido-card-partido">
+    <button class="partido-fila-partido" aria-expanded="false" ${abrible ? '' : 'disabled'}>
       <span class="partido-hora">${escFe(hora)}</span>
-      <span class="${cl}">${escFe(nomeClub(clubs, p.id_club_local))}</span>
+      <span class="${cl}">${escFe(nomeClubP(clubs, p.id_club_local))}</span>
       ${marcador}
-      <span class="${cv}">${escFe(nomeClub(clubs, p.id_club_visitante))}</span>
-    </div>
-  </button>`;
+      <span class="${cv}">${escFe(nomeClubP(clubs, p.id_club_visitante))}</span>
+      ${chevron}
+    </button>
+    <div class="partido-despregable" hidden>${detallePartidoHtml(p, datos)}</div>
+  </div>`;
 }
 
-function pintarLista(cont, xornadas, partidos, clubs){
+// ---------- Render: lista por xornada ----------
+function pintarLista(cont, xornadas, partidos, datos){
   if (!xornadas.length || !partidos.length) {
     cont.innerHTML = '<p class="baleiro">Aínda non hai partidos nesta tempada.</p>';
     return;
@@ -69,78 +125,9 @@ function pintarLista(cont, xornadas, partidos, clubs){
       if (!fb) return -1;
       return fa.localeCompare(fb);
     });
-    html += ordenados.map(p => tarxetaPartido(p, clubs, x)).join('');
+    html += ordenados.map(p => tarxetaPartido(p, datos.clubs, datos)).join('');
   }
   cont.innerHTML = html || '<p class="baleiro">Aínda non hai partidos nesta tempada.</p>';
-}
-
-// ---------- Detalle ----------
-function partidaHtml(e, datos, liga){
-  const { parejas, jugadores, chaves_enfrentamiento } = datos;
-  const eps = datos.enfrentamiento_parejas.filter(x => x.id_enfrentamiento === e.id);
-
-  const nomesPareja = idPareja => {
-    const pa = parejas.find(x => x.id === idPareja);
-    if (!pa) return '—';
-    const a = jugadores.find(j => j.id === pa.id_jugador_a);
-    const b = jugadores.find(j => j.id === pa.id_jugador_b);
-    return [a, b].filter(Boolean).map(j => `${j.nombre} ${j.apellidos || ''}`.trim()).join(' + ');
-  };
-
-  const xogadoresLado = eps.filter(x => x.lado === 'local').flatMap(x => {
-    const pa = parejas.find(y => y.id === x.id_pareja);
-    return pa ? [pa.id_jugador_a, pa.id_jugador_b] : [];
-  });
-
-  const lado = l => {
-    const titulo = l === 'local' ? 'Local' : 'Visitante';
-    const ps = eps.filter(x => x.lado === l);
-    if (!ps.length) return `<div class="partida-lado"><h4 class="partida-lado-tit">${titulo}</h4><div class="partida-xog">—</div></div>`;
-    const xog = ps.flatMap(x => {
-      const pa = parejas.find(y => y.id === x.id_pareja);
-      if (!pa) return [];
-      return [pa.id_jugador_a, pa.id_jugador_b].map(id => {
-        const j = jugadores.find(y => y.id === id);
-        const nome = j ? `${j.nombre} ${j.apellidos || ''}`.trim() : `Xogador #${id}`;
-        const c = chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
-        const chaves = c && c.chaves != null ? `${c.chaves} chaves` : '—';
-        return `<div class="partida-xog"><span>${escFe(nome)}</span><span class="chaves">${escFe(chaves)}</span></div>`;
-      });
-    }).join('');
-    return `<div class="partida-lado"><h4 class="partida-lado-tit">${titulo}</h4>${xog}</div>`;
-  };
-
-  const conMarcador = e.marcador_local != null && e.marcador_visitante != null;
-  const marcador = conMarcador
-    ? `<p class="partida-marcador">${e.marcador_local} - ${e.marcador_visitante}</p>` : '';
-
-  return `<div class="partida-card">
-    <h3 class="partida-tit">Partida ${e.numero}</h3>
-    ${marcador}
-    ${lado('local')}${lado('visitante')}
-  </div>`;
-}
-
-function pintarDetalle(cont, partido, datos){
-  const res = resultadoGlobal(partido);
-  const partidas = datos.enfrentamientos
-    .filter(e => e.id_partido === partido.id)
-    .sort((a, b) => a.numero - b.numero);
-
-  const hora = partido.fecha_hora ? `${tituloDia(partido.fecha_hora)} · ${horaFe(partido.fecha_hora)}` : 'Data por confirmar';
-  const meta = escFe(hora);
-
-  cont.innerHTML = `<button class="detalle-volver" data-volver>← Partidos</button>
-    <div class="detalle-cab">
-      <div class="detalle-enfront">
-        <span class="detalle-club local">${escFe(nomeClub(datos.clubs, partido.id_club_local))}</span>
-        <span class="detalle-marcador">${res ? escFe(res) : 'vs'}</span>
-        <span class="detalle-club">${escFe(nomeClub(datos.clubs, partido.id_club_visitante))}</span>
-      </div>
-      <p class="detalle-meta">${meta}</p>
-    </div>
-    ${partidas.length ? partidas.map(e => partidaHtml(e, datos, datos.liga)).join('')
-      : '<p class="baleiro">Aínda non hai partidas rexistradas neste partido.</p>'}`;
 }
 
 // ---------- Carga de datos ----------
@@ -169,31 +156,24 @@ async function cargarDatosPartidos(){
     enfrentamientos, enfrentamiento_parejas, chaves_enfrentamiento, parejas, jugadores };
 }
 
-// Enche o desplegable de tempadas e devolve a id seleccionada
 function encherSelectorTempadas(temporadas){
   const sel = document.getElementById('tempada-partidos');
   const actual = tempadaActual(temporadas);
-  sel.innerHTML = temporadas.map(t => `<option value="${t.id}" ${t.id === actual?.id ? 'selected' : ''}>${escFe(t.nombre)}</option>`).join('');
-  tempadaEscollida = actual?.id ?? null;
+  sel.innerHTML = temporadas.map(t => `<option value="${t.id}">${escFe(t.nombre)}</option>`).join('');
+  tempadaEscollida = actual?.id ?? (temporadas[0]?.id ?? null);
+  if (tempadaEscollida != null) sel.value = String(tempadaEscollida);
 }
 
 function pintarLiga(datos, liga){
   const cont = contedorPartidos(liga);
   if (!cont) return;
-  const idCat = datos.categorias.find(c => c.nombre === CATEGORIAS_PARTIDOS[liga])?.id;
+  const idCat = datos.categorias.find(c => c.nombre === liga)?.id;
   const ligasTemp = datos.ligas.filter(l => l.id_temporada === tempadaEscollida && l.id_categoria === idCat);
   const idsLigas = new Set(ligasTemp.map(l => l.id));
   const xornadas = datos.xornadas.filter(x => idsLigas.has(x.id_liga));
   const idsXorn = new Set(xornadas.map(x => x.id));
   const partidos = datos.partidos.filter(p => idsXorn.has(p.id_jornada));
-
-  // O detalle non se pinta se non hai partido aberto ou pertence a outra liga
-  if (partidoAberto) {
-    const p = partidos.find(x => x.id === partidoAberto);
-    if (p) return pintarDetalle(cont, p, { ...datos, liga });
-    partidoAberto = null;
-  }
-  pintarLista(cont, xornadas, partidos, datos.clubs);
+  pintarLista(cont, xornadas, partidos, datos);
 }
 
 function pintarTodo(datos){
@@ -201,23 +181,18 @@ function pintarTodo(datos){
   pintarLiga(datos, 'masculina');
 }
 
-// ---------- Interacción ----------
-function delegarClic(){
-  document.getElementById('vista-partidos').addEventListener('click', e => {
-    const botonVolver = e.target.closest('[data-volver]');
-    if (botonVolver) {
-      partidoAberto = null;
-      if (datosPartidos) pintarTodo(datosPartidos);
-      return;
-    }
-    const tarxeta = e.target.closest('[data-partido]');
-    if (tarxeta && datosPartidos) {
-      partidoAberto = Number(tarxeta.dataset.partido);
-      pintarTodo(datosPartidos);
-    }
-  });
-}
+// ---------- Acordeón: un único listener global (igual que Equipos) ----------
+document.addEventListener('click', e => {
+  const fila = e.target.closest('#vista-partidos .partido-fila-partido');
+  if (!fila || fila.disabled) return;
+  const desp = fila.nextElementSibling;
+  if (!desp) return;
+  const aberto = fila.getAttribute('aria-expanded') === 'true';
+  fila.setAttribute('aria-expanded', String(!aberto));
+  desp.hidden = aberto;
+});
 
+// ---------- Arranque ----------
 async function cargarPartidos(){
   if (ERR_CONFIG_FE) {
     for (const l of ['feminina','masculina']) {
@@ -231,10 +206,8 @@ async function cargarPartidos(){
     encherSelectorTempadas(datosPartidos.temporadas);
     document.getElementById('tempada-partidos').addEventListener('change', ev => {
       tempadaEscollida = Number(ev.target.value);
-      partidoAberto = null;
       pintarTodo(datosPartidos);
     });
-    delegarClic();
     pintarTodo(datosPartidos);
   } catch (err) {
     const m = `<p class="erro">Non se puideron cargar os partidos: ${escFe(err.message)}</p>`;
