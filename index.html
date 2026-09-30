@@ -55,25 +55,30 @@
       </div>
     </section>
 
-    <section id="vista-partidos" class="vista vista-liga" hidden>
-      <h1 class="tit-vista">Partidos</h1>
-      <div class="segmentado">
-        <button class="seg activa" data-liga="feminina">Liga feminina</button>
-        <button class="seg" data-liga="masculina">Liga masculina</button>
+<section id="vista-partidos" class="vista vista-liga" hidden>
+  <h1 class="tit-vista">Partidos</h1>
+  <div class="segmentado">
+    <button class="seg activa" data-liga="feminina">Liga feminina</button>
+    <button class="seg" data-liga="masculina">Liga masculina</button>
+  </div>
+  <div class="fila-tempada">
+    <label for="tempada-partidos">Tempada</label>
+    <select id="tempada-partidos"></select>
+  </div>
+  <div class="paneis-liga">
+    <div class="panel-liga" data-liga="feminina">
+      <div class="panel-scroll" id="partidos-feminina">
+        <p class="baleiro">Cargando partidos…</p>
       </div>
-      <div class="paneis-liga">
-        <div class="panel-liga" data-liga="feminina">
-          <div class="panel-scroll">
-            <p class="baleiro">Aínda non hai partidos programados.</p>
-          </div>
-        </div>
-        <div class="panel-liga" data-liga="masculina" hidden>
-          <div class="panel-scroll">
-            <p class="baleiro">Aínda non hai partidos programados.</p>
-          </div>
-        </div>
+    </div>
+    <div class="panel-liga" data-liga="masculina" hidden>
+      <div class="panel-scroll" id="partidos-masculina">
+        <p class="baleiro">Cargando partidos…</p>
       </div>
-    </section>
+    </div>
+  </div>
+</section>
+
 
     <section id="vista-clasificacion" class="vista vista-liga" hidden>
       <h1 class="tit-vista">Clasificación</h1>
@@ -188,5 +193,6 @@
 <script src="js/clasificacionfe.js"></script>
 <script src="js/equiposfe.js"></script>
 <script src="js/appfe.js"></script>
+<script src="js/partidosfe.js"></script>
 </body>
 </html>
