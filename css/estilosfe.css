@@ -393,11 +393,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 
 /* Líder: o equipo con máis puntos e o xogador con máis chaves (sen empate) */
-.marcador-puntos.marcador-lider{color:var(--ouro)}
-.marcador-chaves.marcador-lider{color:var(--ouro)}
-@media (prefers-color-scheme:dark){
-  .marcador-puntos.marcador-lider{color:var(--ouro-claro)}
-  .marcador-chaves.marcador-lider{color:var(--ouro-claro)}
+.marcador-puntos.marcador-lider{color:#1b8a3a}
+.marcador-chaves.marcador-lider{color:#1b8a3a}
 }
 
 .marcador-add:active{background:var(--raia)}
