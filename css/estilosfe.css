@@ -277,10 +277,9 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: 2 columnas × 2 filas.
-   Cada equipo ten 2 filas internas:
-   Fila 1: [Nome+Puntos] [Botonera]
-   Fila 2: [Chaves + Xogadores] a todo o ancho */
+/* Marcador: fichas 2×2. Cada ficha ten:
+   - Arriba: [Nome] centrado, [Puntos] grandes, [Botonera 5×2] centrada
+   - Abaixo: [Chaves + 2 xogadores] a todo o ancho */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -297,64 +296,66 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 
 .marcador-equipo{
-  display:grid;
-  grid-template-columns:auto 1fr;
-  grid-template-areas:
-    "ident bot"
-    "xog   xog";
-  gap:5px 8px;
-  align-items:center;
-  background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
-  border-radius:10px;padding:6px 8px;
+  display:flex;flex-direction:column;gap:6px;
+  background:var(--superficie);border:1px solid var(--raia);
+  border-radius:10px;padding:8px 10px;
   min-width:0;
 }
 .marcador-equipo[hidden]{display:none}
-@media (prefers-color-scheme:dark){.marcador-equipo{border-left-color:var(--ouro-claro)}}
 
-/* Fila 1 izq: nome + puntos */
+/* Fila 1: nome + puntos + botonera, todo centrado */
 .mk-ident{
-  grid-area:ident;
-  display:flex;flex-direction:column;justify-content:center;gap:0;
-  min-width:0;width:60px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  min-width:0;text-align:center;
 }
 .marcador-nome{
-  width:100%;text-align:center;font-size:10.5px;font-weight:800;color:var(--granate);
-  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:1px 0 2px;
+  width:100%;text-align:center;font-size:12.5px;font-weight:800;color:var(--granate);
+  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:1px 0 3px;
   text-overflow:ellipsis;
 }
 @media (prefers-color-scheme:dark){.marcador-nome{color:var(--ouro-claro)}}
 .marcador-puntos{
-  text-align:center;font-size:22px;font-weight:800;color:var(--texto);line-height:1;padding:1px 0;
+  text-align:center;font-size:30px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0;
 }
 
-/* Fila 1 der: botonera 4 columnas × 3 filas */
+/* Botonera: 5 columnas × 2 filas, centrada */
 .mk-bot{
-  grid-area:bot;
   display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:2px;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:3px;
   min-width:0;
 }
 .mk-bot button{
-  padding:3px 1px;border-radius:4px;border:1px solid var(--raia);background:var(--fondo);
-  font-size:9.5px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;min-width:0;
+  padding:5px 2px;border-radius:5px;border:1px solid var(--raia);background:var(--fondo);
+  font-size:11px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;min-width:0;
+  letter-spacing:-.3px;
 }
 .mk-bot button:active{background:var(--raia)}
 .mk-bot [data-add="-1"], .mk-bot [data-add="-2"],
 .mk-bot [data-add="-8"], .mk-bot [data-add="-9"],
 .mk-bot [data-add="-16"]{color:var(--mut)}
-.mk-bot [data-add="16"]{grid-column:1 / 3}
-.mk-bot [data-add="-16"]{grid-column:3 / 5}
+/* Orde visual: fila 1 = +1 +2 +8 +9 +16 ; fila 2 = -1 -2 -8 -9 -16 */
+.mk-bot [data-add="1"]  {order:1}
+.mk-bot [data-add="2"]  {order:2}
+.mk-bot [data-add="8"]  {order:3}
+.mk-bot [data-add="9"]  {order:4}
+.mk-bot [data-add="16"] {order:5}
+.mk-bot [data-add="-1"] {order:6}
+.mk-bot [data-add="-2"] {order:7}
+.mk-bot [data-add="-8"] {order:8}
+.mk-bot [data-add="-9"] {order:9}
+.mk-bot [data-add="-16"]{order:10}
 
 /* Fila 2: título "Chaves" + 2 xogadores a todo o ancho */
 .mk-xog{
-  grid-area:xog;
   min-width:0;
   display:flex;flex-direction:column;gap:3px;
+  padding-top:6px;
+  border-top:1px dashed var(--raia);
 }
 .mk-xog-tit{
-  margin:0;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
-  color:var(--granate);
+  margin:0;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--granate);text-align:center;
 }
 @media (prefers-color-scheme:dark){.mk-xog-tit{color:var(--ouro-claro)}}
 
@@ -386,12 +387,11 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 .mk-chb:active{background:var(--raia)}
 
-/* Botóns engadir C/D: ocupan a súa cela na segunda fila do grid */
+/* Botóns engadir C/D: ocupan unha cela enteira do grid 2×2 */
 .marcador-add{
-  padding:10px 12px;border-radius:8px;border:1px dashed var(--raia);
-  background:transparent;color:var(--mut);font-size:12px;font-weight:700;
-  min-height:60px;
+  padding:14px 12px;border-radius:10px;border:1px dashed var(--raia);
+  background:transparent;color:var(--mut);font-size:12.5px;font-weight:700;
+  min-height:80px;
 }
 .marcador-add:active{background:var(--raia)}
-.marcador-add[hidden]{display:none}
 .marcador-add[hidden]{display:none}
