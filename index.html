@@ -155,8 +155,59 @@
     </section>
 
     <section id="vista-marcador" class="vista" hidden>
-      <h1 class="tit-vista">Marcador</h1>
-      <p class="baleiro">Contido de próxima creación.</p>
+      <div class="marcador-bar">
+        <h1 class="tit-vista" style="margin:0">Marcador</h1>
+        <button id="mk-reset" class="marcador-reset">↺ Reiniciar</button>
+      </div>
+      <div class="marcador-campo">
+
+        <div class="marcador-equipo" id="mk-a">
+          <input class="marcador-nome" value="Equipo A" maxlength="24" aria-label="Nome do equipo A">
+          <div class="marcador-puntos">0</div>
+          <div class="marcador-fila-bot fila-add">
+            <button data-add="1">+1</button><button data-add="2">+2</button><button data-add="8">+8</button><button data-add="9">+9</button><button data-add="16">+16</button>
+          </div>
+          <div class="marcador-fila-bot fila-sub">
+            <button data-add="-1">-1</button><button data-add="-2">-2</button><button data-add="-8">-8</button><button data-add="-9">-9</button><button data-add="-16">-16</button>
+          </div>
+          <div class="marcador-xog">
+            <input class="marcador-xog-nome" value="Xogador/a A1" maxlength="24">
+            <span class="marcador-chaves">0</span>
+            <button class="mk-chb" data-chaves="1">+1</button>
+            <button class="mk-chb" data-chaves="-1">-1</button>
+          </div>
+          <div class="marcador-xog">
+            <input class="marcador-xog-nome" value="Xogador/a A2" maxlength="24">
+            <span class="marcador-chaves">0</span>
+            <button class="mk-chb" data-chaves="1">+1</button>
+            <button class="mk-chb" data-chaves="-1">-1</button>
+          </div>
+        </div>
+
+        <div class="marcador-equipo" id="mk-b">
+          <input class="marcador-nome" value="Equipo B" maxlength="24" aria-label="Nome do equipo B">
+          <div class="marcador-puntos">0</div>
+          <div class="marcador-fila-bot fila-add">
+            <button data-add="1">+1</button><button data-add="2">+2</button><button data-add="8">+8</button><button data-add="9">+9</button><button data-add="16">+16</button>
+          </div>
+          <div class="marcador-fila-bot fila-sub">
+            <button data-add="-1">-1</button><button data-add="-2">-2</button><button data-add="-8">-8</button><button data-add="-9">-9</button><button data-add="-16">-16</button>
+          </div>
+          <div class="marcador-xog">
+            <input class="marcador-xog-nome" value="Xogador/a B1" maxlength="24">
+            <span class="marcador-chaves">0</span>
+            <button class="mk-chb" data-chaves="1">+1</button>
+            <button class="mk-chb" data-chaves="-1">-1</button>
+          </div>
+          <div class="marcador-xog">
+            <input class="marcador-xog-nome" value="Xogador/a B2" maxlength="24">
+            <span class="marcador-chaves">0</span>
+            <button class="mk-chb" data-chaves="1">+1</button>
+            <button class="mk-chb" data-chaves="-1">-1</button>
+          </div>
+        </div>
+
+      </div>
     </section>
 
   </main>
@@ -193,7 +244,8 @@
 <script src="js/calendariofe.js"></script>
 <script src="js/clasificacionfe.js"></script>
 <script src="js/equiposfe.js"></script>
-<script src="js/partidosfe.js?v=2"></script>  
+<script src="js/partidosfe.js?v=2"></script>
+<script src="js/marcadorfe.js"></script>
 <script src="js/appfe.js"></script>
 
 </body>
