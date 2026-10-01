@@ -277,8 +277,9 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: cada equipo é unha fila con 3 columnas.
-   Botonera horizontal (5 sumar arriba, 5 restar abaixo). */
+/* Marcador: cada equipo é un bloque de 2 filas.
+   Fila 1: [Nome + Puntos]  [Chaves + Xogadores]
+   Fila 2: botonera a todo o ancho (2 filas de 5 botóns) */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -290,84 +291,91 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 
 .marcador-equipo{
   display:grid;
-  grid-template-columns:52px 118px 1fr;
-  gap:6px;
+  grid-template-columns:auto 1fr;
+  grid-template-areas:
+    "ident xog"
+    "bot   bot";
+  gap:8px 12px;
   align-items:center;
   background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
-  border-radius:12px;padding:8px 10px;
+  border-radius:12px;padding:8px 12px;
   min-width:0;
 }
 .marcador-equipo[hidden]{display:none}
 @media (prefers-color-scheme:dark){.marcador-equipo{border-left-color:var(--ouro-claro)}}
 
-.mk-col{display:flex;flex-direction:column;justify-content:center;gap:4px;min-width:0}
-
-/* Col 1: nome + puntos */
-.mk-ident{width:100%;text-align:center}
+/* Fila 1 izq: nome + puntos */
+.mk-ident{
+  grid-area:ident;
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  min-width:0;width:70px;text-align:center;
+}
 .marcador-nome{
-  width:100%;text-align:center;font-size:11px;font-weight:800;color:var(--granate);
-  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:1px 0 3px;
+  width:100%;text-align:center;font-size:12px;font-weight:800;color:var(--granate);
+  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:2px 0 4px;
   text-overflow:ellipsis;
 }
 @media (prefers-color-scheme:dark){.marcador-nome{color:var(--ouro-claro)}}
 .marcador-puntos{
-  text-align:center;font-size:26px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0;
+  text-align:center;font-size:30px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0;
 }
 
-/* Col 2: botonera horizontal: 5 sumar arriba, 5 restar abaixo */
-.mk-bot{display:flex;flex-direction:column;gap:3px;justify-content:center}
-.mk-bot-lin{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
-.mk-bot button{
-  padding:5px 1px;border-radius:5px;border:1px solid var(--raia);background:var(--fondo);
-  font-size:9px;line-height:1;font-weight:700;color:var(--texto);letter-spacing:-.3px;white-space:nowrap;
-  min-width:0;
-}
-.mk-bot button:active{background:var(--raia)}
-.mk-bot-lin.sub button{color:var(--mut)}
-
-/* Col 3: título "Chaves" + xogadores */
-.mk-xog{min-width:0}
+/* Fila 1 der: título Chaves + 2 xogadores */
+.mk-xog{grid-area:xog;min-width:0}
 .mk-xog-tit{
-  margin:0 0 3px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  margin:0 0 4px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
   color:var(--granate);
 }
 @media (prefers-color-scheme:dark){.mk-xog-tit{color:var(--ouro-claro)}}
 
 .marcador-xog{
-  background:var(--fondo);border:1px solid var(--raia);border-radius:7px;
-  padding:4px 5px;margin-bottom:3px;
+  background:var(--fondo);border:1px solid var(--raia);border-radius:8px;
+  padding:5px 7px;margin-bottom:4px;
   display:grid;
   grid-template-columns:minmax(0,1fr) auto auto;
   grid-template-areas:
     "nome nome nome"
     "chav .    bots";
-  align-items:center;gap:1px 4px;
+  align-items:center;gap:2px 8px;
 }
 .marcador-xog:last-child{margin-bottom:0}
 .marcador-xog-nome{
   grid-area:nome;
-  min-width:0;font-size:11px;font-weight:700;color:var(--texto);
-  background:transparent;border:0;padding:0 0 1px;
+  min-width:0;font-size:12px;font-weight:700;color:var(--texto);
+  background:transparent;border:0;padding:0 0 2px;
   text-overflow:ellipsis;
 }
 .marcador-xog-nome:focus{outline:none;border-bottom:1px dashed var(--granate)}
 .marcador-chaves{
   grid-area:chav;
-  font-size:14px;font-weight:800;color:var(--granate);
-  text-align:center;min-width:18px;
+  font-size:15px;font-weight:800;color:var(--granate);
+  text-align:center;min-width:20px;
 }
 @media (prefers-color-scheme:dark){.marcador-chaves{color:var(--ouro-claro)}}
 .marcador-xog-bot{
   grid-area:bots;
-  display:flex;flex-direction:column;gap:1px;
+  display:flex;flex-direction:column;gap:2px;
   align-self:center;
 }
 .mk-chb{
-  width:22px;height:16px;padding:0;border-radius:4px;
+  width:26px;height:18px;padding:0;border-radius:5px;
   border:1px solid var(--raia);background:var(--superficie);
-  font-size:9.5px;font-weight:800;color:var(--texto);line-height:1;
+  font-size:10px;font-weight:800;color:var(--texto);line-height:1;
 }
 .mk-chb:active{background:var(--raia)}
+
+/* Fila 2: botonera a todo o ancho (2 filas de 5) */
+.mk-bot{
+  grid-area:bot;
+  display:flex;flex-direction:column;gap:4px;
+}
+.mk-bot-lin{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+.mk-bot button{
+  padding:7px 2px;border-radius:6px;border:1px solid var(--raia);background:var(--fondo);
+  font-size:12px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;min-width:0;
+}
+.mk-bot button:active{background:var(--raia)}
+.mk-bot-lin.sub button{color:var(--mut)}
 
 /* Botóns engadir C/D */
 .marcador-add{
