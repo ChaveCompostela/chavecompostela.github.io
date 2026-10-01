@@ -277,7 +277,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: fichas 2×2 co mínimo marxe posible. */
+/* Marcador: fichas 2×2 co mínimo marxe posible, botóns 4px máis altos. */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 4px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -316,7 +316,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   text-align:center;font-size:32px;font-weight:800;color:var(--texto);line-height:1;padding:0;
 }
 
-/* Botonera */
+/* Botonera — botóns 4px máis altos */
 .mk-bot{
   display:grid;
   grid-template-columns:repeat(5, minmax(0, 1fr));
@@ -324,7 +324,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   min-width:0;
 }
 .mk-bot button{
-  padding:6px 0;border-radius:4px;border:1px solid var(--raia);background:var(--fondo);
+  padding:10px 0;border-radius:4px;border:1px solid var(--raia);background:var(--fondo);
   font-size:12.5px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;min-width:0;
   letter-spacing:-.3px;
 }
@@ -377,8 +377,9 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .marcador-xog-bot{
   display:flex;flex-direction:row;gap:1px;
 }
+/* Botóns de chaves: 4px máis altos */
 .mk-chb{
-  width:26px;height:20px;padding:0;border-radius:4px;
+  width:26px;height:24px;padding:0;border-radius:4px;
   border:1px solid var(--raia);background:var(--superficie);
   font-size:10.5px;font-weight:800;color:var(--texto);line-height:1;
 }
