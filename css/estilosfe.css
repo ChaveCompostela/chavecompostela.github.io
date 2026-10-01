@@ -277,7 +277,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: ferramenta en directo, pantalla partida en dúas metades iguais */
+/* Marcador: ferramenta en directo, ata 4 equipos en cuadrícula 2x2 */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -285,9 +285,20 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 .marcador-reset:active{background:var(--raia)}
 
-.marcador-campo{flex:1;min-height:0;display:flex;gap:0}
-.marcador-equipo{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;padding:2px 5px}
-.marcador-equipo + .marcador-equipo{border-left:1px solid var(--raia)}
+/* Rejilla 2x2. O botón "engadir" ocupa unha cela enteira */
+.marcador-campo{
+  flex:1;min-height:0;overflow-y:auto;
+  display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;gap:10px 12px;
+}
+
+.marcador-equipo{
+  min-width:0;display:flex;flex-direction:column;gap:8px;padding:2px 5px;
+}
+.marcador-equipo[hidden]{display:none}
+
+/* O borde vertical só entre A/C (columna esquerda) e B/D (columna dereita) */
+#mk-a, #mk-c{border-right:1px solid var(--raia);padding-right:10px}
+#mk-b, #mk-d{padding-left:10px}
 
 .marcador-nome{
   width:100%;text-align:center;font-size:15px;font-weight:800;color:var(--granate);
@@ -321,3 +332,22 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   font-size:14px;font-weight:800;color:var(--texto);
 }
 .mk-chb:active{background:var(--raia)}
+
+/* Botón "+ Engadir equipo C/D": ocupa unha cela, mesmo tamaño ca un equipo */
+.marcador-add{
+  display:flex;align-items:center;justify-content:center;
+  padding:18px 10px;border-radius:12px;border:1px dashed var(--raia);
+  background:transparent;color:var(--mut);font-size:14px;font-weight:700;
+  min-height:60px;
+}
+.marcador-add:active{background:var(--raia)}
+.marcador-add[hidden]{display:none}
+
+/* Orde na rejilla: fila 1 → A, B (o botón de C queda na cela da esquerda da fila 2,
+   e o botón de D na cela da dereita da fila 2). Se se cargan C/D, van antes có botón. */
+#mk-a{order:1} #mk-b{order:2}
+#mk-c{order:3} #mk-d{order:4}
+#mk-add-c{order:3} #mk-add-d{order:4}
+
+/* Cando C está oculto, o botón ocupa o seu sitio (cela esquerda fila 2);
+   cando C está visible, o botón desaparece e C queda nesa cela. */
