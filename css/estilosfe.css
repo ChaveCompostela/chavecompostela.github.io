@@ -277,11 +277,11 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: fichas 2×2 sen marxes internas, botóns grandes. */
-.marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 6px}
+/* Marcador: fichas 2×2 co mínimo marxe posible. */
+.marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 4px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
-  padding:5px 10px;border:1px solid var(--raia);border-radius:999px;background:var(--superficie);
+  padding:4px 10px;border:1px solid var(--raia);border-radius:999px;background:var(--superficie);
 }
 .marcador-reset:active{background:var(--raia)}
 
@@ -289,42 +289,42 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:6px;
+  gap:4px;
   align-content:start;
 }
 
 .marcador-equipo{
-  display:flex;flex-direction:column;gap:4px;
+  display:flex;flex-direction:column;gap:2px;
   background:var(--superficie);border:1px solid var(--raia);
-  border-radius:10px;padding:5px 6px;
+  border-radius:8px;padding:3px 4px;
   min-width:0;
 }
 .marcador-equipo[hidden]{display:none}
 
-/* Nome + puntos centrados */
+/* Nome + puntos */
 .mk-ident{
-  display:flex;flex-direction:column;align-items:center;gap:1px;
+  display:flex;flex-direction:column;align-items:center;gap:0;
   min-width:0;text-align:center;
 }
 .marcador-nome{
   width:100%;text-align:center;font-size:13px;font-weight:800;color:var(--granate);
-  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:1px 0 2px;
+  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:0 0 1px;
   text-overflow:ellipsis;
 }
 @media (prefers-color-scheme:dark){.marcador-nome{color:var(--ouro-claro)}}
 .marcador-puntos{
-  text-align:center;font-size:32px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0;
+  text-align:center;font-size:32px;font-weight:800;color:var(--texto);line-height:1;padding:0;
 }
 
-/* Botonera: 5 columnas × 2 filas, botóns grandes */
+/* Botonera */
 .mk-bot{
   display:grid;
   grid-template-columns:repeat(5, minmax(0, 1fr));
-  gap:2px;
+  gap:1px;
   min-width:0;
 }
 .mk-bot button{
-  padding:7px 2px;border-radius:5px;border:1px solid var(--raia);background:var(--fondo);
+  padding:6px 0;border-radius:4px;border:1px solid var(--raia);background:var(--fondo);
   font-size:12.5px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;min-width:0;
   letter-spacing:-.3px;
 }
@@ -343,11 +343,11 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .mk-bot [data-add="-9"] {order:9}
 .mk-bot [data-add="-16"]{order:10}
 
-/* Chaves + xogadores a todo o ancho */
+/* Chaves + xogadores */
 .mk-xog{
   min-width:0;
-  display:flex;flex-direction:column;gap:2px;
-  padding-top:4px;
+  display:flex;flex-direction:column;gap:1px;
+  padding-top:2px;
   border-top:1px dashed var(--raia);
 }
 .mk-xog-tit{
@@ -357,11 +357,11 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 @media (prefers-color-scheme:dark){.mk-xog-tit{color:var(--ouro-claro)}}
 
 .marcador-xog{
-  background:var(--fondo);border:1px solid var(--raia);border-radius:6px;
-  padding:3px 5px;
+  background:var(--fondo);border:1px solid var(--raia);border-radius:5px;
+  padding:2px 3px;
   display:grid;
   grid-template-columns:minmax(0,1fr) auto auto auto;
-  align-items:center;gap:2px 5px;
+  align-items:center;gap:1px 4px;
 }
 .marcador-xog-nome{
   min-width:0;font-size:11.5px;font-weight:700;color:var(--texto);
@@ -375,7 +375,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 @media (prefers-color-scheme:dark){.marcador-chaves{color:var(--ouro-claro)}}
 .marcador-xog-bot{
-  display:flex;flex-direction:row;gap:2px;
+  display:flex;flex-direction:row;gap:1px;
 }
 .mk-chb{
   width:26px;height:20px;padding:0;border-radius:4px;
@@ -386,7 +386,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 
 /* Botóns engadir C/D */
 .marcador-add{
-  padding:14px 10px;border-radius:10px;border:1px dashed var(--raia);
+  padding:14px 10px;border-radius:8px;border:1px dashed var(--raia);
   background:transparent;color:var(--mut);font-size:13px;font-weight:700;
   min-height:90px;
 }
