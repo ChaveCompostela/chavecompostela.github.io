@@ -14,6 +14,7 @@ document.addEventListener('click', e => {
     marcador.textContent = clamp0(actual + Number(botonPuntos.dataset.add));
     return;
   }
+
   // Botóns +1/-1 das chaves de cada xogador/a
   const botonChave = e.target.closest('#vista-marcador .mk-chb');
   if (botonChave) {
@@ -23,11 +24,26 @@ document.addEventListener('click', e => {
     contador.textContent = clamp0(actual + Number(botonChave.dataset.chaves));
     return;
   }
+
+  // Engadir equipo C ou D
+  const addC = e.target.closest('#mk-add-c');
+  if (addC) {
+    const eq = document.getElementById('mk-c');
+    if (eq) { eq.hidden = false; addC.hidden = true; }
+    return;
+  }
+  const addD = e.target.closest('#mk-add-d');
+  if (addD) {
+    const eq = document.getElementById('mk-d');
+    if (eq) { eq.hidden = false; addD.hidden = true; }
+    return;
+  }
 });
 
-// Reiniciar: só pon a cero os números (puntos e chaves); os nomes escritos quédanse.
+// Reiniciar: pon a cero os números (puntos e chaves) de todos os equipos visibles.
+// Os nomes escritos quédanse como están.
 document.getElementById('mk-reset')?.addEventListener('click', () => {
   if (!confirm('¿Reiniciar todos os marcadores a cero?')) return;
-  document.querySelectorAll('#vista-marcador .marcador-puntos, #vista-marcador .marcador-chaves')
+  document.querySelectorAll('#vista-marcador .marcador-equipo:not([hidden]) .marcador-puntos, #vista-marcador .marcador-equipo:not([hidden]) .marcador-chaves')
     .forEach(el => { el.textContent = '0'; });
 });
