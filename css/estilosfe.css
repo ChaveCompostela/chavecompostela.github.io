@@ -277,8 +277,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: cada equipo é unha fila con 3 columnas. Un único deseño
-   optimizado para que caiba en calquera pantalla sen scroll horizontal. */
+/* Marcador: cada equipo é unha fila con 3 columnas.
+   Botonera horizontal (5 sumar arriba, 5 restar abaixo). */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -290,8 +290,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 
 .marcador-equipo{
   display:grid;
-  grid-template-columns:58px 76px 1fr;
-  gap:8px;
+  grid-template-columns:52px 118px 1fr;
+  gap:6px;
   align-items:center;
   background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
   border-radius:12px;padding:8px 10px;
@@ -305,28 +305,25 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 /* Col 1: nome + puntos */
 .mk-ident{width:100%;text-align:center}
 .marcador-nome{
-  width:100%;text-align:center;font-size:11.5px;font-weight:800;color:var(--granate);
-  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:2px 0 3px;
+  width:100%;text-align:center;font-size:11px;font-weight:800;color:var(--granate);
+  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:1px 0 3px;
   text-overflow:ellipsis;
 }
 @media (prefers-color-scheme:dark){.marcador-nome{color:var(--ouro-claro)}}
 .marcador-puntos{
-  text-align:center;font-size:28px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0;
+  text-align:center;font-size:26px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0;
 }
 
-/* Col 2: botonera en 5 filas de 2 botóns */
-.mk-bot{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:2px;
-  align-content:center;
-}
+/* Col 2: botonera horizontal: 5 sumar arriba, 5 restar abaixo */
+.mk-bot{display:flex;flex-direction:column;gap:3px;justify-content:center}
+.mk-bot-lin{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
 .mk-bot button{
-  padding:4px 2px;border-radius:5px;border:1px solid var(--raia);background:var(--fondo);
-  font-size:9.5px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;
+  padding:5px 1px;border-radius:5px;border:1px solid var(--raia);background:var(--fondo);
+  font-size:9px;line-height:1;font-weight:700;color:var(--texto);letter-spacing:-.3px;white-space:nowrap;
+  min-width:0;
 }
 .mk-bot button:active{background:var(--raia)}
-.mk-bot button:nth-child(even){color:var(--mut)}
+.mk-bot-lin.sub button{color:var(--mut)}
 
 /* Col 3: título "Chaves" + xogadores */
 .mk-xog{min-width:0}
@@ -379,5 +376,4 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   background:transparent;color:var(--mut);font-size:12px;font-weight:700;
 }
 .marcador-add:active{background:var(--raia)}
-.marcador-add[hidden]{display:none}
 .marcador-add[hidden]{display:none}
