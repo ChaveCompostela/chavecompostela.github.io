@@ -277,7 +277,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: ferramenta en directo, ata 4 equipos en cuadrícula 2x2 */
+/* Marcador: cada equipo é unha fila de 3 columnas:
+   [Nome+Puntos]  [Botonera]  [Xogadores] */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -285,69 +286,91 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 .marcador-reset:active{background:var(--raia)}
 
-/* Rejilla 2x2. O botón "engadir" ocupa unha cela enteira */
-.marcador-campo{
-  flex:1;min-height:0;overflow-y:auto;
-  display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:min-content;gap:10px 12px;
-}
+.marcador-campo{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
 
 .marcador-equipo{
-  min-width:0;display:flex;flex-direction:column;gap:8px;padding:2px 5px;
+  display:grid;
+  grid-template-columns:minmax(90px,1fr) auto minmax(0,2fr);
+  gap:12px;
+  background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
+  border-radius:12px;padding:10px 12px;
 }
 .marcador-equipo[hidden]{display:none}
+@media (prefers-color-scheme:dark){.marcador-equipo{border-left-color:var(--ouro-claro)}}
 
-/* O borde vertical só entre A/C (columna esquerda) e B/D (columna dereita) */
-#mk-a, #mk-c{border-right:1px solid var(--raia);padding-right:10px}
-#mk-b, #mk-d{padding-left:10px}
+/* Cada columna interna */
+.mk-col{display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
 
+/* Col 1: nome + puntos */
 .marcador-nome{
-  width:100%;text-align:center;font-size:15px;font-weight:800;color:var(--granate);
-  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:4px 2px 6px;
+  width:100%;text-align:center;font-size:14px;font-weight:800;color:var(--granate);
+  background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:2px 0 4px;
+  text-overflow:ellipsis;
 }
 @media (prefers-color-scheme:dark){.marcador-nome{color:var(--ouro-claro)}}
+.marcador-puntos{
+  text-align:center;font-size:38px;font-weight:800;color:var(--texto);line-height:1;padding:4px 0;
+}
 
-.marcador-puntos{text-align:center;font-size:42px;font-weight:800;color:var(--texto);line-height:1;padding:2px 0}
-
-.marcador-fila-bot{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+/* Col 2: botonera */
+.marcador-fila-bot{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
 .marcador-fila-bot button{
-  padding:6px 0;border-radius:6px;border:1px solid var(--raia);background:var(--superficie);
-  font-size:11.5px;line-height:1;font-weight:700;color:var(--texto);letter-spacing:-.4px;white-space:nowrap;
+  padding:7px 6px;border-radius:6px;border:1px solid var(--raia);background:var(--fondo);
+  font-size:11px;line-height:1;font-weight:700;color:var(--texto);letter-spacing:-.3px;white-space:nowrap;
 }
 .marcador-fila-bot button:active{background:var(--raia)}
 .fila-sub button{color:var(--mut)}
 
+/* Col 3: xogadores */
 .marcador-xog{
-  background:var(--superficie);border:1px solid var(--raia);border-radius:10px;
-  padding:7px 8px;margin-top:2px;
-  display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:7px;
+  background:var(--fondo);border:1px solid var(--raia);border-radius:8px;
+  padding:6px 8px;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr) auto auto;
+  align-items:center;gap:6px;
+}
+.marcador-xog-lbl{
+  font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.03em;
+  white-space:nowrap;
 }
 .marcador-xog-nome{
-  flex:0 0 100%;text-align:center;font-size:12.5px;font-weight:700;color:var(--texto);
-  background:transparent;border:0;padding:0 0 4px;
+  min-width:0;font-size:12.5px;font-weight:700;color:var(--texto);
+  background:transparent;border:0;padding:0;text-overflow:ellipsis;
 }
-.marcador-chaves{min-width:24px;text-align:center;font-size:17px;font-weight:800;color:var(--granate)}
+.marcador-xog-nome:focus{outline:none;border-bottom:1px dashed var(--granate)}
+.marcador-chaves{
+  min-width:24px;text-align:center;font-size:20px;font-weight:800;color:var(--granate);
+}
 @media (prefers-color-scheme:dark){.marcador-chaves{color:var(--ouro-claro)}}
+.marcador-xog-bot{
+  display:flex;flex-direction:column;gap:2px;
+}
 .mk-chb{
-  width:34px;height:30px;border-radius:8px;border:1px solid var(--raia);background:var(--fondo);
-  font-size:14px;font-weight:800;color:var(--texto);
+  width:28px;height:20px;padding:0;border-radius:5px;
+  border:1px solid var(--raia);background:var(--superficie);
+  font-size:11px;font-weight:800;color:var(--texto);line-height:1;
 }
 .mk-chb:active{background:var(--raia)}
 
-/* Botón "+ Engadir equipo C/D": ocupa unha cela, mesmo tamaño ca un equipo */
+/* Botóns engadir C/D */
 .marcador-add{
-  display:flex;align-items:center;justify-content:center;
-  padding:18px 10px;border-radius:12px;border:1px dashed var(--raia);
-  background:transparent;color:var(--mut);font-size:14px;font-weight:700;
-  min-height:60px;
+  align-self:flex-end;
+  padding:8px 14px;border-radius:8px;border:1px dashed var(--raia);
+  background:transparent;color:var(--mut);font-size:12.5px;font-weight:700;
 }
 .marcador-add:active{background:var(--raia)}
 .marcador-add[hidden]{display:none}
 
-/* Orde na rejilla: fila 1 → A, B (o botón de C queda na cela da esquerda da fila 2,
-   e o botón de D na cela da dereita da fila 2). Se se cargan C/D, van antes có botón. */
-#mk-a{order:1} #mk-b{order:2}
-#mk-c{order:3} #mk-d{order:4}
-#mk-add-c{order:3} #mk-add-d{order:4}
-
-/* Cando C está oculto, o botón ocupa o seu sitio (cela esquerda fila 2);
-   cando C está visible, o botón desaparece e C queda nesa cela. */
+/* Móbil: cada equipo reorganízase en 2 columnas internas */
+@media (max-width:520px){
+  .marcador-equipo{
+    grid-template-columns:1fr 1fr;
+    gap:8px 10px;
+  }
+  .mk-col:nth-child(1){grid-column:1}
+  .mk-col:nth-child(2){grid-column:2;justify-content:center}
+  .mk-col:nth-child(3){grid-column:1 / -1}
+  .marcador-puntos{font-size:32px}
+  .marcador-fila-bot button{font-size:10px;padding:6px 2px}
+  .marcador-xog{grid-template-columns:auto minmax(0,1fr) auto auto}
+}
