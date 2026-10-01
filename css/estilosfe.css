@@ -277,8 +277,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partida-xog .chaves{font-weight:700;color:var(--granate);white-space:nowrap}
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
-/* Marcador: cada equipo é unha fila de 3 columnas:
-   [Nome+Puntos]  [Botonera]  [Xogadores] */
+/* Marcador: cada equipo é unha fila con 3 columnas:
+   [Nome+Puntos]  [Botonera 2 cols]  [Chaves + Xogadores] */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 10px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -290,65 +290,86 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 
 .marcador-equipo{
   display:grid;
-  grid-template-columns:minmax(90px,1fr) auto minmax(0,2fr);
+  grid-template-columns:auto auto auto;
   gap:12px;
+  align-items:center;
   background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
   border-radius:12px;padding:10px 12px;
 }
 .marcador-equipo[hidden]{display:none}
 @media (prefers-color-scheme:dark){.marcador-equipo{border-left-color:var(--ouro-claro)}}
 
-/* Cada columna interna */
+/* Columnas internas */
 .mk-col{display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
 
 /* Col 1: nome + puntos */
+.mk-ident{width:80px;text-align:center}
 .marcador-nome{
-  width:100%;text-align:center;font-size:14px;font-weight:800;color:var(--granate);
+  width:100%;text-align:center;font-size:13px;font-weight:800;color:var(--granate);
   background:transparent;border:0;border-bottom:1px dashed var(--raia);padding:2px 0 4px;
   text-overflow:ellipsis;
 }
 @media (prefers-color-scheme:dark){.marcador-nome{color:var(--ouro-claro)}}
 .marcador-puntos{
-  text-align:center;font-size:38px;font-weight:800;color:var(--texto);line-height:1;padding:4px 0;
+  text-align:center;font-size:34px;font-weight:800;color:var(--texto);line-height:1;padding:4px 0;
 }
 
-/* Col 2: botonera */
-.marcador-fila-bot{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
-.marcador-fila-bot button{
-  padding:7px 6px;border-radius:6px;border:1px solid var(--raia);background:var(--fondo);
-  font-size:11px;line-height:1;font-weight:700;color:var(--texto);letter-spacing:-.3px;white-space:nowrap;
+/* Col 2: botonera en 2 columnas (+N / -N) */
+.mk-bot{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:3px 4px;
+  align-content:center;
 }
-.marcador-fila-bot button:active{background:var(--raia)}
-.fila-sub button{color:var(--mut)}
+.mk-bot button{
+  padding:6px 4px;border-radius:6px;border:1px solid var(--raia);background:var(--fondo);
+  font-size:11px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;
+}
+.mk-bot button:active{background:var(--raia)}
+/* Botóns de restar (impares, porque van después de cada sumar): */
+.mk-bot button:nth-child(even){color:var(--mut)}
 
-/* Col 3: xogadores */
+/* Col 3: Chaves como título + xogadores */
+.mk-xog{min-width:0}
+.mk-xog-tit{
+  margin:0 0 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--granate);
+}
+@media (prefers-color-scheme:dark){.mk-xog-tit{color:var(--ouro-claro)}}
+
 .marcador-xog{
   background:var(--fondo);border:1px solid var(--raia);border-radius:8px;
-  padding:6px 8px;
+  padding:5px 7px;margin-bottom:4px;
   display:grid;
-  grid-template-columns:auto minmax(0,1fr) auto auto;
-  align-items:center;gap:6px;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  grid-template-areas:
+    "nome nome nome"
+    "chav .    bots";
+  align-items:center;gap:2px 6px;
 }
-.marcador-xog-lbl{
-  font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.03em;
-  white-space:nowrap;
-}
+.marcador-xog:last-child{margin-bottom:0}
 .marcador-xog-nome{
+  grid-area:nome;
   min-width:0;font-size:12.5px;font-weight:700;color:var(--texto);
-  background:transparent;border:0;padding:0;text-overflow:ellipsis;
+  background:transparent;border:0;padding:0 0 2px;
+  text-overflow:ellipsis;
 }
 .marcador-xog-nome:focus{outline:none;border-bottom:1px dashed var(--granate)}
 .marcador-chaves{
-  min-width:24px;text-align:center;font-size:20px;font-weight:800;color:var(--granate);
+  grid-area:chav;
+  font-size:16px;font-weight:800;color:var(--granate);
+  text-align:center;min-width:22px;
 }
 @media (prefers-color-scheme:dark){.marcador-chaves{color:var(--ouro-claro)}}
 .marcador-xog-bot{
+  grid-area:bots;
   display:flex;flex-direction:column;gap:2px;
+  align-self:center;
 }
 .mk-chb{
-  width:28px;height:20px;padding:0;border-radius:5px;
+  width:26px;height:18px;padding:0;border-radius:5px;
   border:1px solid var(--raia);background:var(--superficie);
-  font-size:11px;font-weight:800;color:var(--texto);line-height:1;
+  font-size:10px;font-weight:800;color:var(--texto);line-height:1;
 }
 .mk-chb:active{background:var(--raia)}
 
@@ -360,17 +381,3 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 .marcador-add:active{background:var(--raia)}
 .marcador-add[hidden]{display:none}
-
-/* Móbil: cada equipo reorganízase en 2 columnas internas */
-@media (max-width:520px){
-  .marcador-equipo{
-    grid-template-columns:1fr 1fr;
-    gap:8px 10px;
-  }
-  .mk-col:nth-child(1){grid-column:1}
-  .mk-col:nth-child(2){grid-column:2;justify-content:center}
-  .mk-col:nth-child(3){grid-column:1 / -1}
-  .marcador-puntos{font-size:32px}
-  .marcador-fila-bot button{font-size:10px;padding:6px 2px}
-  .marcador-xog{grid-template-columns:auto minmax(0,1fr) auto auto}
-}
