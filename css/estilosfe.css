@@ -391,5 +391,10 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   background:transparent;color:var(--mut);font-size:13px;font-weight:700;
   min-height:90px;
 }
+
+/* Líder: o equipo con máis puntos (só se hai 2+ equipos visibles e sen empate) */
+.marcador-puntos.marcador-lider{color:var(--ouro)}
+@media (prefers-color-scheme:dark){.marcador-puntos.marcador-lider{color:var(--ouro-claro)}}
+
 .marcador-add:active{background:var(--raia)}
 .marcador-add[hidden]{display:none}
