@@ -154,7 +154,7 @@
       </div>
     </section>
 
-  <section id="vista-marcador" class="vista" hidden>
+<section id="vista-marcador" class="vista" hidden>
   <div class="marcador-bar">
     <h1 class="tit-vista" style="margin:0">Marcador</h1>
     <button id="mk-reset" class="marcador-reset">↺ Reiniciar</button>
@@ -162,21 +162,20 @@
   <div class="marcador-campo">
 
     <div class="marcador-equipo" id="mk-a">
-      <div class="mk-col">
+      <div class="mk-col mk-ident">
         <input class="marcador-nome" value="Equipo A" maxlength="24" aria-label="Nome do equipo A">
         <div class="marcador-puntos">0</div>
       </div>
-      <div class="mk-col">
-        <div class="marcador-fila-bot fila-add">
-          <button data-add="1">+1</button><button data-add="2">+2</button><button data-add="8">+8</button><button data-add="9">+9</button><button data-add="16">+16</button>
-        </div>
-        <div class="marcador-fila-bot fila-sub">
-          <button data-add="-1">-1</button><button data-add="-2">-2</button><button data-add="-8">-8</button><button data-add="-9">-9</button><button data-add="-16">-16</button>
-        </div>
+      <div class="mk-col mk-bot">
+        <button data-add="1">+1</button><button data-add="-1">-1</button>
+        <button data-add="2">+2</button><button data-add="-2">-2</button>
+        <button data-add="8">+8</button><button data-add="-8">-8</button>
+        <button data-add="9">+9</button><button data-add="-9">-9</button>
+        <button data-add="16">+16</button><button data-add="-16">-16</button>
       </div>
-      <div class="mk-col">
+      <div class="mk-col mk-xog">
+        <h4 class="mk-xog-tit">Chaves</h4>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a A1" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -185,7 +184,6 @@
           </div>
         </div>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a A2" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -197,21 +195,20 @@
     </div>
 
     <div class="marcador-equipo" id="mk-b">
-      <div class="mk-col">
+      <div class="mk-col mk-ident">
         <input class="marcador-nome" value="Equipo B" maxlength="24" aria-label="Nome do equipo B">
         <div class="marcador-puntos">0</div>
       </div>
-      <div class="mk-col">
-        <div class="marcador-fila-bot fila-add">
-          <button data-add="1">+1</button><button data-add="2">+2</button><button data-add="8">+8</button><button data-add="9">+9</button><button data-add="16">+16</button>
-        </div>
-        <div class="marcador-fila-bot fila-sub">
-          <button data-add="-1">-1</button><button data-add="-2">-2</button><button data-add="-8">-8</button><button data-add="-9">-9</button><button data-add="-16">-16</button>
-        </div>
+      <div class="mk-col mk-bot">
+        <button data-add="1">+1</button><button data-add="-1">-1</button>
+        <button data-add="2">+2</button><button data-add="-2">-2</button>
+        <button data-add="8">+8</button><button data-add="-8">-8</button>
+        <button data-add="9">+9</button><button data-add="-9">-9</button>
+        <button data-add="16">+16</button><button data-add="-16">-16</button>
       </div>
-      <div class="mk-col">
+      <div class="mk-col mk-xog">
+        <h4 class="mk-xog-tit">Chaves</h4>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a B1" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -220,7 +217,6 @@
           </div>
         </div>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a B2" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -232,21 +228,20 @@
     </div>
 
     <div class="marcador-equipo" id="mk-c" hidden>
-      <div class="mk-col">
+      <div class="mk-col mk-ident">
         <input class="marcador-nome" value="Equipo C" maxlength="24" aria-label="Nome do equipo C">
         <div class="marcador-puntos">0</div>
       </div>
-      <div class="mk-col">
-        <div class="marcador-fila-bot fila-add">
-          <button data-add="1">+1</button><button data-add="2">+2</button><button data-add="8">+8</button><button data-add="9">+9</button><button data-add="16">+16</button>
-        </div>
-        <div class="marcador-fila-bot fila-sub">
-          <button data-add="-1">-1</button><button data-add="-2">-2</button><button data-add="-8">-8</button><button data-add="-9">-9</button><button data-add="-16">-16</button>
-        </div>
+      <div class="mk-col mk-bot">
+        <button data-add="1">+1</button><button data-add="-1">-1</button>
+        <button data-add="2">+2</button><button data-add="-2">-2</button>
+        <button data-add="8">+8</button><button data-add="-8">-8</button>
+        <button data-add="9">+9</button><button data-add="-9">-9</button>
+        <button data-add="16">+16</button><button data-add="-16">-16</button>
       </div>
-      <div class="mk-col">
+      <div class="mk-col mk-xog">
+        <h4 class="mk-xog-tit">Chaves</h4>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a C1" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -255,7 +250,6 @@
           </div>
         </div>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a C2" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -267,21 +261,20 @@
     </div>
 
     <div class="marcador-equipo" id="mk-d" hidden>
-      <div class="mk-col">
+      <div class="mk-col mk-ident">
         <input class="marcador-nome" value="Equipo D" maxlength="24" aria-label="Nome do equipo D">
         <div class="marcador-puntos">0</div>
       </div>
-      <div class="mk-col">
-        <div class="marcador-fila-bot fila-add">
-          <button data-add="1">+1</button><button data-add="2">+2</button><button data-add="8">+8</button><button data-add="9">+9</button><button data-add="16">+16</button>
-        </div>
-        <div class="marcador-fila-bot fila-sub">
-          <button data-add="-1">-1</button><button data-add="-2">-2</button><button data-add="-8">-8</button><button data-add="-9">-9</button><button data-add="-16">-16</button>
-        </div>
+      <div class="mk-col mk-bot">
+        <button data-add="1">+1</button><button data-add="-1">-1</button>
+        <button data-add="2">+2</button><button data-add="-2">-2</button>
+        <button data-add="8">+8</button><button data-add="-8">-8</button>
+        <button data-add="9">+9</button><button data-add="-9">-9</button>
+        <button data-add="16">+16</button><button data-add="-16">-16</button>
       </div>
-      <div class="mk-col">
+      <div class="mk-col mk-xog">
+        <h4 class="mk-xog-tit">Chaves</h4>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a D1" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
@@ -290,7 +283,6 @@
           </div>
         </div>
         <div class="marcador-xog">
-          <span class="marcador-xog-lbl">Chaves</span>
           <input class="marcador-xog-nome" value="Xogador/a D2" maxlength="24">
           <span class="marcador-chaves">0</span>
           <div class="marcador-xog-bot">
