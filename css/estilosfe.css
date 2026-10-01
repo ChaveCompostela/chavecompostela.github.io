@@ -278,7 +278,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 @media (prefers-color-scheme:dark){.partida-xog .chaves{color:var(--ouro-claro)}}
 
 /* Marcador: cada equipo é unha fila compacta de 3 columnas.
-   Col1: [Nome + Puntos]   Col2: [Botonera]   Col3: [Chaves + Xogadores] */
+   Col1: [Nome + Puntos]   Col2: [Botonera]   Col3: [Chaves + Xogadores]
+   A botonera é un grid 4×3: +1+2 / -1-2, logo +8+9 / -8-9, e +16/-16 centrados. */
 .marcador-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 8px}
 .marcador-reset{
   flex:none;font-size:12px;font-weight:700;color:var(--mut);
@@ -317,18 +318,25 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   text-align:center;font-size:22px;font-weight:800;color:var(--texto);line-height:1;padding:1px 0;
 }
 
-/* Col 2: botonera en 2 filas de 5 botóns */
+/* Col 2: botonera en grid 4 columnas × 3 filas */
 .mk-bot{
   grid-area:bot;
-  display:flex;flex-direction:column;gap:2px;
+  display:grid;
+  grid-template-columns:repeat(4, 1fr);
+  grid-auto-rows:1fr;
+  gap:3px;
+  min-width:0;
 }
-.mk-bot-lin{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
 .mk-bot button{
   padding:3px 1px;border-radius:5px;border:1px solid var(--raia);background:var(--fondo);
   font-size:10px;line-height:1;font-weight:700;color:var(--texto);white-space:nowrap;min-width:0;
 }
 .mk-bot button:active{background:var(--raia)}
-.mk-bot-lin.sub button{color:var(--mut)}
+.mk-bot [data-add="-1"], .mk-bot [data-add="-2"],
+.mk-bot [data-add="-8"], .mk-bot [data-add="-9"],
+.mk-bot [data-add="-16"]{color:var(--mut)}
+.mk-bot [data-add="16"]{grid-column:1 / 3}
+.mk-bot [data-add="-16"]{grid-column:3 / 5}
 
 /* Col 3: título Chaves + 2 xogadores, cada un nunha soa liña */
 .mk-xog{
@@ -377,4 +385,5 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   background:transparent;color:var(--mut);font-size:12px;font-weight:700;
 }
 .marcador-add:active{background:var(--raia)}
+.marcador-add[hidden]{display:none}
 .marcador-add[hidden]{display:none}
