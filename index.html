@@ -159,8 +159,34 @@
 <section id="vista-marcador" class="vista" hidden>
   <div class="marcador-bar">
     <h1 class="tit-vista" style="margin:0">Marcador</h1>
+    <button id="mk-cargar" class="marcador-reset">🔒 Cargar partido</button>
     <button id="mk-reset" class="marcador-reset">↺ Reiniciar</button>
   </div>
+
+  <!-- Selector de partido/partida real, oculto ata premer "Cargar partido" -->
+  <div id="mk-carga-panel" class="marcador-carga" hidden>
+    <label>Partido
+      <select id="mk-sel-partido"><option value="">Cargando…</option></select>
+    </label>
+    <label>Partida
+      <select id="mk-sel-partida" disabled><option value="">— elixe antes un partido —</option></select>
+    </label>
+    <div class="marcador-carga-bot">
+      <button id="mk-carga-confirmar" class="marcador-pri" disabled>Cargar</button>
+      <button id="mk-carga-cancelar">Cancelar</button>
+    </div>
+    <p id="mk-carga-msg" class="erro" hidden></p>
+  </div>
+
+  <!-- Aparece só cando hai unha partida real cargada -->
+  <div id="mk-enviar-panel" class="marcador-carga" hidden>
+    <p class="baleiro" id="mk-enviar-info"></p>
+    <div class="marcador-carga-bot">
+      <button id="mk-enviar-confirmar" class="marcador-pri">Enviar resultado</button>
+      <button id="mk-enviar-cancelar">✕ Deixar de anotar esta partida</button>
+    </div>
+  </div>
+
   <div class="marcador-campo">
 
     <div class="marcador-equipo" id="mk-a">
@@ -321,7 +347,6 @@
 
   </div>
 </section>
-</section>
 
   </main>
 
@@ -359,6 +384,7 @@
 <script src="js/equiposfe.js"></script>
 <script src="js/partidosfe.js?v=2"></script>
 <script src="js/marcadorfe.js"></script>
+<script src="js/marcadorcargafe.js"></script>
 <script src="js/appfe.js"></script>
 
 </body>
