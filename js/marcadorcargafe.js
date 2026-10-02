@@ -41,12 +41,14 @@ async function abrirPanelCarga(){
     const nomeCat = idCat => d.categorias.find(c => c.id === idCat)?.nombre === 'femenina' ? 'Fem' : 'Masc';
     const catDaLiga = idLiga => d.ligas.find(l => l.id === idLiga)?.id_categoria;
 
+    // Só os partidos de hoxe e que aínda non estean finalizados
+    const hoxeChave = chaveDia(new Date());
     const partidos = d.partidos
-      .filter(p => idsXorn.has(p.id_jornada))
-      .sort((a, b) => (b.fecha_hora || '').localeCompare(a.fecha_hora || ''));
+      .filter(p => idsXorn.has(p.id_jornada) && p.estado !== 'finalizado' && p.fecha_hora && chaveDia(p.fecha_hora) === hoxeChave)
+      .sort((a, b) => (a.fecha_hora || '').localeCompare(b.fecha_hora || ''));
 
     if (!partidos.length) {
-      selPartido.innerHTML = '<option value="">Non hai partidos nesta tempada</option>';
+      selPartido.innerHTML = '<option value="">Non hai partidos de hoxe pendentes de xogar</option>';
       return;
     }
     selPartido.innerHTML = '<option value="">— elixe un partido —</option>' + partidos.map(p => {
