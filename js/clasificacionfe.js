@@ -67,6 +67,44 @@ function chavesPorXogador(partidosLiga, enfrentamentos, chaves, xogadores, clubs
     .sort((a, b) => b.chaves - a.chaves || a.nome.localeCompare(b.nome));
 }
 
+let datosClasificacion = null;
+let tempadaEscollidaClas = null;
+
+function encherSelectorTempadasClas(temporadas){
+  const sel = document.getElementById('tempada-clasificacion');
+  const actual = tempadaActual(temporadas);
+  sel.innerHTML = temporadas.map(t => `<option value="${t.id}">${escFe(t.nombre)}</option>`).join('');
+  tempadaEscollidaClas = actual?.id ?? (temporadas[0]?.id ?? null);
+  if (tempadaEscollidaClas != null) sel.value = String(tempadaEscollidaClas);
+}
+
+function pintarClasificacion(){
+  const d = datosClasificacion;
+  const els = {
+    feminina: { equipos: document.getElementById('clas-equipos-feminina'), chavistas: document.getElementById('clas-chavistas-feminina') },
+    masculina: { equipos: document.getElementById('clas-equipos-masculina'), chavistas: document.getElementById('clas-chavistas-masculina') },
+  };
+
+  const partidosConResultado = d.partidos.filter(p => p.resultado_local != null && p.resultado_visitante != null);
+  const idFem = d.categorias.find(c => c.nombre === 'femenina')?.id;
+  const idMasc = d.categorias.find(c => c.nombre === 'masculina')?.id;
+  const ligasTempada = d.ligas.filter(l => l.id_temporada === tempadaEscollidaClas);
+  const ligasFem = new Set(ligasTempada.filter(l => l.id_categoria === idFem).map(l => l.id));
+  const ligasMasc = new Set(ligasTempada.filter(l => l.id_categoria === idMasc).map(l => l.id));
+  const xornFem = new Set(d.xornadas.filter(x => ligasFem.has(x.id_liga)).map(x => x.id));
+  const xornMasc = new Set(d.xornadas.filter(x => ligasMasc.has(x.id_liga)).map(x => x.id));
+
+  const partidosFem = partidosConResultado.filter(p => xornFem.has(p.id_jornada));
+  const partidosMasc = partidosConResultado.filter(p => xornMasc.has(p.id_jornada));
+  const clubsFem = d.clubs.filter(c => c.id_categoria === idFem);
+  const clubsMasc = d.clubs.filter(c => c.id_categoria === idMasc);
+
+  pintarClasEquipos(els.feminina.equipos, puntosPorEquipo(partidosFem, clubsFem));
+  pintarClasEquipos(els.masculina.equipos, puntosPorEquipo(partidosMasc, clubsMasc));
+  pintarClasChavistas(els.feminina.chavistas, chavesPorXogador(partidosFem, d.enfrentamentos, d.chaves, d.xogadores, d.clubs), 'Xogadora');
+  pintarClasChavistas(els.masculina.chavistas, chavesPorXogador(partidosMasc, d.enfrentamentos, d.chaves, d.xogadores, d.clubs), 'Xogador');
+}
+
 async function cargarClasificacion(){
   const els = {
     feminina: { equipos: document.getElementById('clas-equipos-feminina'), chavistas: document.getElementById('clas-chavistas-feminina') },
@@ -83,7 +121,7 @@ async function cargarClasificacion(){
       { data: enfrentamentos, error: e6 }, { data: chaves, error: e7 }, { data: xogadores, error: e8 },
     ] = await Promise.all([
       sbfe.from('categorias').select('*'),
-      sbfe.from('temporadas').select('*'),
+      sbfe.from('temporadas').select('*').order('fecha_inicio', { ascending: false }),
       sbfe.from('ligas').select('*'),
       sbfe.from('jornadas').select('*'),
       sbfe.from('partidos').select('*'),
@@ -94,25 +132,13 @@ async function cargarClasificacion(){
     ]);
     for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8]) if (err) throw new Error(err.message);
 
-    const partidosConResultado = partidos.filter(p => p.resultado_local != null && p.resultado_visitante != null);
-    const tempada = tempadaActual(temporadas);
-    const idFem = categorias.find(c => c.nombre === 'femenina')?.id;
-    const idMasc = categorias.find(c => c.nombre === 'masculina')?.id;
-    const ligasTempada = ligas.filter(l => l.id_temporada === tempada?.id);
-    const ligasFem = new Set(ligasTempada.filter(l => l.id_categoria === idFem).map(l => l.id));
-    const ligasMasc = new Set(ligasTempada.filter(l => l.id_categoria === idMasc).map(l => l.id));
-    const xornFem = new Set(xornadas.filter(x => ligasFem.has(x.id_liga)).map(x => x.id));
-    const xornMasc = new Set(xornadas.filter(x => ligasMasc.has(x.id_liga)).map(x => x.id));
-
-    const partidosFem = partidosConResultado.filter(p => xornFem.has(p.id_jornada));
-    const partidosMasc = partidosConResultado.filter(p => xornMasc.has(p.id_jornada));
-    const clubsFem = clubs.filter(c => c.id_categoria === idFem);
-    const clubsMasc = clubs.filter(c => c.id_categoria === idMasc);
-
-    pintarClasEquipos(els.feminina.equipos, puntosPorEquipo(partidosFem, clubsFem));
-    pintarClasEquipos(els.masculina.equipos, puntosPorEquipo(partidosMasc, clubsMasc));
-    pintarClasChavistas(els.feminina.chavistas, chavesPorXogador(partidosFem, enfrentamentos, chaves, xogadores, clubs), 'Xogadora');
-    pintarClasChavistas(els.masculina.chavistas, chavesPorXogador(partidosMasc, enfrentamentos, chaves, xogadores, clubs), 'Xogador');
+    datosClasificacion = { categorias, temporadas, ligas, xornadas, partidos, clubs, enfrentamentos, chaves, xogadores };
+    encherSelectorTempadasClas(temporadas);
+    document.getElementById('tempada-clasificacion').addEventListener('change', ev => {
+      tempadaEscollidaClas = Number(ev.target.value);
+      pintarClasificacion();
+    });
+    pintarClasificacion();
   } catch (e) {
     const msg = `<p class="erro">Non se puido cargar a clasificación: ${escFe(e.message)}</p>`;
     for (const l of Object.values(els)) l.equipos.innerHTML = l.chavistas.innerHTML = msg;
