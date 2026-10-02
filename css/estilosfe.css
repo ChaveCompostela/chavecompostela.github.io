@@ -395,7 +395,26 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 /* Líder: o equipo con máis puntos e o xogador con máis chaves (sen empate) */
 .marcador-puntos.marcador-lider{color:#1b8a3a}
 .marcador-chaves.marcador-lider{color:#1b8a3a}
-}
 
 .marcador-add:active{background:var(--raia)}
 .marcador-add[hidden]{display:none}
+.marcador-add{grid-column:1 / -1}
+
+/* Marcador: panel de carga dun partido real e de envío do resultado */
+.marcador-carga{
+  flex:none;background:var(--superficie);border:1px solid var(--raia);border-radius:10px;
+  padding:10px;margin:0 0 8px;display:flex;flex-direction:column;gap:8px;
+}
+.marcador-carga label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:var(--mut)}
+.marcador-carga select{
+  font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--raia);border-radius:8px;
+  background:var(--fondo);color:var(--texto);
+}
+.marcador-carga-bot{display:flex;gap:8px}
+.marcador-carga-bot button{
+  flex:1;padding:8px 0;border-radius:8px;border:1px solid var(--raia);background:var(--fondo);
+  font-size:13px;font-weight:700;color:var(--texto);
+}
+.marcador-pri{background:var(--granate);color:#fff;border-color:var(--granate) !important}
+@media (prefers-color-scheme:dark){.marcador-pri{background:var(--ouro-claro);color:#241e19;border-color:var(--ouro-claro) !important}}
+#mk-enviar-info{text-align:left;font-size:13px}
