@@ -1,12 +1,17 @@
 // Resultados pendientes: lo que llega desde el Marcador público (sin iniciar sesión)
 // se guarda en "resultados_pendientes" a la espera de que alguien con permiso lo revise.
-// Validar copia el marcador y las chaves a las tablas definitivas y recalcula el resultado
-// del partido; descartar borra el pendiente sin aplicarlo.
+// Editar corrige el marcador o las chaves antes de validar; validar copia los datos a las
+// tablas definitivas y recalcula el resultado del partido; descartar borra el pendiente
+// sin aplicarlo.
+
+let pendientesData = [];
+let editandoPendienteId = null;
 
 async function vistaPendientes(){
   $('#main').innerHTML = 'Cargando…';
   const { data, error } = await sb.from('resultados_pendientes').select('*').order('enviado_en', { ascending: true });
   if (error) { $('#main').innerHTML = `<p class="mut">Error: ${esc(error.message)}</p>`; return; }
+  editandoPendienteId = null;
   pintarPendientes(data || []);
 }
 
@@ -30,6 +35,25 @@ function tarjetaPendiente(f){
   const ctx = contextoPendiente(f.id_enfrentamiento);
   const parLocal = ctx.eps.filter(x => x.lado === 'local').map(x => nomeParejaPendiente(x.id_pareja)).join(' · ') || '—';
   const parVisit = ctx.eps.filter(x => x.lado === 'visitante').map(x => nomeParejaPendiente(x.id_pareja)).join(' · ') || '—';
+
+  if (editandoPendienteId === f.id) {
+    const camposChaves = (f.chaves || []).map(c =>
+      `<label>${esc(lab('jugadores', c.id_jugador))} · chaves<input type="number" min="0" id="pend-ch-${f.id}-${c.id_jugador}" value="${esc(c.chaves)}"></label>`
+    ).join('');
+    return `<div class="card">
+      <h3>${esc(ctx.titulo)}</h3>
+      <p class="mut">${esc(parLocal)} vs ${esc(parVisit)}</p>
+      <label>Marcador local<input type="number" min="0" id="pend-ml-${f.id}" value="${esc(f.marcador_local)}"></label>
+      <label>Marcador visitante<input type="number" min="0" id="pend-mv-${f.id}" value="${esc(f.marcador_visitante)}"></label>
+      ${camposChaves}
+      <p class="mut" id="pend-err-${f.id}"></p>
+      <div class="acc">
+        <button class="pri" onclick="guardarEdicionPendiente(${f.id})">Guardar cambios</button>
+        <button onclick="cancelarEdicionPendiente()">Cancelar</button>
+      </div>
+    </div>`;
+  }
+
   const filasChaves = (f.chaves || [])
     .map(c => `<tr><td>${esc(lab('jugadores', c.id_jugador))}</td><td>${esc(c.chaves)}</td></tr>`).join('');
   return `<div class="card">
@@ -39,17 +63,42 @@ function tarjetaPendiente(f){
     ${filasChaves ? `<table><thead><tr><th>Jugador/a</th><th>Chaves</th></tr></thead><tbody>${filasChaves}</tbody></table>` : ''}
     <div class="acc">
       <button class="pri" onclick="validarPendiente(${f.id})">Validar</button>
+      <button onclick="editarPendiente(${f.id})">Editar</button>
       <button class="del" onclick="descartarPendiente(${f.id})">Descartar</button>
     </div>
   </div>`;
 }
 
 function pintarPendientes(filas){
+  pendientesData = filas;
   if (!filas.length) {
     $('#main').innerHTML = `<h2>Resultados pendientes</h2><p class="mut">No hay resultados pendientes de validar.</p>`;
     return;
   }
   $('#main').innerHTML = `<h2>Resultados pendientes (${filas.length})</h2>` + filas.map(tarjetaPendiente).join('');
+}
+
+function editarPendiente(id){ editandoPendienteId = id; pintarPendientes(pendientesData); }
+function cancelarEdicionPendiente(){ editandoPendienteId = null; pintarPendientes(pendientesData); }
+
+async function guardarEdicionPendiente(id){
+  const f = pendientesData.find(x => x.id === id);
+  if (!f) return;
+  const ml = Number($('#pend-ml-' + id).value);
+  const mv = Number($('#pend-mv-' + id).value);
+  const chaves = (f.chaves || []).map(c => ({
+    id_jugador: c.id_jugador,
+    chaves: Number($(`#pend-ch-${id}-${c.id_jugador}`).value) || 0,
+  }));
+  const { error } = await sb.from('resultados_pendientes')
+    .update({ marcador_local: ml, marcador_visitante: mv, chaves })
+    .eq('id', id);
+  if (error) {
+    const err = document.getElementById('pend-err-' + id);
+    if (err) err.textContent = 'Error: ' + error.message;
+    return;
+  }
+  await vistaPendientes();
 }
 
 // Recalcula el resultado (partidas ganadas por cada bando) de un partido a partir
