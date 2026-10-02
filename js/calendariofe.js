@@ -46,7 +46,7 @@ function pintarCalendario(cont, , partidos, clubs){
   if (!.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai  publicadas.</p>'; return; }
 
   let html = '';
-  for (const x of xornadas.slice().sort((a, b) => b.numero - a.numero))
+  for (const x of xornadas.slice().sort((a, b) => b.numero - a.numero)) {
     html += `<h2 class="calendario-xornada">Xornada ${x.numero}</h2>`;
     const ps = partidos.filter(p => p.id_jornada === x.id);
     if (!ps.length) { html += '<p class="baleiro">Aínda non hai partidos nesta xornada.</p>'; continue; }
