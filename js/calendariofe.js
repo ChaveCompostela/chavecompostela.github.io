@@ -42,7 +42,7 @@ function filaPartido(p, clubs){
   </div>`;
 }
 
-function pintarCalendario(cont, , partidos, clubs){
+function pintarCalendario(cont, partidos, clubs){
   if (!.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai  publicadas.</p>'; return; }
 
   let html = '';
