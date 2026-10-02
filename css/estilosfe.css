@@ -93,6 +93,15 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .vista[hidden]{display:none}
 .vista-liga{overflow:hidden}
 .tit-vista{flex:none;font-size:21px;margin:0 0 12px;color:var(--granate)}
+
+/* Título xunto ao selector de tempada, na mesma liña */
+.tit-fila{flex:none;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px}
+.tit-fila .tit-vista{margin:0}
+.tit-tempada{
+  flex:none;max-width:45%;font:inherit;font-size:13px;font-weight:700;
+  padding:6px 8px;border:1px solid var(--raia);border-radius:8px;
+  background:var(--superficie);color:var(--texto);
+}
 @media (prefers-color-scheme:dark){.tit-vista{color:var(--ouro-claro)}}
 
 /* Selector Feminina / Masculina */
@@ -233,15 +242,6 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   .clas-chaves{color:var(--ouro-claro)}
 }
 
-/* Partidos: selector de tempada */
-.fila-tempada{flex:none;display:flex;align-items:center;gap:10px;margin:0 0 12px}
-.fila-tempada label{font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
-.fila-tempada select{
-  flex:1;min-width:0;font:inherit;font-size:14px;padding:8px 10px;
-  background:var(--superficie);color:var(--texto);
-  border:1px solid var(--raia);border-radius:10px;
-}
-
 /* Tarxeta de partido plegable (mesmo patrón ca .equipo-card) */
 .partido-card-partido{
   background:var(--superficie);border:1px solid var(--raia);border-left:4px solid var(--ouro);
@@ -284,6 +284,11 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   padding:4px 10px;border:1px solid var(--raia);border-radius:999px;background:var(--superficie);
 }
 .marcador-reset:active{background:var(--raia)}
+.marcador-icon{
+  width:32px;height:32px;padding:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;line-height:1;
+}
 
 .marcador-campo{
   flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
