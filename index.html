@@ -56,15 +56,14 @@
     </section>
 
 <section id="vista-partidos" class="vista vista-liga" hidden>
-  <div class="fila-cabecera">
-    <h1 class="tit-vista">Partidos</h1>
-    <label class="sel-tempada">
-      <select id="tempada-partidos"></select>
-    </label>
-  </div>
+  <h1 class="tit-vista">Partidos</h1>
   <div class="segmentado">
     <button class="seg activa" data-liga="feminina">Liga feminina</button>
     <button class="seg" data-liga="masculina">Liga masculina</button>
+  </div>
+  <div class="fila-tempada">
+    <label for="tempada-partidos">Tempada</label>
+    <select id="tempada-partidos"></select>
   </div>
   <div class="paneis-liga">
     <div class="panel-liga" data-liga="feminina">
@@ -82,43 +81,38 @@
 
 
     <section id="vista-clasificacion" class="vista vista-liga" hidden>
-  <div class="fila-cabecera">
-    <h1 class="tit-vista">Clasificación</h1>
-    <label class="sel-tempada">
-      <select id="tempada-clasificacion"></select>
-    </label>
-  </div>
-  <div class="segmentado">
-    <button class="seg activa" data-liga="feminina">Liga feminina</button>
-    <button class="seg" data-liga="masculina">Liga masculina</button>
-  </div>
-  <div class="paneis-liga">
-    <div class="panel-liga" data-liga="feminina">
-      <div class="split">
-        <div class="split-metade">
-          <h3 class="tit-sub">Clasificación por equipos</h3>
-          <div class="scroll-area" id="clas-equipos-feminina"><p class="baleiro">Cargando clasificación…</p></div>
+      <h1 class="tit-vista">Clasificación</h1>
+      <div class="segmentado">
+        <button class="seg activa" data-liga="feminina">Liga feminina</button>
+        <button class="seg" data-liga="masculina">Liga masculina</button>
+      </div>
+      <div class="paneis-liga">
+        <div class="panel-liga" data-liga="feminina">
+          <div class="split">
+            <div class="split-metade">
+              <h3 class="tit-sub">Clasificación por equipos</h3>
+              <div class="scroll-area" id="clas-equipos-feminina"><p class="baleiro">Cargando clasificación…</p></div>
+            </div>
+            <div class="split-metade">
+              <h3 class="tit-sub">Máximas chavistas</h3>
+              <div class="scroll-area" id="clas-chavistas-feminina"><p class="baleiro">Cargando clasificación…</p></div>
+            </div>
+          </div>
         </div>
-        <div class="split-metade">
-          <h3 class="tit-sub">Máximas chavistas</h3>
-          <div class="scroll-area" id="clas-chavistas-feminina"><p class="baleiro">Cargando clasificación…</p></div>
+        <div class="panel-liga" data-liga="masculina" hidden>
+          <div class="split">
+            <div class="split-metade">
+              <h3 class="tit-sub">Clasificación por equipos</h3>
+              <div class="scroll-area" id="clas-equipos-masculina"><p class="baleiro">Cargando clasificación…</p></div>
+            </div>
+            <div class="split-metade">
+              <h3 class="tit-sub">Máximos chavistas</h3>
+              <div class="scroll-area" id="clas-chavistas-masculina"><p class="baleiro">Cargando clasificación…</p></div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="panel-liga" data-liga="masculina" hidden>
-      <div class="split">
-        <div class="split-metade">
-          <h3 class="tit-sub">Clasificación por equipos</h3>
-          <div class="scroll-area" id="clas-equipos-masculina"><p class="baleiro">Cargando clasificación…</p></div>
-        </div>
-        <div class="split-metade">
-          <h3 class="tit-sub">Máximos chavistas</h3>
-          <div class="scroll-area" id="clas-chavistas-masculina"><p class="baleiro">Cargando clasificación…</p></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+    </section>
 
     <section id="vista-calendario" class="vista vista-liga" hidden>
       <h1 class="tit-vista">Calendario</h1>
@@ -384,15 +378,15 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/configfe.js"></script>          <!-- conexión Supabase -->
-<script src="js/novasfe.js"></script>           <!-- utilidades: escFe, horaFe, tituloDia, chaveDia -->
-<script src="js/calendariofe.js"></script>      <!-- tempadaActual + vista Calendario -->
-<script src="js/partidosfe.js?v=2"></script>    <!-- vista Partidos -->
-<script src="js/clasificacionfe.js"></script>   <!-- vista Clasificación -->
-<script src="js/equiposfe.js"></script>         <!-- vista Equipos -->
-<script src="js/marcadorfe.js"></script>        <!-- vista Marcador -->
-<script src="js/marcadorcargafe.js"></script>   <!-- carga de partido en Marcador -->
-<script src="js/appfe.js"></script>             <!-- navegación, menú, tabs (al final) -->
+<script src="js/configfe.js"></script>
+<script src="js/novasfe.js"></script>
+<script src="js/calendariofe.js"></script>
+<script src="js/clasificacionfe.js"></script>
+<script src="js/equiposfe.js"></script>
+<script src="js/partidosfe.js?v=2"></script>
+<script src="js/marcadorfe.js"></script>
+<script src="js/marcadorcargafe.js"></script>
+<script src="js/appfe.js"></script>
 
 </body>
 </html>
