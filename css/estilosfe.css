@@ -405,6 +405,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
   flex:none;background:var(--superficie);border:1px solid var(--raia);border-radius:10px;
   padding:10px;margin:0 0 8px;display:flex;flex-direction:column;gap:8px;
 }
+.marcador-carga[hidden]{display:none}
 .marcador-carga label{display:flex;flex-direction:column;gap:3px;font-size:12px;font-weight:700;color:var(--mut)}
 .marcador-carga select{
   font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--raia);border-radius:8px;
