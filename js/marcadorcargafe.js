@@ -187,11 +187,13 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
 
 $mk('#mk-enviar-cancelar').addEventListener('click', rematarCargaPartida);
 
-// Volve ao modo libre: equipos A/B editables outra vez, e C/D dispoñibles para engadir.
+// Volve ao modo libre: os 4 equipos quedan coma ao abrir a páxina (A e B editables e
+// visibles, C e D ocultos e a cero), e péchase calquera panel de carga aberto.
 function rematarCargaPartida(){
-  ['mk-a', 'mk-b'].forEach((idEquipo, i) => {
+  ['mk-a', 'mk-b', 'mk-c', 'mk-d'].forEach((idEquipo, i) => {
     const eq = document.getElementById(idEquipo);
-    const letra = i === 0 ? 'A' : 'B';
+    if (!eq) return;
+    const letra = 'ABCD'[i];
     const nomeInput = eq.querySelector('.marcador-nome');
     nomeInput.readOnly = false; nomeInput.value = 'Equipo ' + letra;
     eq.querySelector('.marcador-puntos').textContent = '0';
@@ -202,8 +204,17 @@ function rematarCargaPartida(){
       fila.querySelector('.marcador-chaves').textContent = '0';
     });
   });
+  // C e D sempre ocultos ao reiniciar; os seus botóns de "+ Engadir" volven estar dispoñibles.
+  ['mk-c', 'mk-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
   ['mk-add-c', 'mk-add-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
+
   partidaCargada = null;
+  $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = true;
   if (typeof actualizarLideres === 'function') actualizarLideres();
 }
+
+// "Salir": se estabamos a cargar ou anotando unha partida real, sae dese modo e volve
+// aos marcadores libres; se xa estabamos en modo libre, simplemente reinicia a páxina
+// (os 4 equipos, non só os puntos) ao seu estado inicial.
+$mk('#mk-salir').addEventListener('click', rematarCargaPartida);
