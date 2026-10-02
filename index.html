@@ -56,14 +56,13 @@
     </section>
 
 <section id="vista-partidos" class="vista vista-liga" hidden>
-  <h1 class="tit-vista">Partidos</h1>
+  <div class="tit-fila">
+    <h1 class="tit-vista">Partidos</h1>
+    <select id="tempada-partidos" class="tit-tempada"></select>
+  </div>
   <div class="segmentado">
     <button class="seg activa" data-liga="feminina">Liga feminina</button>
     <button class="seg" data-liga="masculina">Liga masculina</button>
-  </div>
-  <div class="fila-tempada">
-    <label for="tempada-partidos">Tempada</label>
-    <select id="tempada-partidos"></select>
   </div>
   <div class="paneis-liga">
     <div class="panel-liga" data-liga="feminina">
@@ -81,7 +80,10 @@
 
 
     <section id="vista-clasificacion" class="vista vista-liga" hidden>
-      <h1 class="tit-vista">Clasificación</h1>
+      <div class="tit-fila">
+        <h1 class="tit-vista">Clasificación</h1>
+        <select id="tempada-clasificacion" class="tit-tempada"></select>
+      </div>
       <div class="segmentado">
         <button class="seg activa" data-liga="feminina">Liga feminina</button>
         <button class="seg" data-liga="masculina">Liga masculina</button>
@@ -160,8 +162,8 @@
   <div class="marcador-bar">
     <h1 class="tit-vista" style="margin:0">Marcador</h1>
     <button id="mk-cargar" class="marcador-reset">🔒 Cargar partido</button>
-    <button id="mk-reset" class="marcador-reset">↺ Reiniciar</button>
-    <button id="mk-salir" class="marcador-reset">✕ Saír</button>
+    <button id="mk-reset" class="marcador-reset marcador-icon" aria-label="Reiniciar" title="Reiniciar">↺</button>
+    <button id="mk-salir" class="marcador-reset marcador-icon" aria-label="Saír" title="Saír">✕</button>
   </div>
 
   <!-- Selector de partido/partida real, oculto ata premer "Cargar partido" -->
