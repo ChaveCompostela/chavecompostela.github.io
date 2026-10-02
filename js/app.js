@@ -31,12 +31,14 @@ const ICONOS = {
   enfrentamientos:'<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>',
   enfrentamiento_parejas:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   chaves_enfrentamiento:'<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/>',
-  copias:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>'
+  copias:'<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>',
+  pendientes:'<path d="M3 13h4l2 3h6l2-3h4"/><path d="M5 13 3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2l-2 6"/><path d="M3 13v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6"/>'
 };
 const icono = k => `<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONOS[k]}</svg>`;
-const MENU = ['partidos','jornadas','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas'];
+const MENU = ['pendientes','partidos','jornadas','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas'];
 const MENU_AVANZADO = ['enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento','copias'];
-const nombreSeccion = k => k === 'copias' ? 'Copia de seguridad' : T[k].t.replace(' (avanzado)', '');
+const NOMBRES_PROPIOS = { pendientes: 'Resultados pendientes', copias: 'Copia de seguridad' };
+const nombreSeccion = k => NOMBRES_PROPIOS[k] || T[k].t.replace(' (avanzado)', '');
 
 async function start(){
   $('#app').innerHTML = `<header><button class="inicio" onclick="vistaInicio()" aria-label="Inicio" title="Inicio"><img class="logo-s" src="icons/logo-chave.svg" alt=""></button>
@@ -59,7 +61,7 @@ function vistaInicio(){
   $('#main').innerHTML = `<h2 class="c">Liga de chave de Santiago</h2><p class="mut c">¿Qué quieres gestionar?</p><div class="rejilla">${MENU.map(tarjeta).join('')}</div>
     <h3>Avanzado</h3><div class="rejilla">${MENU_AVANZADO.map(tarjeta).join('')}</div>`;
 }
-function show(t){ cur = t; msg(''); if (t === 'copias') return vistaCopias(); listar(); }
+function show(t){ cur = t; msg(''); if (t === 'copias') return vistaCopias(); if (t === 'pendientes') return vistaPendientes(); listar(); }
 
 function celda(r, k, ty){
   const v = fmt(r[k], ty);
