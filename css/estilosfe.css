@@ -234,31 +234,12 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 }
 
 /* Partidos: selector de tempada */
-/* Cabeceira con título + selector de tempada na misma línea */
-.fila-cabecera{
-  flex:none;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  margin:0 0 12px;
-}
-.fila-cabecera .tit-vista{
-  margin:0;
-}
-.sel-tempada{
-  flex:none;
-}
-.sel-tempada select{
-  font:inherit;
-  font-size:13px;
-  font-weight:700;
-  padding:6px 10px;
-  background:var(--superficie);
-  color:var(--texto);
-  border:1px solid var(--raia);
-  border-radius:10px;
-  max-width:180px;
+.fila-tempada{flex:none;display:flex;align-items:center;gap:10px;margin:0 0 12px}
+.fila-tempada label{font-size:13px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.fila-tempada select{
+  flex:1;min-width:0;font:inherit;font-size:14px;padding:8px 10px;
+  background:var(--superficie);color:var(--texto);
+  border:1px solid var(--raia);border-radius:10px;
 }
 
 /* Tarxeta de partido plegable (mesmo patrón ca .equipo-card) */
