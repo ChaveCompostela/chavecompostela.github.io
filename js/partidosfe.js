@@ -131,7 +131,7 @@ function pintarLista(cont, xornadas, partidos, datos){
     return;
   }
   let html = '';
-  for (const x of xornadas.slice().sort((a, b) => a.numero - b.numero)) {
+  for (const x of xornadas.slice().sort((a, b) => b.numero - a.numero)) {
     const ps = partidos.filter(p => p.id_jornada === x.id);
     if (!ps.length) continue;
     html += `<h2 class="calendario-xornada">Xornada ${x.numero}</h2>`;
