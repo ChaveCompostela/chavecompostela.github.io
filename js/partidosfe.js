@@ -127,7 +127,7 @@ function tarxetaPartido(p, clubs, datos){
 // ---------- Render: lista por xornada ----------
 function pintarLista(cont, xornadas, partidos, datos){
   if (!xornadas.length || !partidos.length) {
-    cont.innerHTML = '<p class="baleiro">Aínda non hai partidos nesta tempada.</p>';
+    cont.innerHTML = '<p class="baleiro">Aínda non hai partidos finalizados nesta tempada.</p>';
     return;
   }
   let html = '';
@@ -190,7 +190,8 @@ function pintarLiga(datos, liga){
   const idsLigas = new Set(ligasTemp.map(l => l.id));
   const xornadas = datos.xornadas.filter(x => idsLigas.has(x.id_liga));
   const idsXorn = new Set(xornadas.map(x => x.id));
-  const partidos = datos.partidos.filter(p => idsXorn.has(p.id_jornada));
+  // Só os partidos xa finalizados
+  const partidos = datos.partidos.filter(p => idsXorn.has(p.id_jornada) && p.estado === 'finalizado');
   pintarLista(cont, xornadas, partidos, datos);
 }
 
