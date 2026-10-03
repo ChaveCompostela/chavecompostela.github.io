@@ -205,7 +205,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partido-card:last-child{margin-bottom:0}
 .partido-fila{display:flex;align-items:center;gap:8px;padding:9px 0}
 .partido-fila + .partido-fila{border-top:1px solid var(--raia)}
-.partido-hora{flex:none;width:40px;font-size:12px;color:var(--mut)}
+.partido-hora{flex:none;width:44px;font-size:12px;color:var(--mut)}
 .partido-equipo{flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .partido-local{text-align:right}
 .partido-visitante{text-align:left}
