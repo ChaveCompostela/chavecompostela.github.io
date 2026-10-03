@@ -17,6 +17,13 @@ function contedorPartidos(liga){
   return document.getElementById('partidos-' + liga);
 }
 
+// Só a data (día/mes), sen hora: nesta pestaña os partidos xa están finalizados.
+function dataCurtaP(iso){
+  const d = new Date(iso);
+  const p = n => String(n).padStart(2, '0');
+  return `${p(d.getDate())}/${p(d.getMonth() + 1)}`;
+}
+
 function nomeClubP(clubs, id){
   if (!id) return 'Sen club';
   return clubs.find(c => c.id === id)?.nombre || `Club #${id}`;
@@ -108,7 +115,7 @@ function tarxetaPartido(p, clubs, datos){
   const marcador = res
     ? `<span class="partido-resultado">${resultadoConGanador(p.resultado_local, p.resultado_visitante)}</span>`
     : `<span class="partido-resultado partido-pendente">-</span>`;
-  const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
+  const hora = p.fecha_hora ? dataCurtaP(p.fecha_hora) : '';
 
   const chevron = `<svg class="partido-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
 
