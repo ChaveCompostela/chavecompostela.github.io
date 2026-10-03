@@ -37,14 +37,36 @@ function pintarClasChavistas(cont, filas, etiqueta){
     + filas.map((f, i) => filaChavista(i + 1, f.nome, f.club, f.chaves)).join('');
 }
 
-function puntosPorEquipo(partidosLiga, clubsLiga){
-  const puntos = {};
+// Puntos por "equipo": un club rexistrado, ou, se un bando non ten club, a parella que
+// o representa (coma "Laura&Carlota"), usando o seu id de parella coma clave estable para
+// que sume sempre na mesma fila aínda que xogue varios partidos. Os clubs da liga aparecen
+// sempre, aínda con 0 puntos; as parellas sen club só aparecen se xa puntuaron algo.
+function puntosPorEquipo(partidosLiga, clubsLiga, datos){
+  const puntos = {}, nomes = {};
+  for (const c of clubsLiga) { puntos['c' + c.id] = 0; nomes['c' + c.id] = c.nombre; }
+
+  const claveLado = (p, lado) => {
+    const idClub = lado === 'local' ? p.id_club_local : p.id_club_visitante;
+    if (idClub) return 'c' + idClub;
+    const pa = parellaRepresentativa(p, lado, datos);
+    return pa ? 'p' + pa.id : null;
+  };
+
   for (const p of partidosLiga) {
-    if (p.id_club_local) puntos[p.id_club_local] = (puntos[p.id_club_local] || 0) + p.resultado_local;
-    if (p.id_club_visitante) puntos[p.id_club_visitante] = (puntos[p.id_club_visitante] || 0) + p.resultado_visitante;
+    const kLocal = claveLado(p, 'local');
+    if (kLocal) {
+      puntos[kLocal] = (puntos[kLocal] || 0) + p.resultado_local;
+      if (!(kLocal in nomes)) nomes[kLocal] = nomeLadoPartido(p, 'local', datos);
+    }
+    const kVisit = claveLado(p, 'visitante');
+    if (kVisit) {
+      puntos[kVisit] = (puntos[kVisit] || 0) + p.resultado_visitante;
+      if (!(kVisit in nomes)) nomes[kVisit] = nomeLadoPartido(p, 'visitante', datos);
+    }
   }
-  return clubsLiga
-    .map(c => ({ nome: c.nombre, puntos: puntos[c.id] || 0 }))
+
+  return Object.keys(puntos)
+    .map(k => ({ nome: nomes[k], puntos: puntos[k] }))
     .sort((a, b) => b.puntos - a.puntos || a.nome.localeCompare(b.nome));
 }
 
@@ -99,8 +121,8 @@ function pintarClasificacion(){
   const clubsFem = d.clubs.filter(c => c.id_categoria === idFem);
   const clubsMasc = d.clubs.filter(c => c.id_categoria === idMasc);
 
-  pintarClasEquipos(els.feminina.equipos, puntosPorEquipo(partidosFem, clubsFem));
-  pintarClasEquipos(els.masculina.equipos, puntosPorEquipo(partidosMasc, clubsMasc));
+  pintarClasEquipos(els.feminina.equipos, puntosPorEquipo(partidosFem, clubsFem, d));
+  pintarClasEquipos(els.masculina.equipos, puntosPorEquipo(partidosMasc, clubsMasc, d));
   pintarClasChavistas(els.feminina.chavistas, chavesPorXogador(partidosFem, d.enfrentamentos, d.chaves, d.xogadores, d.clubs), 'Xogadora');
   pintarClasChavistas(els.masculina.chavistas, chavesPorXogador(partidosMasc, d.enfrentamentos, d.chaves, d.xogadores, d.clubs), 'Xogador');
 }
@@ -118,7 +140,8 @@ async function cargarClasificacion(){
     const [
       { data: categorias, error: e1 }, { data: temporadas, error: e0 }, { data: ligas, error: e2 },
       { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
-      { data: enfrentamentos, error: e6 }, { data: chaves, error: e7 }, { data: xogadores, error: e8 },
+      { data: enfrentamentos, error: e6 }, { data: chaves, error: e7 }, { data: xogadoresActivos, error: e8 },
+      { data: enfrentamiento_parejas, error: e9 }, { data: parejas, error: e10 }, { data: todosXogadores, error: e11 },
     ] = await Promise.all([
       sbfe.from('categorias').select('*'),
       sbfe.from('temporadas').select('*').order('fecha_inicio', { ascending: false }),
@@ -126,13 +149,22 @@ async function cargarClasificacion(){
       sbfe.from('jornadas').select('*'),
       sbfe.from('partidos').select('*'),
       sbfe.from('clubs').select('*').eq('activo', true),
-      sbfe.from('enfrentamientos').select('id,id_partido'),
+      sbfe.from('enfrentamientos').select('id,id_partido,numero'),
       sbfe.from('chaves_enfrentamiento').select('*'),
       sbfe.from('jugadores').select('id,nombre,apellidos,id_club').eq('activo', true),
+      sbfe.from('enfrentamiento_parejas').select('*'),
+      sbfe.from('parejas').select('*'),
+      sbfe.from('jugadores').select('id,nombre'),
     ]);
-    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8]) if (err) throw new Error(err.message);
+    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]) if (err) throw new Error(err.message);
 
-    datosClasificacion = { categorias, temporadas, ligas, xornadas, partidos, clubs, enfrentamentos, chaves, xogadores };
+    // xogadores: a lista completa (todosXogadores) fai falta para nomear as parellas sen club
+    // aínda que algún dos seus membros estivese dado de baixa; a lista de activos (xogadores)
+    // séguese a usar para os máximos chavistas, coma antes.
+    datosClasificacion = {
+      categorias, temporadas, ligas, xornadas, partidos, clubs, enfrentamentos, chaves,
+      xogadores: xogadoresActivos, enfrentamiento_parejas, parejas, jugadores: todosXogadores,
+    };
     encherSelectorTempadasClas(temporadas);
     document.getElementById('tempada-clasificacion').addEventListener('change', ev => {
       tempadaEscollidaClas = Number(ev.target.value);

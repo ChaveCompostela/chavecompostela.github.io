@@ -55,7 +55,7 @@ async function abrirPanelCarga(){
       const x = d.xornadas.find(j => j.id === p.id_jornada);
       const cat = nomeCat(catDaLiga(x?.id_liga));
       const data = p.fecha_hora ? ` · ${new Date(p.fecha_hora).toLocaleDateString('gl-ES')}` : '';
-      return `<option value="${p.id}">X${x?.numero ?? '?'} (${cat}) · ${escFe(nomeClubP(d.clubs, p.id_club_local))} - ${escFe(nomeClubP(d.clubs, p.id_club_visitante))}${data}</option>`;
+      return `<option value="${p.id}">X${x?.numero ?? '?'} (${cat}) · ${escFe(nomeLadoPartido(p, 'local', d))} - ${escFe(nomeLadoPartido(p, 'visitante', d))}${data}</option>`;
     }).join('');
   } catch (e) {
     selPartido.innerHTML = '<option value="">Erro ao cargar</option>';
@@ -117,19 +117,24 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
 
   // Chaves xa gardadas (se o panel de administración xa anotara algo antes)
   const chaveDe = id => d.chaves_enfrentamiento.find(c => c.id_enfrentamiento === e.id && c.id_jugador === id)?.chaves || 0;
+  // Nome do bando: o club, se o ten; se non, o nome desta parella concreta xa cargada
+  // (máis preciso aquí có xenérico nomeLadoPartido, porque xa sabemos exactamente quen xoga).
+  const nomeBando = (idClub, pareja) => idClub ? nomeClubP(d.clubs, idClub) : (nomeParellaCurta(pareja.id, d) || 'Sen equipo');
+  const nomeLocalCargado = nomeBando(partido.id_club_local, parL);
+  const nomeVisitanteCargado = nomeBando(partido.id_club_visitante, parV);
 
   // Agocha os equipos C/D (e os botóns de engadilos): unha partida real son sempre 2 bandos
   ['mk-c', 'mk-d', 'mk-add-c', 'mk-add-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
 
-  configurarEquipoCargado('mk-a', nomeClubP(d.clubs, partido.id_club_local), [parL.id_jugador_a, parL.id_jugador_b], d, chaveDe, e.marcador_local);
-  configurarEquipoCargado('mk-b', nomeClubP(d.clubs, partido.id_club_visitante), [parV.id_jugador_a, parV.id_jugador_b], d, chaveDe, e.marcador_visitante);
+  configurarEquipoCargado('mk-a', nomeLocalCargado, [parL.id_jugador_a, parL.id_jugador_b], d, chaveDe, e.marcador_local);
+  configurarEquipoCargado('mk-b', nomeVisitanteCargado, [parV.id_jugador_a, parV.id_jugador_b], d, chaveDe, e.marcador_visitante);
 
   partidaCargada = { idEnfrentamiento };
 
   $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = false;
   $mk('#mk-enviar-info').textContent =
-    `Anotando a Partida ${e.numero} de ${nomeClubP(d.clubs, partido.id_club_local)} - ${nomeClubP(d.clubs, partido.id_club_visitante)}.`;
+    `Anotando a Partida ${e.numero} de ${nomeLocalCargado} - ${nomeVisitanteCargado}.`;
 });
 
 function configurarEquipoCargado(idEquipo, nomeClub, idsXogadores, d, chaveDe, marcadorXaGardado){

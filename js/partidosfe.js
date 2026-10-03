@@ -115,9 +115,9 @@ function tarxetaPartido(p, clubs, datos){
   return `<div class="partido-card-partido">
     <button class="partido-fila-partido" aria-expanded="false" ${abrible ? '' : 'disabled'}>
       <span class="partido-hora">${escFe(hora)}</span>
-      <span class="partido-equipo partido-local">${escFe(nomeClubP(clubs, p.id_club_local))}</span>
+      <span class="partido-equipo partido-local">${escFe(nomeLadoPartido(p, 'local', datos))}</span>
       ${marcador}
-      <span class="partido-equipo partido-visitante">${escFe(nomeClubP(clubs, p.id_club_visitante))}</span>
+      <span class="partido-equipo partido-visitante">${escFe(nomeLadoPartido(p, 'visitante', datos))}</span>
       ${chevron}
     </button>
     <div class="partido-despregable" hidden>${detallePartidoHtml(p, datos)}</div>

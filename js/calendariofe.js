@@ -19,6 +19,46 @@ function nomeClubCal(clubs, id){
   return clubs.find(c => c.id === id)?.nombre || `Club #${id}`;
 }
 
+// Nome dun bando (local/visitante) dun partido: o nome do club se o ten; se non, o
+// nome da parella que o representa, coma "Laura&Carlota" (primeiro nome de cada xogadora/xogador).
+// Cando o bando non ten club, tómase a parella da primeira partida (mesa) dese bando —
+// é a mellor pista dispoñible, xa que as parellas sen club non quedan fixadas ao partido enteiro.
+// Compartida entre Calendario, Partidos e Marcador.
+function primeiroNomeXog(id, datos){
+  const j = datos.jugadores?.find(x => x.id === id);
+  return j ? j.nombre.split(' ')[0] : null;
+}
+
+function nomeParellaCurta(idPareja, datos){
+  const pa = datos.parejas?.find(p => p.id === idPareja);
+  if (!pa) return null;
+  const n1 = primeiroNomeXog(pa.id_jugador_a, datos), n2 = primeiroNomeXog(pa.id_jugador_b, datos);
+  return n1 && n2 ? `${n1}&${n2}` : null;
+}
+
+// A parella que representa un bando sen club: a da súa primeira partida (mesa).
+// Devolve o obxecto pareja completo (para poder usar o seu id coma clave estable
+// na clasificación) ou null se aínda non ten ningunha mesa asignada.
+function parellaRepresentativa(partido, lado, datos){
+  const mesas = (datos.enfrentamientos || [])
+    .filter(e => e.id_partido === partido.id)
+    .sort((a, b) => a.numero - b.numero);
+  for (const m of mesas) {
+    const ep = (datos.enfrentamiento_parejas || []).find(x => x.id_enfrentamiento === m.id && x.lado === lado);
+    if (!ep) continue;
+    const pa = (datos.parejas || []).find(p => p.id === ep.id_pareja);
+    if (pa) return pa;
+  }
+  return null;
+}
+
+function nomeLadoPartido(partido, lado, datos){
+  const idClub = lado === 'local' ? partido.id_club_local : partido.id_club_visitante;
+  if (idClub) return nomeClubCal(datos.clubs, idClub);
+  const pa = parellaRepresentativa(partido, lado, datos);
+  return (pa && nomeParellaCurta(pa.id, datos)) || 'Sen equipo';
+}
+
 // Debuxa un resultado coa cifra do gañador destacada; a do perdedor queda coa cor normal
 // (a mesma cós nomes). Nun empate, as dúas cifras quedan coa cor normal. Compartida entre
 // o Calendario e os Partidos (equipos e partidas).
@@ -29,20 +69,20 @@ function resultadoConGanador(numLocal, numVisitante){
   return `<span${claseLocal}>${numLocal}</span> - <span${claseVisit}>${numVisitante}</span>`;
 }
 
-function filaPartido(p, clubs){
+function filaPartido(p, datos){
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
   const conResultado = p.resultado_local != null && p.resultado_visitante != null;
   const resultado = conResultado ? resultadoConGanador(p.resultado_local, p.resultado_visitante) : '-';
 
   return `<div class="partido-fila">
     <span class="partido-hora">${escFe(hora)}</span>
-    <span class="partido-equipo partido-local">${escFe(nomeClubCal(clubs, p.id_club_local))}</span>
+    <span class="partido-equipo partido-local">${escFe(nomeLadoPartido(p, 'local', datos))}</span>
     <span class="partido-resultado">${resultado}</span>
-    <span class="partido-equipo partido-visitante">${escFe(nomeClubCal(clubs, p.id_club_visitante))}</span>
+    <span class="partido-equipo partido-visitante">${escFe(nomeLadoPartido(p, 'visitante', datos))}</span>
   </div>`;
 }
 
-function pintarCalendario(cont, xornadas, partidos, clubs){
+function pintarCalendario(cont, xornadas, partidos, datos){
   if (!xornadas.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai xornadas publicadas.</p>'; return; }
 
   let html = '';
@@ -64,7 +104,7 @@ function pintarCalendario(cont, xornadas, partidos, clubs){
       const lista = grupos[chave].slice().sort((a, b) => (a.fecha_hora || '').localeCompare(b.fecha_hora || ''));
       const titulo = chave === 'sen-data' ? 'Data por confirmar' : tituloDia(lista[0].fecha_hora);
       html += `<h3 class="calendario-data">${escFe(titulo)}</h3>`;
-      html += `<div class="partido-card">${lista.map(p => filaPartido(p, clubs)).join('')}</div>`;
+      html += `<div class="partido-card">${lista.map(p => filaPartido(p, datos)).join('')}</div>`;
     }
   }
   cont.innerHTML = html;
@@ -78,6 +118,8 @@ async function cargarCalendario(){
     const [
       { data: categorias, error: e1 }, { data: temporadas, error: e0 }, { data: ligas, error: e2 },
       { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
+      { data: enfrentamientos, error: e6 }, { data: enfrentamiento_parejas, error: e7 },
+      { data: parejas, error: e8 }, { data: jugadores, error: e9 },
     ] = await Promise.all([
       sbfe.from('categorias').select('*'),
       sbfe.from('temporadas').select('*'),
@@ -85,14 +127,14 @@ async function cargarCalendario(){
       sbfe.from('jornadas').select('*'),
       sbfe.from('partidos').select('*'),
       sbfe.from('clubs').select('id,nombre'),
+      sbfe.from('enfrentamientos').select('id,id_partido,numero'),
+      sbfe.from('enfrentamiento_parejas').select('*'),
+      sbfe.from('parejas').select('*'),
+      sbfe.from('jugadores').select('id,nombre'),
     ]);
-    if (e0) throw new Error(e0.message);
-    if (e1) throw new Error(e1.message);
-    if (e2) throw new Error(e2.message);
-    if (e3) throw new Error(e3.message);
-    if (e4) throw new Error(e4.message);
-    if (e5) throw new Error(e5.message);
+    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9]) if (err) throw new Error(err.message);
 
+    const datos = { clubs, enfrentamientos, enfrentamiento_parejas, parejas, jugadores };
     const tempada = tempadaActual(temporadas);
     const idFem = categorias.find(c => c.nombre === 'femenina')?.id;
     const idMasc = categorias.find(c => c.nombre === 'masculina')?.id;
@@ -104,8 +146,8 @@ async function cargarCalendario(){
     const idsFem = new Set(xornFem.map(x => x.id));
     const idsMasc = new Set(xornMasc.map(x => x.id));
 
-    pintarCalendario(contFem, xornFem, partidos.filter(p => idsFem.has(p.id_jornada)), clubs);
-    pintarCalendario(contMasc, xornMasc, partidos.filter(p => idsMasc.has(p.id_jornada)), clubs);
+    pintarCalendario(contFem, xornFem, partidos.filter(p => idsFem.has(p.id_jornada)), datos);
+    pintarCalendario(contMasc, xornMasc, partidos.filter(p => idsMasc.has(p.id_jornada)), datos);
   } catch (e) {
     const msg = `<p class="erro">Non se puido cargar o calendario: ${escFe(e.message)}</p>`;
     contFem.innerHTML = contMasc.innerHTML = msg;
