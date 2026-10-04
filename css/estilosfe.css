@@ -426,3 +426,15 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .marcador-pri{background:var(--granate);color:#fff;border-color:var(--granate) !important}
 @media (prefers-color-scheme:dark){.marcador-pri{background:var(--ouro-claro);color:#241e19;border-color:var(--ouro-claro) !important}}
 #mk-enviar-info{text-align:left;font-size:13px}
+
+/* Normas liga feminina: escudo centrado e lista de normas */
+.normas-contido{display:flex;flex-direction:column}
+.normas-escudo{width:140px;max-width:55%;height:auto;margin:0 auto 16px;border-radius:50%}
+.normas-tit{font-size:15px;font-weight:800;color:var(--granate);text-align:center;margin:0 0 16px}
+@media (prefers-color-scheme:dark){.normas-tit{color:var(--ouro-claro)}}
+.normas-lista{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.normas-lista li{
+  background:var(--superficie);border:1px solid var(--raia);border-left:3px solid var(--ouro);
+  border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.5;color:var(--texto);
+}
+@media (prefers-color-scheme:dark){.normas-lista li{border-left-color:var(--ouro-claro)}}
