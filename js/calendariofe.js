@@ -83,12 +83,39 @@ function filaPartido(p, datos){
   </div>`;
 }
 
+// A xornada á que facer scroll ao entrar: a primeira (pola súa orde) que teña algún
+// partido con data de hoxe en diante. Se unha xornada aínda ten partidos pendentes
+// (hoxe ou despois), gaña ela aínda que exista outra posterior xa pechada no calendario.
+// Se todas as xornadas son xa pasadas, quédase na última.
+function xornadaObxectivo(xornadas, partidos){
+  if (!xornadas.length) return null;
+  const hoxe = new Date(); hoxe.setHours(0, 0, 0, 0);
+  const ordenadas = xornadas.slice().sort((a, b) => a.numero - b.numero);
+  for (const x of ordenadas) {
+    const temPendente = partidos.some(p => p.id_jornada === x.id && p.fecha_hora && new Date(p.fecha_hora) >= hoxe);
+    if (temPendente) return x.id;
+  }
+  return ordenadas[ordenadas.length - 1].id;
+}
+
+// Desprázase dentro do propio contedor (non da páxina enteira) ata a xornada indicada.
+// Se o panel aínda está oculto (display:none), o cálculo dá 0 e non fai nada — por iso
+// se volve chamar máis abaixo cando o panel pasa a estar visible.
+function desprazarAXornada(cont, idXornada){
+  if (idXornada == null) return;
+  const el = cont.querySelector(`[data-xid="${idXornada}"]`);
+  if (!el) return;
+  const delta = el.getBoundingClientRect().top - cont.getBoundingClientRect().top;
+  if (delta === 0 && cont.offsetParent === null) return;   // contedor oculto: nada que facer aínda
+  cont.scrollTop = cont.scrollTop + delta - 8;
+}
+
 function pintarCalendario(cont, xornadas, partidos, datos){
-  if (!xornadas.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai xornadas publicadas.</p>'; return; }
+  if (!xornadas.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai xornadas publicadas.</p>'; return null; }
 
   let html = '';
   for (const x of xornadas.slice().sort((a, b) => a.numero - b.numero)) {
-    html += `<h2 class="calendario-xornada">Xornada ${x.numero}</h2>`;
+    html += `<h2 class="calendario-xornada" data-xid="${x.id}">Xornada ${x.numero}</h2>`;
     const ps = partidos.filter(p => p.id_jornada === x.id);
     if (!ps.length) { html += '<p class="baleiro">Aínda non hai partidos nesta xornada.</p>'; continue; }
 
@@ -109,6 +136,10 @@ function pintarCalendario(cont, xornadas, partidos, datos){
     }
   }
   cont.innerHTML = html;
+
+  const idObxectivo = xornadaObxectivo(xornadas, partidos);
+  desprazarAXornada(cont, idObxectivo);   // funciona xa se o panel está visible
+  return idObxectivo;
 }
 
 async function cargarCalendario(){
@@ -147,8 +178,18 @@ async function cargarCalendario(){
     const idsFem = new Set(xornFem.map(x => x.id));
     const idsMasc = new Set(xornMasc.map(x => x.id));
 
-    pintarCalendario(contFem, xornFem, partidos.filter(p => idsFem.has(p.id_jornada)), datos);
-    pintarCalendario(contMasc, xornMasc, partidos.filter(p => idsMasc.has(p.id_jornada)), datos);
+    const idObxFem = pintarCalendario(contFem, xornFem, partidos.filter(p => idsFem.has(p.id_jornada)), datos);
+    const idObxMasc = pintarCalendario(contMasc, xornMasc, partidos.filter(p => idsMasc.has(p.id_jornada)), datos);
+
+    // Ao entrar, só o panel visible (feminina, por defecto) puido desprazarse de verdade;
+    // cando se cambia á outra liga, o seu panel acaba de facerse visible e hai que repetir
+    // o cálculo nese intre (un pequeno atraso abonda para que xa estea despregado).
+    document.querySelectorAll('#vista-calendario .seg').forEach(s => s.addEventListener('click', () => {
+      setTimeout(() => {
+        if (s.dataset.liga === 'feminina') desprazarAXornada(contFem, idObxFem);
+        else desprazarAXornada(contMasc, idObxMasc);
+      }, 0);
+    }));
   } catch (e) {
     const msg = `<p class="erro">Non se puido cargar o calendario: ${escFe(e.message)}</p>`;
     contFem.innerHTML = contMasc.innerHTML = msg;
