@@ -221,7 +221,8 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 
 /* Clasificación: cabeceira + filas, todas nunha soa tarxeta con scroll propio */
 .clas-cabeceira{
-  display:flex;align-items:center;gap:8px;padding:0 2px 6px;margin-bottom:4px;
+  position:sticky;top:0;z-index:1;background:var(--fondo);
+  display:flex;align-items:center;gap:8px;padding:4px 2px 6px;margin-bottom:4px;
   border-bottom:1px solid var(--raia);
   font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);
 }
