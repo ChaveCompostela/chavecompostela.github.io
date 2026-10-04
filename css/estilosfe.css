@@ -214,6 +214,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 
 /* A cifra do gañador destaca; a do perdedor queda coa cor normal (a mesma cós nomes) */
 .num-gan{color:var(--granate)}
+.num-perde{color:var(--mut)}
 @media (prefers-color-scheme:dark){
   .num-gan{color:var(--ouro-claro)}
 }
