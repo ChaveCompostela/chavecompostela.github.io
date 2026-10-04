@@ -59,13 +59,14 @@ function nomeLadoPartido(partido, lado, datos){
   return (pa && nomeParellaCurta(pa.id, datos)) || 'Sen equipo';
 }
 
-// Debuxa un resultado coa cifra do gañador destacada; a do perdedor queda coa cor normal
-// (a mesma cós nomes). Nun empate, as dúas cifras quedan coa cor normal. Compartida entre
-// o Calendario e os Partidos (equipos e partidas).
+// Debuxa un resultado coa cifra do gañador destacada e a do perdedor nun gris máis tenue,
+// para que se distingan ben. Nun empate, as dúas cifras quedan en negra forte (sen gañador
+// nin perdedor). Compartida entre o Calendario e os Partidos (equipos e partidas).
 function resultadoConGanador(numLocal, numVisitante){
   if (numLocal == null || numVisitante == null) return '-';
-  const claseLocal = numLocal > numVisitante ? ' class="num-gan"' : '';
-  const claseVisit = numVisitante > numLocal ? ' class="num-gan"' : '';
+  let claseLocal = '', claseVisit = '';
+  if (numLocal > numVisitante) { claseLocal = ' class="num-gan"'; claseVisit = ' class="num-perde"'; }
+  else if (numVisitante > numLocal) { claseVisit = ' class="num-gan"'; claseLocal = ' class="num-perde"'; }
   return `<span${claseLocal}>${numLocal}</span> - <span${claseVisit}>${numVisitante}</span>`;
 }
 
