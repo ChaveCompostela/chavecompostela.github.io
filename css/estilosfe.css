@@ -92,6 +92,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .vista{flex:1;min-height:0;display:flex;flex-direction:column}
 .vista[hidden]{display:none}
 .vista-liga{overflow:hidden}
+.vista-eiras{overflow:hidden}
 .tit-vista{flex:none;font-size:21px;margin:0 0 12px;color:var(--granate)}
 
 /* Título xunto ao selector de tempada, na mesma liña */
