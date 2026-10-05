@@ -16,8 +16,8 @@ function tituloDia(iso){
 
 function horaFe(iso){
   const d = new Date(iso);
-  try { return d.toLocaleTimeString('gl-ES', { hour: '2-digit', minute: '2-digit' }); }
-  catch (e) { return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
+  try { return d.toLocaleTimeString('gl-ES', { hour: '2-digit', minute: '2-digit', hour12: false }); }
+  catch (e) { return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }); }
 }
 
 function tarxetaEvento(ev, inst){

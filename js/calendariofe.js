@@ -74,12 +74,19 @@ function filaPartido(p, datos){
   const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
   const conResultado = p.resultado_local != null && p.resultado_visitante != null;
   const resultado = conResultado ? resultadoConGanador(p.resultado_local, p.resultado_visitante) : '-';
+  const inst = (datos.instalaciones || []).find(i => i.id === p.id_instalacion);
+  const lugar = inst
+    ? (inst.url_localizacion
+        ? `<a class="partido-lugar" href="${escFe(inst.url_localizacion)}" target="_blank" rel="noopener">${escFe(inst.nombre)} 📍</a>`
+        : `<span class="partido-lugar">${escFe(inst.nombre)}</span>`)
+    : '';
 
   return `<div class="partido-fila">
     <span class="partido-hora">${escFe(hora)}</span>
     <span class="partido-equipo partido-local">${escFe(nomeLadoPartido(p, 'local', datos))}</span>
     <span class="partido-resultado">${resultado}</span>
     <span class="partido-equipo partido-visitante">${escFe(nomeLadoPartido(p, 'visitante', datos))}</span>
+    ${lugar}
   </div>`;
 }
 
@@ -151,7 +158,7 @@ async function cargarCalendario(){
       { data: categorias, error: e1 }, { data: temporadas, error: e0 }, { data: ligas, error: e2 },
       { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
       { data: enfrentamientos, error: e6 }, { data: enfrentamiento_parejas, error: e7 },
-      { data: parejas, error: e8 }, { data: jugadores, error: e9 },
+      { data: parejas, error: e8 }, { data: jugadores, error: e9 }, { data: instalaciones, error: e10 },
     ] = await Promise.all([
       sbfe.from('categorias').select('*'),
       sbfe.from('temporadas').select('*'),
@@ -163,10 +170,11 @@ async function cargarCalendario(){
       sbfe.from('enfrentamiento_parejas').select('*'),
       sbfe.from('parejas').select('*'),
       sbfe.from('jugadores').select('id,nombre'),
+      sbfe.from('instalaciones').select('id,nombre,url_localizacion'),
     ]);
-    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9]) if (err) throw new Error(err.message);
+    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10]) if (err) throw new Error(err.message);
 
-    const datos = { clubs, enfrentamientos, enfrentamiento_parejas, parejas, jugadores };
+    const datos = { clubs, enfrentamientos, enfrentamiento_parejas, parejas, jugadores, instalaciones };
     const tempada = tempadaActual(temporadas);
     const idFem = categorias.find(c => c.nombre === 'femenina')?.id;
     const idMasc = categorias.find(c => c.nombre === 'masculina')?.id;
