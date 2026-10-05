@@ -207,6 +207,12 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .partido-fila + .partido-fila{border-top:1px solid var(--raia)}
 .partido-hora{flex:none;width:44px;font-size:12px;color:var(--mut)}
 .partido-equipo{flex:1;min-width:0;font-size:14px;font-weight:500;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.partido-lugar{
+  flex:none;max-width:72px;font-size:11px;color:var(--mut);text-decoration:none;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right;
+}
+a.partido-lugar{color:var(--granate)}
+@media (prefers-color-scheme:dark){a.partido-lugar{color:var(--ouro-claro)}}
 .partido-local{text-align:right}
 .partido-visitante{text-align:left}
 .partido-resultado{flex:none;min-width:38px;text-align:center;font-size:14px;font-weight:800;color:var(--texto)}
