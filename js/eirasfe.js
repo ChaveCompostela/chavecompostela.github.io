@@ -5,7 +5,7 @@ function tarxetaEira(i){
   const info = (i.localidad || i.num_pistas)
     ? `<div class="novas-info">
         <span class="novas-hora">${i.localidad ? escFe(i.localidad) : ''}</span>
-        <span class="novas-lugar">${i.num_pistas ? escFe(i.num_pistas + (i.num_pistas === 1 ? ' pista' : ' pistas')) : ''}</span>
+        <span class="novas-lugar">${i.num_pistas ? escFe(i.num_pistas + (i.num_pistas === 1 ? ' tiro' : ' tiros')) : ''}</span>
       </div>`
     : '';
   const ligazon = i.url_localizacion
