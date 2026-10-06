@@ -26,7 +26,7 @@ $mk('#mk-clave-input').addEventListener('keydown', e => {
 });
 
 $mk('#mk-clave-aceptar').addEventListener('click', async () => {
-  const clave = $mk('#mk-clave-input').value;
+  const clave = $mk('#mk-clave-input').value.trim();
   const msg = $mk('#mk-clave-msg');
   if (!clave) { msg.textContent = 'Escribe o contrasinal.'; msg.hidden = false; return; }
 
