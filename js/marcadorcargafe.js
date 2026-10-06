@@ -9,19 +9,43 @@ let partidaCargada = null;   // { idEnfrentamiento, xogadores: { a1,a2,b1,b2 } }
 
 const $mk = sel => document.querySelector(sel);
 
-// ---------- Botón "Cargar partido": pide a clave e, se é correcta, mostra os desplegables ----------
-$mk('#mk-cargar').addEventListener('click', async () => {
-  const clave = prompt('Contrasinal para anotar partidos:');
-  if (!clave) return;
+// ---------- Botón "Cargar partido": pide a clave (en asteriscos) e, se é correcta, mostra os desplegables ----------
+$mk('#mk-cargar').addEventListener('click', () => {
+  $mk('#mk-clave-input').value = '';
+  $mk('#mk-clave-msg').hidden = true;
+  $mk('#mk-clave-panel').hidden = false;
+  $mk('#mk-clave-input').focus();
+});
+
+$mk('#mk-clave-cancelar').addEventListener('click', () => {
+  $mk('#mk-clave-panel').hidden = true;
+});
+
+$mk('#mk-clave-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') $mk('#mk-clave-aceptar').click();
+});
+
+$mk('#mk-clave-aceptar').addEventListener('click', async () => {
+  const clave = $mk('#mk-clave-input').value;
+  const msg = $mk('#mk-clave-msg');
+  if (!clave) { msg.textContent = 'Escribe o contrasinal.'; msg.hidden = false; return; }
+
+  const boton = $mk('#mk-clave-aceptar');
+  boton.disabled = true;
   try {
     const { data: ok, error } = await sbfe.rpc('comprobar_clave_marcador', { p_clave: clave });
     if (error) throw new Error(error.message);
-    if (!ok) { alert('Contrasinal incorrecto.'); return; }
+    if (!ok) { msg.textContent = 'Contrasinal incorrecto.'; msg.hidden = false; return; }
   } catch (e) {
-    alert('Non se puido comprobar o contrasinal: ' + e.message);
+    msg.textContent = 'Non se puido comprobar o contrasinal: ' + e.message;
+    msg.hidden = false;
     return;
+  } finally {
+    boton.disabled = false;
   }
+
   claveMarcador = clave;
+  $mk('#mk-clave-panel').hidden = true;
   await abrirPanelCarga();
 });
 
@@ -216,6 +240,7 @@ function rematarCargaPartida(){
   ['mk-add-c', 'mk-add-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
 
   partidaCargada = null;
+  $mk('#mk-clave-panel').hidden = true;
   $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = true;
   if (typeof actualizarLideres === 'function') actualizarLideres();
