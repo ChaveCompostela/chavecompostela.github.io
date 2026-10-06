@@ -77,8 +77,8 @@ function filaPartido(p, datos){
   const inst = (datos.instalaciones || []).find(i => i.id === p.id_instalacion);
   const lugar = inst
     ? (inst.url_localizacion
-        ? `<a class="partido-lugar" href="${escFe(inst.url_localizacion)}" target="_blank" rel="noopener">${escFe(inst.nombre)} 📍</a>`
-        : `<span class="partido-lugar">${escFe(inst.nombre)}</span>`)
+        ? `<a class="partido-lugar" href="${escFe(inst.url_localizacion)}" target="_blank" rel="noopener" title="${escFe(inst.nombre)}">${escFe(inst.nombre)} 📍</a>`
+        : `<span class="partido-lugar" title="${escFe(inst.nombre)}">${escFe(inst.nombre)}</span>`)
     : '';
 
   return `<div class="partido-fila">
