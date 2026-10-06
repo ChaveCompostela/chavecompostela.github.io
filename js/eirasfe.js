@@ -16,7 +16,7 @@ function tarxetaEira(i){
     <h3 class="novas-tit">${escFe(i.nombre)}</h3>
     ${info}
     ${i.direccion ? `<p class="novas-desc">${escFe(i.direccion)}</p>` : ''}
-    ${i.notas ? `<p class="novas-desc">${escFe(i.notas)}</p>` : ''}
+    ${i.notas ? `<p class="novas-desc eira-notas">${escFe(i.notas)}</p>` : ''}
     ${ligazon}
   </article>`;
 }
