@@ -175,6 +175,18 @@
     <button id="mk-salir" class="marcador-reset marcador-icon" aria-label="Saír" title="Saír">✕</button>
   </div>
 
+  <!-- Contrasinal, oculto ata premer "Cargar partido"; amosa asteriscos, non o texto -->
+  <div id="mk-clave-panel" class="marcador-carga" hidden>
+    <label>Contrasinal para anotar partidos
+      <input type="password" id="mk-clave-input" autocomplete="off">
+    </label>
+    <div class="marcador-carga-bot">
+      <button id="mk-clave-aceptar" class="marcador-pri">Aceptar</button>
+      <button id="mk-clave-cancelar">Cancelar</button>
+    </div>
+    <p id="mk-clave-msg" class="erro" hidden></p>
+  </div>
+
   <!-- Selector de partido/partida real, oculto ata premer "Cargar partido" -->
   <div id="mk-carga-panel" class="marcador-carga" hidden>
     <label>Partido
