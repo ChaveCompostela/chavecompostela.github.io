@@ -47,12 +47,29 @@ function detalle(){
     <p class="mut">${esc(fmt(p.fecha_hora, 'dt'))} · ${esc(p.estado)}</p>
     <h3 id="resultado">${resultadoTxt(p)}</h3>
     ${partidas.map(partidaHtml).join('')}
-    <div class="card"><h3>Nueva partida: pareja contra pareja</h3>
-      <b>Local · ${esc(nombreLado('local'))}</b>${sinJugadores('local')}
-      ${selPareja('nl', 'local')}
-      <hr><b>Visitante · ${esc(nombreLado('visitante'))}</b>${sinJugadores('visitante')}
-      ${selPareja('nv', 'visitante')}
-      <button class="pri" style="width:100%;margin-top:10px" onclick="crearPartida()">Crear partida</button></div>`;
+    <button class="pri" id="btn-nueva-partida" style="width:100%" onclick="mostrarNuevaPartida()">+ Partida nueva</button>
+    <div id="nueva-partida" hidden>
+      <div class="card"><h3>Nueva partida: pareja contra pareja</h3>
+        <b>Local · ${esc(nombreLado('local'))}</b>${sinJugadores('local')}
+        ${selPareja('nl', 'local')}
+        <hr><b>Visitante · ${esc(nombreLado('visitante'))}</b>${sinJugadores('visitante')}
+        ${selPareja('nv', 'visitante')}
+        <button class="pri" style="width:100%;margin-top:10px" onclick="crearPartida()">Crear partida</button>
+        <button style="width:100%;margin-top:8px" onclick="ocultarNuevaPartida()">Cancelar</button>
+      </div>
+    </div>`;
+}
+
+// El formulario de nueva partida solo se ve al pulsar "+ Partida nueva". Tras crear una,
+// la pantalla se vuelve a pintar con el formulario oculto y el botón otra vez al final.
+function mostrarNuevaPartida(){
+  $('#btn-nueva-partida').hidden = true;
+  $('#nueva-partida').hidden = false;
+  $('#nueva-partida').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function ocultarNuevaPartida(){
+  $('#nueva-partida').hidden = true;
+  $('#btn-nueva-partida').hidden = false;
 }
 
 function partidaHtml(e){

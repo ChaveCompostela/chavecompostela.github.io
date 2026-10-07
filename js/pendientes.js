@@ -15,14 +15,44 @@ async function vistaPendientes(){
   pintarPendientes(data || []);
 }
 
+// Título en una sola línea: "Liga Masculina - Jornada 3 - Equipo A vs Equipo B - Partida 2".
+// Un bando sin club se nombra con los nombres de pila de la pareja de esa partida (Laura&Carlota).
 function contextoPendiente(idEnfrentamiento){
   const e = D.enfrentamientos.find(x => x.id === idEnfrentamiento);
   if (!e) return { titulo: `Partida #${idEnfrentamiento} (ya no existe)`, eps: [] };
-  const p = D.partidos.find(x => x.id === e.id_partido);
-  const nomeClub = id => id ? lab('clubs', id) : 'Sin club';
-  const titulo = p ? `${nomeClub(p.id_club_local)} vs ${nomeClub(p.id_club_visitante)} · Partida ${e.numero}` : `Partida ${e.numero}`;
   const eps = D.enfrentamiento_parejas.filter(x => x.id_enfrentamiento === idEnfrentamiento);
+  const p = D.partidos.find(x => x.id === e.id_partido);
+  if (!p) return { titulo: `Partida ${e.numero}`, idPartido: e.id_partido, eps };
+
+  const jornada = D.jornadas.find(j => j.id === p.id_jornada);
+  const liga = jornada && D.ligas.find(l => l.id === jornada.id_liga);
+  const categoria = liga && D.categorias.find(c => c.id === liga.id_categoria);
+  const nomeLiga = categoria?.nombre === 'femenina' ? 'Liga Femenina'
+    : categoria?.nombre === 'masculina' ? 'Liga Masculina' : 'Liga';
+
+  const primerNombre = id => (D.jugadores.find(j => j.id === id)?.nombre || '').split(' ')[0];
+  const nomeBando = (idClub, lado) => {
+    if (idClub) return lab('clubs', idClub);
+    const ep = eps.find(x => x.lado === lado);
+    const pa = ep && D.parejas.find(x => x.id === ep.id_pareja);
+    return pa ? `${primerNombre(pa.id_jugador_a)}&${primerNombre(pa.id_jugador_b)}` : 'Sin equipo';
+  };
+
+  const titulo = `${nomeLiga} - Jornada ${jornada?.numero ?? '?'} - ` +
+    `${nomeBando(p.id_club_local, 'local')} vs ${nomeBando(p.id_club_visitante, 'visitante')} - Partida ${e.numero}`;
   return { titulo, idPartido: e.id_partido, eps };
+}
+
+// Un partido se puede finalizar cuando TODAS sus partidas tienen resultado: ya guardado
+// en las tablas definitivas o pendiente de validar. Si aún falta alguna, no hay botón.
+function partidoListoParaFinalizar(idPartido){
+  const p = D.partidos.find(x => x.id === idPartido);
+  if (!p || p.estado === 'finalizado') return false;
+  const partidas = D.enfrentamientos.filter(e => e.id_partido === idPartido);
+  if (!partidas.length) return false;
+  return partidas.every(e =>
+    (e.marcador_local != null && e.marcador_visitante != null) ||
+    pendientesData.some(f => f.id_enfrentamiento === e.id));
 }
 
 function nomeParejaPendiente(idPareja){
@@ -65,6 +95,8 @@ function tarjetaPendiente(f){
       <button class="pri" onclick="validarPendiente(${f.id})">Validar</button>
       <button onclick="editarPendiente(${f.id})">Editar</button>
       <button class="del" onclick="descartarPendiente(${f.id})">Descartar</button>
+      ${ctx.idPartido != null && partidoListoParaFinalizar(ctx.idPartido)
+        ? `<button class="pri" onclick="finalizarPartidoPendiente(${ctx.idPartido})">Finalizar partido</button>` : ''}
     </div>
   </div>`;
 }
@@ -113,31 +145,64 @@ async function recalcularResultadoPartido(idPartido){
   await sb.from('partidos').update({ resultado_local: rl, resultado_visitante: rv }).eq('id', idPartido);
 }
 
-async function validarPendiente(id){
-  if (!confirm('¿Validar este resultado y copiarlo a las tablas definitivas?')) return;
-  msg('');
+// Copia un resultado pendiente a las tablas definitivas, recalcula el resultado del partido
+// y lo quita de pendientes. Devuelve un texto de error, o null si todo fue bien.
+async function aplicarPendiente(id){
   const { data: pend, error: e0 } = await sb.from('resultados_pendientes').select('*').eq('id', id).single();
-  if (e0) return msg('Error: ' + e0.message);
+  if (e0) return 'Error: ' + e0.message;
 
   const { error: e1 } = await sb.from('enfrentamientos')
     .update({ marcador_local: pend.marcador_local, marcador_visitante: pend.marcador_visitante })
     .eq('id', pend.id_enfrentamiento);
-  if (e1) return msg('Error al guardar el marcador: ' + e1.message);
+  if (e1) return 'Error al guardar el marcador: ' + e1.message;
 
   for (const c of (pend.chaves || [])) {
     const { error: e2 } = await sb.from('chaves_enfrentamiento')
       .upsert({ id_enfrentamiento: pend.id_enfrentamiento, id_jugador: c.id_jugador, chaves: c.chaves },
         { onConflict: 'id_enfrentamiento,id_jugador' });
-    if (e2) return msg('Error al guardar las chaves: ' + e2.message);
+    if (e2) return 'Error al guardar las chaves: ' + e2.message;
   }
 
   const enf = D.enfrentamientos.find(x => x.id === pend.id_enfrentamiento);
   if (enf) await recalcularResultadoPartido(enf.id_partido);
 
   const { error: e3 } = await sb.from('resultados_pendientes').delete().eq('id', id);
-  if (e3) return msg('Se validó, pero no se pudo quitar de pendientes: ' + e3.message);
+  if (e3) return 'Se validó, pero no se pudo quitar de pendientes: ' + e3.message;
+  return null;
+}
 
-  await Promise.all([loadTable('enfrentamientos'), loadTable('chaves_enfrentamiento'), loadTable('partidos')]);
+const recargarTrasValidar = () =>
+  Promise.all([loadTable('enfrentamientos'), loadTable('chaves_enfrentamiento'), loadTable('partidos')]);
+
+async function validarPendiente(id){
+  if (!confirm('¿Validar este resultado y copiarlo a las tablas definitivas?')) return;
+  msg('');
+  const err = await aplicarPendiente(id);
+  if (err) return msg(err);
+  await recargarTrasValidar();
+  vistaPendientes();
+}
+
+// Valida todos los resultados pendientes de ese partido y lo marca como finalizado.
+async function finalizarPartidoPendiente(idPartido){
+  const delPartido = pendientesData.filter(f => {
+    const e = D.enfrentamientos.find(x => x.id === f.id_enfrentamiento);
+    return e && e.id_partido === idPartido;
+  });
+  const aviso = delPartido.length === 1
+    ? 'Se validará el resultado pendiente de este partido'
+    : `Se validarán los ${delPartido.length} resultados pendientes de este partido`;
+  if (!confirm(`${aviso} y el partido quedará marcado como finalizado. ¿Continuar?`)) return;
+
+  msg('');
+  for (const f of delPartido) {
+    const err = await aplicarPendiente(f.id);
+    if (err) return msg(err);
+  }
+  const { error } = await sb.from('partidos').update({ estado: 'finalizado' }).eq('id', idPartido);
+  if (error) return msg('Se validaron los resultados, pero no se pudo finalizar el partido: ' + error.message);
+
+  await recargarTrasValidar();
   vistaPendientes();
 }
 
