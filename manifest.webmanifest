@@ -1,23 +1,14 @@
 {
+  "id": "/chave.html",
   "name": "Liga de chave de Santiago",
   "short_name": "Liga de chave",
-  "start_url": "chave.html",
-  "scope": "./",
+  "start_url": "/chave.html",
+  "scope": "/chave",
   "display": "standalone",
   "background_color": "#080573",
   "theme_color": "#1d6fa5",
   "icons": [
-    {
-      "src": "icons/faviconch-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/faviconch-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "/icons/faviconch-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/faviconch-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }
