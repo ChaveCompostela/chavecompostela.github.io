@@ -1,6 +1,6 @@
 // Marcador: ferramenta de anotación en directo. Todo vive en memoria (non usa Supabase),
 // así que ao recargar a páxina os marcadores volven ao seu valor inicial.
-// Destaca en dourado o equipo con máis puntos e o xogador con máis chaves,
+// Destaca en verde o equipo con máis puntos e o xogador con máis chaves,
 // sempre entre os visibles, sen empate e con valor > 0.
 
 const clamp0 = n => (n < 0 ? 0 : n);

@@ -55,6 +55,21 @@ function partidoListoParaFinalizar(idPartido){
     pendientesData.some(f => f.id_enfrentamiento === e.id));
 }
 
+// El botón "Finalizar partido" solo sale en la tarjeta del último resultado pendiente
+// de ese partido EN LLEGAR (el de enviado_en más reciente), no en la de mayor número de partida.
+function esUltimoPendienteDelPartido(f, idPartido){
+  const delPartido = pendientesData.filter(x => {
+    const e = D.enfrentamientos.find(y => y.id === x.id_enfrentamiento);
+    return e && e.id_partido === idPartido;
+  });
+  if (!delPartido.length) return false;
+  const ultimo = delPartido.reduce((a, b) => {
+    const ta = new Date(a.enviado_en).getTime(), tb = new Date(b.enviado_en).getTime();
+    return tb > ta || (tb === ta && b.id > a.id) ? b : a;
+  });
+  return ultimo.id === f.id;
+}
+
 function nomeParejaPendiente(idPareja){
   const pa = D.parejas.find(x => x.id === idPareja);
   if (!pa) return '—';
@@ -95,7 +110,7 @@ function tarjetaPendiente(f){
       <button class="pri" onclick="validarPendiente(${f.id})">Validar</button>
       <button onclick="editarPendiente(${f.id})">Editar</button>
       <button class="del" onclick="descartarPendiente(${f.id})">Descartar</button>
-      ${ctx.idPartido != null && partidoListoParaFinalizar(ctx.idPartido)
+      ${ctx.idPartido != null && partidoListoParaFinalizar(ctx.idPartido) && esUltimoPendienteDelPartido(f, ctx.idPartido)
         ? `<button class="pri" onclick="finalizarPartidoPendiente(${ctx.idPartido})">Finalizar partido</button>` : ''}
     </div>
   </div>`;
