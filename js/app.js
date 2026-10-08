@@ -146,7 +146,7 @@ async function guardar(){
     const e = $('#f_' + k); let v = ty === 'b' ? e.checked : e.value;
     if (v === '') v = null;
     else if (ty === 'n' || ty.startsWith('r:')) v = Number(v);
-    else if (ty === 'dt') v = new Date(v).toISOString();
+    else if (ty === 'dt') v = v.length === 16 ? v + ':00' : v;   // hora local tal cual (la columna es timestamp SIN zona horaria)
     o[k] = v;
   }
   const match = edit && Object.fromEntries(pkOf(cur).map(k => [k, edit[k]]));

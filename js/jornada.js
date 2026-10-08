@@ -44,7 +44,7 @@ async function anadirPartidoJ(){
   if (l && l === v) return msg('El club local y el visitante no pueden ser el mismo.');
   const { error } = await sb.from('partidos').insert({
     id_jornada: jid, id_club_local: l ? +l : null, id_club_visitante: v ? +v : null,
-    fecha_hora: f ? new Date(f).toISOString() : null, id_instalacion: i ? +i : null });
+    fecha_hora: f ? (f.length === 16 ? f + ':00' : f) : null, id_instalacion: i ? +i : null });
   if (error) return msg('Error: ' + error.message);
   msg(''); await loadTable('partidos'); vistaJornada();
 }
