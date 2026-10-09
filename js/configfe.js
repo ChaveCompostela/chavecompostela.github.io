@@ -12,3 +12,7 @@ if (typeof supabase === 'undefined') {
   try { sbfe = supabase.createClient(SUPABASE_URL, SUPABASE_KEY); }
   catch (e) { ERR_CONFIG_FE = 'Configuración de Supabase non válida: ' + e.message; }
 }
+
+// Clave PÚBLICA VAPID para os avisos push das novas (a privada NUNCA vai aquí: só nos secretos da Edge Function).
+// Xérase unha vez con: npx web-push generate-vapid-keys
+const VAPID_PUBLIC_KEY_FE = 'BJwkYmhsNvFZtfG5fT7DO95iyH0AAdefKIe41NLt2th07S8t4dotbziikmvDfjKRSNLFvA3cuYv4jC3sct6sLcc';

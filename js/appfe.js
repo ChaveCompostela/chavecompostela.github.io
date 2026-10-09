@@ -2,7 +2,7 @@
 // e selector Feminina / Masculina dentro de cada apartado. Sen conexión a datos por agora.
 
 const tabs = document.querySelectorAll('.tab');
-const menuItems = document.querySelectorAll('.menu-item');
+const menuItems = document.querySelectorAll('.menu-item[data-vista]');
 const vistas = document.querySelectorAll('.vista');
 const btnMenu = document.getElementById('btn-menu');
 const menu = document.getElementById('menu');
