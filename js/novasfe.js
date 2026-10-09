@@ -21,7 +21,8 @@ function horaFe(iso){
 }
 
 function tarxetaEvento(ev, inst){
-  const hora = horaFe(ev.fecha_inicio) + (ev.fecha_fin ? ' – ' + horaFe(ev.fecha_fin) : '');
+  // «Sin hora»: solo se sabe el día, así que non se amosa ningunha hora
+  const hora = ev.sin_hora ? '' : horaFe(ev.fecha_inicio) + (ev.fecha_fin ? ' – ' + horaFe(ev.fecha_fin) : '');
   const nomeInstalacion = inst?.nombre || '';
   const url = ev.url_localizacion || '';
   const ligazon = url
@@ -29,10 +30,11 @@ function tarxetaEvento(ev, inst){
 
   return `<article class="novas-card">
     <h3 class="novas-tit">${escFe(ev.nombre)}</h3>
-    <div class="novas-info">
+    ${(hora || nomeInstalacion) ? `<div class="novas-info">
       <span class="novas-hora">${escFe(hora)}</span>
       ${nomeInstalacion ? `<span class="novas-lugar">${escFe(nomeInstalacion)}</span>` : ''}
-    </div>
+    </div>` : ''}
+    ${ev.direccion ? `<p class="novas-dir">${escFe(ev.direccion)}</p>` : ''}
     ${ev.descripcion ? `<p class="novas-desc">${escFe(ev.descripcion)}</p>` : ''}
     ${ligazon}
   </article>`;
@@ -42,7 +44,7 @@ async function cargarNovas(){
   const cont = document.getElementById('novas-lista');
   if (ERR_CONFIG_FE) { cont.innerHTML = `<p class="erro">${escFe(ERR_CONFIG_FE)}</p>`; return; }
   try {
-    const { data: eventos, error } = await sbfe.from('eventos').select('*').order('fecha_inicio', { ascending: false });
+    const { data: eventos, error } = await sbfe.from('eventos').select('*').order('fecha_inicio', { ascending: false });   // días de máis recente a máis antigo e, dentro de cada día, hora de maior a menor
     if (error) throw new Error(error.message);
     if (!eventos.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai novas publicadas.</p>'; return; }
     const { data: instalaciones } = await sbfe.from('instalaciones').select('id,nombre');

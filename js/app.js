@@ -64,7 +64,8 @@ function vistaInicio(){
 function show(t){ cur = t; msg(''); if (t === 'copias') return vistaCopias(); if (t === 'pendientes') return vistaPendientes(); listar(); }
 
 function celda(r, k, ty){
-  const v = fmt(r[k], ty);
+  // Evento «sin hora»: solo se muestra la fecha
+  const v = ty === 'dt' && r.sin_hora && r[k] ? new Date(r[k]).toLocaleDateString('es-ES') : fmt(r[k], ty);
   if (ty === 'u') return /^https?:\/\//.test(v) ? `<a href="${esc(v)}" target="_blank" rel="noopener">📍 Ver</a>` : esc(v);
   return esc(v);
 }
@@ -89,6 +90,7 @@ function cerrar(){ $('#sheet')?.remove(); document.body.style.overflow = ''; }
 function field([k, label, ty], v){
   const id = 'f_' + k;
   if (ty === 'b') return `<label>${label}<input id="${id}" type="checkbox" ${v ?? true ? 'checked' : ''}></label>`;
+  if (ty === 'bf') return `<label>${label}<input id="${id}" type="checkbox" ${v ? 'checked' : ''}></label>`;
   if (ty.startsWith('r:')) { const t = ty.slice(2);
     return `<label>${label}<select id="${id}"><option value="">—</option>${(D[t] || []).map(r =>
       `<option value="${r.id}" ${r.id === v ? 'selected' : ''}>${esc(lab(t, r.id))}</option>`).join('')}</select></label>`; }
@@ -106,9 +108,24 @@ function abrirForm(i){
   sheet(`<h2>${edit ? 'Editar' : 'Nuevo'} · ${c.t}</h2>${c.f.map(f => field(f, edit?.[f[0]])).join('')}
     <p class="err" id="smsg"></p>
     <div class="bar"><button onclick="cerrar()">Cancelar</button><button class="pri" onclick="guardar()">Guardar</button></div>`);
+  if (cur === 'eventos') {
+    $('#f_sin_hora').addEventListener('change', aplicarSinHora);
+    aplicarSinHora();   // al editar una nova «sin hora» deja los campos solo con fecha
+  }
   if (cur === 'partidos') {
     $('#f_id_jornada').addEventListener('change', actualizarClubsPartido);
     actualizarClubsPartido();   // aplica el filtro también al editar un partido ya creado
+  }
+}
+
+// En el formulario de Eventos: con «Sin hora» marcado, Inicio y Fin pasan a pedir solo la fecha.
+function aplicarSinHora(){
+  const sin = $('#f_sin_hora').checked;
+  for (const id of ['f_fecha_inicio', 'f_fecha_fin']) {
+    const e = $('#' + id); if (!e) continue;
+    const v = e.value;
+    if (sin) { e.type = 'date'; e.value = v ? v.slice(0, 10) : ''; }
+    else { e.type = 'datetime-local'; e.value = v ? (v.length === 10 ? v + 'T00:00' : v) : ''; }
   }
 }
 
@@ -143,10 +160,10 @@ function actualizarClubsPartido(){
 async function guardar(){
   const o = {};
   for (const [k,, ty] of T[cur].f) {
-    const e = $('#f_' + k); let v = ty === 'b' ? e.checked : e.value;
+    const e = $('#f_' + k); let v = (ty === 'b' || ty === 'bf') ? e.checked : e.value;
     if (v === '') v = null;
     else if (ty === 'n' || ty.startsWith('r:')) v = Number(v);
-    else if (ty === 'dt') v = v.length === 16 ? v + ':00' : v;   // hora local tal cual (la columna es timestamp SIN zona horaria)
+    else if (ty === 'dt') v = v.length === 10 ? v + 'T00:00:00' : v.length === 16 ? v + ':00' : v;   // hora local tal cual (la columna es timestamp SIN zona horaria); solo fecha → 00:00
     o[k] = v;
   }
   const match = edit && Object.fromEntries(pkOf(cur).map(k => [k, edit[k]]));

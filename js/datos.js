@@ -1,6 +1,6 @@
 // Modelo de datos de la interfaz.
 // c = columnas visibles en el listado (por defecto todas)
-// Campos: [columna, etiqueta, tipo]  t=texto n=número d=fecha dt=fecha y hora u=url con mapa b=sí/no r:tabla=referencia e:a|b=opciones
+// Campos: [columna, etiqueta, tipo]  t=texto n=número d=fecha dt=fecha y hora u=url con mapa b=sí/no (marcado por defecto) bf=sí/no (desmarcado por defecto) r:tabla=referencia e:a|b=opciones
 const T = {
   temporadas:{t:'Temporadas',f:[['nombre','Nombre','t'],['fecha_inicio','Inicio','d'],['fecha_fin','Fin','d']],l:r=>r.nombre},
   categorias:{h:1,f:[],l:r=>r.nombre},
@@ -9,7 +9,7 @@ const T = {
   clubs:{t:'Clubs',f:[['nombre','Nombre','t'],['localidad','Localidad','t'],['id_categoria','Categoría','r:categorias'],['activo','Activo','b']],l:r=>r.nombre},
   jugadores:{t:'Jugadores',c:['nombre','apellidos','id_club'],f:[['nombre','Nombre','t'],['apellidos','Apellidos','t'],['id_club','Club (vacío = sin club)','r:clubs'],['activo','Activo','b']],l:r=>`${r.nombre} ${r.apellidos||''}`.trim()},
   instalaciones:{t:'Instalaciones',c:['nombre','localidad','num_pistas','url_localizacion'],f:[['nombre','Nombre','t'],['direccion','Dirección','t'],['localidad','Localidad','t'],['num_pistas','Nº pistas','n'],['notas','Notas','t'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
-  eventos:{t:'Eventos',c:['nombre','fecha_inicio','fecha_fin','id_instalacion','url_localizacion'],f:[['nombre','Nombre','t'],['descripcion','Descripción','t'],['fecha_inicio','Inicio','dt'],['fecha_fin','Fin','dt'],['id_instalacion','Instalación','r:instalaciones'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
+  eventos:{t:'Eventos',c:['nombre','fecha_inicio','fecha_fin','direccion','id_instalacion','url_localizacion'],f:[['nombre','Nombre','t'],['descripcion','Descripción','t'],['sin_hora','Sin hora (solo fecha)','bf'],['fecha_inicio','Inicio','dt'],['fecha_fin','Fin','dt'],['direccion','Dirección','t'],['id_instalacion','Instalación','r:instalaciones'],['url_localizacion','URL localización','u']],l:r=>r.nombre},
   parejas:{t:'Parejas',x:[['Club',r=>{const c=clubPar(r);return c?lab('clubs',c):'';}]],f:[['id_jugador_a','Jugador A','r:jugadores'],['id_jugador_b','Jugador B','r:jugadores']],l:r=>`${lab('jugadores',r.id_jugador_a)} + ${lab('jugadores',r.id_jugador_b)}`},
   partidos:{t:'Partidos',c:['fecha_hora','id_club_local','id_club_visitante','estado'],x:[['Resultado',r=>r.resultado_local!=null&&r.resultado_visitante!=null?r.resultado_local+' - '+r.resultado_visitante:'']],f:[['id_jornada','Jornada','r:jornadas'],['id_instalacion','Instalación','r:instalaciones'],['fecha_hora','Fecha y hora','dt'],['id_club_local','Club local (vacío = sin club)','r:clubs'],['id_club_visitante','Club visitante (vacío = sin club)','r:clubs'],['estado','Estado','e:programado|en_juego|finalizado|suspendido'],['resultado_local','Resultado · partidas ganadas local','n'],['resultado_visitante','Resultado · partidas ganadas visitante','n']],
     l:r=>`#${r.id} · ${r.id_club_local?lab('clubs',r.id_club_local):'sin club'} vs ${r.id_club_visitante?lab('clubs',r.id_club_visitante):'sin club'}`},
@@ -37,7 +37,7 @@ function lab(t, id){
 }
 function fmt(v, ty){
   if (v == null || v === '') return '';
-  if (ty === 'b') return v ? 'Sí' : 'No';
+  if (ty === 'b' || ty === 'bf') return v ? 'Sí' : 'No';
   if (ty === 'dt') return new Date(v).toLocaleString('es-ES', {dateStyle:'short', timeStyle:'short'});
   if (ty.startsWith('r:')) return lab(ty.slice(2), v);
   return String(v);
