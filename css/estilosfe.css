@@ -86,6 +86,7 @@ img,svg{display:block}
 }
 .menu-item{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:10px;text-align:left;font-size:15px;color:var(--texto)}
 .menu-item:active{background:var(--fondo)}
+.menu-item[hidden]{display:none}
 
 /* Contido: ocupa todo o resto da pantalla */
 main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflow-y:auto}
