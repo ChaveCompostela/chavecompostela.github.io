@@ -63,3 +63,16 @@ document.querySelectorAll('.vista-liga').forEach(vista => {
     paneis.forEach(p => p.hidden = p.dataset.liga !== s.dataset.liga);
   }));
 });
+
+// Globo de novas na icona da app: ao abrir (ou volver a) a app dáse por vistas as novas:
+// bórrase o globo, ponse a cero o contador que leva o service worker e péchanse os avisos pendentes.
+async function limparGlobo(){
+  try { if ('clearAppBadge' in navigator) await navigator.clearAppBadge(); } catch (e) {}
+  try { const c = await caches.open('badge'); await c.put('/__novas', new Response('0')); } catch (e) {}
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg) (await reg.getNotifications()).forEach(n => n.close());
+  } catch (e) {}
+}
+limparGlobo();
+document.addEventListener('visibilitychange', () => { if (!document.hidden) limparGlobo(); });
