@@ -108,9 +108,9 @@ function abrirForm(i){
   sheet(`<h2>${edit ? 'Editar' : 'Nuevo'} · ${c.t}</h2>${c.f.map(f => field(f, edit?.[f[0]])).join('')}
     <p class="err" id="smsg"></p>
     <div class="bar"><button onclick="cerrar()">Cancelar</button><button class="pri" onclick="guardar()">Guardar</button></div>`);
-  if (cur === 'eventos') {
+  if (cur === 'eventos' || cur === 'partidos') {
     $('#f_sin_hora').addEventListener('change', aplicarSinHora);
-    aplicarSinHora();   // al editar una nova «sin hora» deja los campos solo con fecha
+    aplicarSinHora();   // al editar un registro «sin hora» deja los campos solo con fecha
   }
   if (cur === 'partidos') {
     $('#f_id_jornada').addEventListener('change', actualizarClubsPartido);
@@ -118,10 +118,11 @@ function abrirForm(i){
   }
 }
 
-// En el formulario de Eventos: con «Sin hora» marcado, Inicio y Fin pasan a pedir solo la fecha.
+// En los formularios de Eventos y Partidos: con «Sin hora» marcado, los campos de fecha y hora piden solo la fecha.
 function aplicarSinHora(){
   const sin = $('#f_sin_hora').checked;
-  for (const id of ['f_fecha_inicio', 'f_fecha_fin']) {
+  const campos = cur === 'partidos' ? ['f_fecha_hora'] : ['f_fecha_inicio', 'f_fecha_fin'];
+  for (const id of campos) {
     const e = $('#' + id); if (!e) continue;
     const v = e.value;
     if (sin) { e.type = 'date'; e.value = v ? v.slice(0, 10) : ''; }

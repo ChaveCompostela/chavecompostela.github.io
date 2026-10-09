@@ -71,7 +71,7 @@ function resultadoConGanador(numLocal, numVisitante){
 }
 
 function filaPartido(p, datos){
-  const hora = p.fecha_hora ? horaFe(p.fecha_hora) : '';
+  const hora = p.fecha_hora && !p.sin_hora ? horaFe(p.fecha_hora) : '';   // «sin hora»: solo se sabe o día
   const conResultado = p.resultado_local != null && p.resultado_visitante != null;
   const resultado = conResultado ? resultadoConGanador(p.resultado_local, p.resultado_visitante) : '-';
   const inst = (datos.instalaciones || []).find(i => i.id === p.id_instalacion);
@@ -136,7 +136,7 @@ function pintarCalendario(cont, xornadas, partidos, datos){
     if (grupos['sen-data']) chaves.push('sen-data');
 
     for (const chave of chaves) {
-      const lista = grupos[chave].slice().sort((a, b) => (a.fecha_hora || '').localeCompare(b.fecha_hora || ''));
+      const lista = grupos[chave].slice().sort((a, b) => (a.sin_hora ? 1 : 0) - (b.sin_hora ? 1 : 0) || (a.fecha_hora || '').localeCompare(b.fecha_hora || ''));   // os «sen hora» ao final do día
       const titulo = chave === 'sen-data' ? 'Data por confirmar' : tituloDia(lista[0].fecha_hora);
       html += `<h3 class="calendario-data">${escFe(titulo)}</h3>`;
       html += `<div class="partido-card">${lista.map(p => filaPartido(p, datos)).join('')}</div>`;
