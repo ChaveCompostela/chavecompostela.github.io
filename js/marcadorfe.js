@@ -7,8 +7,9 @@ const clamp0 = n => (n < 0 ? 0 : n);
 
 // Equipos visibles (non ocultos)
 function equiposVisibles(){
+  const completa = document.getElementById('vista-marcador').classList.contains('mk-full');
   return [...document.querySelectorAll('#vista-marcador .marcador-equipo')]
-    .filter(eq => !eq.hidden);
+    .filter(eq => !eq.hidden && !(completa && (eq.id === 'mk-c' || eq.id === 'mk-d')));   // en pantalla completa só se ven A e B
 }
 
 // Líder de puntos: entre os equipos visibles, o que teña máis puntos.
@@ -99,4 +100,42 @@ document.getElementById('mk-reset')?.addEventListener('click', () => {
     '#vista-marcador .marcador-equipo:not([hidden]) .marcador-chaves'
   ).forEach(el => { el.textContent = '0'; });
   actualizarLideres();
+});
+
+// ---------- Pantalla completa: equipos A e B un ao carón do outro, con números grandes ----------
+// Intenta tamén poñer o navegador en pantalla completa, bloquear a orientación en horizontal
+// e manter a pantalla acesa; se o dispositivo non o permite (p. ex. iPhone), queda igualmente
+// a vista ampliada, e basta xirar o móbil.
+const vistaMk = document.getElementById('vista-marcador');
+let bloqueoPantalla = null;
+
+async function pedirBloqueoPantalla(){
+  try { if (navigator.wakeLock) bloqueoPantalla = await navigator.wakeLock.request('screen'); } catch (e) {}
+}
+
+async function entrarPantallaCompleta(){
+  vistaMk.classList.add('mk-full');
+  try { if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); } catch (e) {}
+  try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch (e) {}
+  await pedirBloqueoPantalla();
+  actualizarLideres();
+}
+
+async function sairPantallaCompleta(){
+  vistaMk.classList.remove('mk-full');
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+  try { if (document.fullscreenElement) await document.exitFullscreen(); } catch (e) {}
+  try { if (bloqueoPantalla) { await bloqueoPantalla.release(); bloqueoPantalla = null; } } catch (e) {}
+  actualizarLideres();
+}
+
+document.getElementById('mk-full')?.addEventListener('click', entrarPantallaCompleta);
+document.getElementById('mk-full-salir')?.addEventListener('click', sairPantallaCompleta);
+// Se o usuario sae da pantalla completa do navegador (botón atrás / Esc), sae tamén a vista ampliada
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && vistaMk.classList.contains('mk-full')) sairPantallaCompleta();
+});
+// O bloqueo de pantalla acesa libérase ao ocultar a páxina: volve pedirse ao volver
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && vistaMk.classList.contains('mk-full') && !bloqueoPantalla) pedirBloqueoPantalla();
 });
