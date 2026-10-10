@@ -4,7 +4,7 @@
 
 // Icona e título do despregable segundo a liga
 const ICONA_XOGADOR = { feminina: 'icons/pesos13d.svg', masculina: 'icons/pesos23d.svg' };
-const TITULO_XOGADORES = { feminina: 'Xogadoras do club', masculina: 'Xogadores do club' };
+const TITULO_XOGADORES = { feminina: 'Xogadoras do equipo', masculina: 'Xogadores do equipo' };
 
 function tarxetaEquipo(club, xogadores, liga){
   const icona = ICONA_XOGADOR[liga];
