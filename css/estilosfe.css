@@ -448,3 +448,24 @@ a.partido-lugar{color:var(--granate)}
   border-radius:10px;padding:10px 12px;font-size:13.5px;line-height:1.5;color:var(--texto);
 }
 @media (prefers-color-scheme:dark){.normas-lista li{border-left-color:var(--ouro-claro)}}
+
+/* Marcador a pantalla completa: equipos A e B un ao carón do outro, números grandes */
+.mk-full-salir{display:none}
+#vista-marcador.mk-full{
+  position:fixed;inset:0;z-index:60;background:var(--fondo);
+  padding:max(6px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+}
+.mk-full .marcador-bar,.mk-full .marcador-carga,.mk-full .marcador-add,.mk-full #mk-c,.mk-full #mk-d{display:none !important}
+.mk-full .mk-full-salir{display:block;align-self:flex-end;margin:0 0 4px}
+.mk-full .marcador-campo{grid-template-columns:1fr 1fr;gap:10px;align-content:stretch}
+.mk-full .marcador-equipo{padding:6px 8px;gap:6px;border-radius:12px}
+.mk-full .marcador-nome{font-size:18px}
+.mk-full .marcador-puntos{font-size:min(22vh,18vw)}
+.mk-full .mk-bot{gap:3px}
+.mk-full .mk-bot button{padding:11px 0;font-size:16px;border-radius:6px}
+.mk-full .mk-xog{gap:3px}
+.mk-full .mk-xog-tit{font-size:12px}
+.mk-full .marcador-xog{padding:3px 6px;gap:2px 8px}
+.mk-full .marcador-xog-nome{font-size:15px}
+.mk-full .marcador-chaves{font-size:22px;min-width:24px}
+.mk-full .mk-chb{width:44px;height:36px;font-size:15px}
