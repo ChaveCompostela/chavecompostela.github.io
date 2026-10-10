@@ -176,8 +176,12 @@
     <h1 class="tit-vista" style="margin:0">Marcador</h1>
     <button id="mk-cargar" class="marcador-reset">🔒 Cargar partido</button>
     <button id="mk-reset" class="marcador-reset marcador-icon" aria-label="Reiniciar" title="Reiniciar">↺</button>
+    <button id="mk-full" class="marcador-reset marcador-icon" aria-label="Pantalla completa" title="Pantalla completa (2 equipos)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></button>
     <button id="mk-salir" class="marcador-reset marcador-icon" aria-label="Saír" title="Saír">✕</button>
   </div>
+
+  <!-- Só se ve en pantalla completa -->
+  <button id="mk-full-salir" class="marcador-reset mk-full-salir" type="button">✕ Saír</button>
 
   <!-- Contrasinal, oculto ata premer "Cargar partido"; amosa asteriscos, non o texto -->
   <div id="mk-clave-panel" class="marcador-carga" hidden>
