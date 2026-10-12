@@ -20,7 +20,7 @@ self.addEventListener('push', e => {
   try { d = e.data ? e.data.json() : {}; } catch (err) { d = { body: e.data ? e.data.text() : '' }; }
   e.waitUntil(Promise.all([sumarGlobo(), self.registration.showNotification(d.title || 'Chave Compostela', {
     body: d.body || '',
-    icon: '/icons/apple-touch-icon.png',
+    icon: '/icons/escudo-192.png',
     tag: d.tag || undefined,              // un tag distinto por nova: non se pisan entre elas
     data: { url: d.url || '/' },
   })]));
