@@ -51,7 +51,7 @@ img,svg{display:block}
   border-radius:10px;color:#fff;
 }
 .logo-btn:active{background:rgba(255,255,255,.15)}
-.logo-btn .logo{height:40px;width:auto}
+.logo-btn .logo{height:40px;width:auto;background:#fff;border-radius:50%}   /* el escudo es transparente por dentro: disco blanco para que se vea sobre el granate */
 .titulo-btn{
   flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
   padding:6px 4px;border-radius:10px;color:#fff;
