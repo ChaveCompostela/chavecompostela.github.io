@@ -25,7 +25,7 @@ async function cargarEiras(){
   const cont = document.getElementById('eiras-lista');
   if (ERR_CONFIG_FE) { cont.innerHTML = `<p class="erro">${escFe(ERR_CONFIG_FE)}</p>`; return; }
   try {
-    const { data: instalaciones, error } = await sbfe.from('instalaciones').select('*').order('nombre');
+    const { data: instalaciones, error } = await sbfe.from('instalaciones').select('*').eq('mostrar_en_eiras', true).order('nombre');   // las ocultas solo se usan en los desplegables del panel
     if (error) throw new Error(error.message);
     if (!instalaciones.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai instalacións publicadas.</p>'; return; }
     cont.innerHTML = instalaciones.map(tarxetaEira).join('');

@@ -46,10 +46,41 @@ function miUbicacion(){
     () => { $('#mtxt').textContent = 'No se pudo obtener tu ubicación (revisa el permiso).'; });
 }
 
-function usarUbicacion(){
+// Dirección a partir de las coordenadas (geocodificación inversa de OpenStreetMap / Nominatim)
+async function direccionDe(lat, lon){
+  const u = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=18&accept-language=gl,es&lat=${lat}&lon=${lon}`;
+  const r = await (await fetch(u)).json();
+  if (!r || r.error) return null;
+  const a = r.address || {};
+  const calle = a.road || a.pedestrian || a.footway || a.path || a.cycleway || a.hamlet || a.neighbourhood || '';
+  const via = [calle, a.house_number].filter(Boolean).join(' ');
+  const poblacion = a.city || a.town || a.village || a.municipality || a.hamlet || '';
+  const resto = [a.postcode, poblacion].filter(Boolean).join(' ');
+  const direccion = [via, resto].filter(Boolean).join(', ') || (r.display_name || '').split(',').slice(0, 3).join(',').trim();
+  return { direccion, localidad: poblacion };
+}
+
+// Rellena Dirección (y Localidad, si estaba vacía) en el formulario que haya debajo del mapa.
+// Si ya había una dirección distinta, pregunta antes de sustituirla.
+function rellenarDireccion(info){
+  const dir = $('#f_direccion');
+  if (dir && info.direccion && dir.value.trim() !== info.direccion) {
+    if (!dir.value.trim() || confirm('¿Sustituir la dirección actual por esta?\n\n' + info.direccion)) dir.value = info.direccion;
+  }
+  const loc = $('#f_localidad');
+  if (loc && !loc.value.trim() && info.localidad) loc.value = info.localidad;
+}
+
+async function usarUbicacion(){
   if (!PICK) return ($('#mtxt').textContent = 'Toca primero el mapa para marcar el sitio.');
-  $('#' + DEST).value = `https://www.google.com/maps/search/?api=1&query=${PICK[0].toFixed(6)},${PICK[1].toFixed(6)}`;
+  const [lat, lon] = PICK;
+  $('#' + DEST).value = `https://www.google.com/maps/search/?api=1&query=${lat.toFixed(6)},${lon.toFixed(6)}`;
+  $('#mtxt').textContent = 'Buscando la dirección…';
+  let info = null;
+  try { info = await direccionDe(lat, lon); } catch (e) {}
   cerrarMapa();
+  if (!info) return msg('Ubicación guardada, pero no se pudo obtener la dirección automáticamente: escríbela a mano.');
+  rellenarDireccion(info);
 }
 
 function cerrarMapa(){ if (MAPA) { MAPA.remove(); MAPA = null; } $('#mapa')?.remove(); }
