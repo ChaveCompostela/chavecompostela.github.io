@@ -7,7 +7,8 @@ const vistas = document.querySelectorAll('.vista');
 const btnMenu = document.getElementById('btn-menu');
 const menu = document.getElementById('menu');
 const menuFondo = document.getElementById('menu-fondo');
-const btnInfo = [document.getElementById('btn-logo'), document.getElementById('btn-titulo')];
+const btnLogo = document.getElementById('btn-logo');
+const btnInfo = [document.getElementById('btn-titulo')];   // só o título abre o globo; o logo recarga a app
 const globo = document.getElementById('globo');
 const globoFondo = document.getElementById('globo-fondo');
 
@@ -76,3 +77,12 @@ async function limparGlobo(){
 }
 limparGlobo();
 document.addEventListener('visibilitychange', () => { if (!document.hidden) limparGlobo(); });
+
+// O logo da esquina superior esquerda recarga a app. O Marcador vive só en memoria:
+// se hai puntos ou chaves anotados, pídese confirmación antes de recargar.
+btnLogo.addEventListener('click', () => {
+  const hayMarcador = [...document.querySelectorAll('#vista-marcador .marcador-puntos, #vista-marcador .marcador-chaves')]
+    .some(el => (el.textContent || '0').trim() !== '0');
+  if (hayMarcador && !confirm('Hai un marcador en curso: se recargas, perderase. ¿Recargar igualmente?')) return;
+  location.reload();
+});
