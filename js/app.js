@@ -108,6 +108,7 @@ function abrirForm(i){
   sheet(`<h2>${edit ? 'Editar' : 'Nuevo'} · ${c.t}</h2>${c.f.map(f => field(f, edit?.[f[0]])).join('')}
     <p class="err" id="smsg"></p>
     <div class="bar"><button onclick="cerrar()">Cancelar</button><button class="pri" onclick="guardar()">Guardar</button></div>`);
+  if (cur === 'eventos') $('#f_id_instalacion').addEventListener('change', rellenarDesdeInstalacion);
   if (cur === 'eventos' || cur === 'partidos') {
     $('#f_sin_hora').addEventListener('change', aplicarSinHora);
     aplicarSinHora();   // al editar un registro «sin hora» deja los campos solo con fecha
@@ -116,6 +117,19 @@ function abrirForm(i){
     $('#f_id_jornada').addEventListener('change', actualizarClubsPartido);
     actualizarClubsPartido();   // aplica el filtro también al editar un partido ya creado
   }
+}
+
+// En el formulario de Eventos: al elegir una instalación se copian su localización (mapa) y su dirección.
+// Si ya había datos distintos, pregunta antes de sustituirlos (si dices que no, solo se rellenan los campos vacíos).
+function rellenarDesdeInstalacion(){
+  const id = Number($('#f_id_instalacion').value);
+  const inst = id && D.instalaciones.find(i => i.id === id);
+  if (!inst) return;
+  const campos = [['f_url_localizacion', inst.url_localizacion], ['f_direccion', inst.direccion]]
+    .filter(([c, v]) => v && $('#' + c));
+  const hayDistintos = campos.some(([c, v]) => $('#' + c).value.trim() && $('#' + c).value.trim() !== v);
+  const sustituir = hayDistintos && confirm(`¿Sustituir la localización y la dirección actuales por las de «${inst.nombre}»?`);
+  campos.forEach(([c, v]) => { if (sustituir || !$('#' + c).value.trim()) $('#' + c).value = v; });
 }
 
 // En los formularios de Eventos y Partidos: con «Sin hora» marcado, los campos de fecha y hora piden solo la fecha.
