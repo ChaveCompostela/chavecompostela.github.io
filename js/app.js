@@ -2,7 +2,7 @@
 let cur = 'partidos', edit = null;
 
 function loginView(){
-  $('#app').innerHTML = `<img class="logo" src="icons/logo-chave.svg" alt="Chave">
+  $('#app').innerHTML = `<img class="logo" src="icons/escudoch-512.png" alt="Chave">
     <h1 class="c">Liga de chave · Administración</h1>
     <form class="card" onsubmit="entrar(event)">
       <label>Correo<input id="em" type="email" value="compostelachave@gmail.com" autocomplete="username" required></label>
@@ -41,7 +41,7 @@ const NOMBRES_PROPIOS = { pendientes: 'Resultados pendientes', copias: 'Copia de
 const nombreSeccion = k => NOMBRES_PROPIOS[k] || T[k].t.replace(' (avanzado)', '');
 
 async function start(){
-  $('#app').innerHTML = `<header><button class="inicio" onclick="vistaInicio()" aria-label="Inicio" title="Inicio"><img class="logo-s" src="icons/logo-chave.svg" alt=""></button>
+  $('#app').innerHTML = `<header><button class="inicio" onclick="vistaInicio()" aria-label="Inicio" title="Inicio"><img class="logo-s" src="icons/escudoch-256.png" alt=""></button>
     <span style="flex:1"></span><button onclick="salir()">Salir</button></header><p id="msg"></p><main id="main">Cargando…</main>`;
   await loadAll();
   vistaInicio();
