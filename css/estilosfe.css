@@ -29,9 +29,11 @@ button{font:inherit;background:none;border:0;color:inherit;-webkit-tap-highlight
 img,svg{display:block}
 
 /* A app ocupa toda a pantalla nunha soa columna: cabeceira, contido, pestañas */
+/* position:fixed en vez de height:100vh/100dvh: en Android (app instalada) tras recargar, vh/dvh pueden dar
+   más alto que la ventana visible y el menú inferior queda fuera de pantalla */
 #app{
+  position:fixed;top:0;bottom:0;left:0;right:0;
   max-width:600px;margin:0 auto;
-  height:100vh;height:100dvh;
   display:flex;flex-direction:column;overflow:hidden;
 }
 
