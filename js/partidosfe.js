@@ -244,4 +244,4 @@ async function cargarPartidos(){
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarPartidos);
+CARGAS_PENDIENTES.partidos = cargarPartidos;   // cárgase a primeira vez que se entra (ver novasfe.js)

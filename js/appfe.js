@@ -16,6 +16,8 @@ function amosarVista(nome){
   vistas.forEach(v => v.hidden = v.id !== 'vista-' + nome);
   tabs.forEach(t => t.classList.toggle('activa', t.dataset.vista === nome));
   document.getElementById('contido').scrollTop = 0;
+  cargarVistaUnaVez(nome);                      // carga o apartado a primeira vez que se abre (novasfe.js)
+  if (nome === 'calendario' && typeof axustarScrollCalendario === 'function') axustarScrollCalendario();
 }
 
 tabs.forEach(t => t.addEventListener('click', () => amosarVista(t.dataset.vista)));

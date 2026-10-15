@@ -40,25 +40,57 @@ function tarxetaEvento(ev, inst){
   </article>`;
 }
 
+// ---------- Carga diferida: só Novas (a primeira pantalla) cárgase ao abrir ----------
+// Os outros apartados rexístranse aquí e cárganse a primeira vez que se entra neles, ou en
+// segundo plano cando Novas xa está pintada (así non compiten pola rede co que se ve primeiro).
+const CARGAS_PENDIENTES = {};
+const CARGAS_FEITAS = {};
+function cargarVistaUnaVez(nome){
+  if (CARGAS_FEITAS[nome] || !CARGAS_PENDIENTES[nome]) return;
+  CARGAS_FEITAS[nome] = true;
+  CARGAS_PENDIENTES[nome]();
+}
+function precargarOutrasVistas(){
+  ['partidos', 'clasificacion', 'calendario', 'equipos', 'eiras']
+    .forEach((nome, i) => setTimeout(() => cargarVistaUnaVez(nome), 600 * (i + 1)));
+}
+
+// ---------- Novas ----------
+const CACHE_NOVAS = 'chave_novas_v1';   // última lista vista: móstrase ao instante mentres se actualiza
+
+function pintarNovas(cont, eventos){
+  if (!eventos.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai novas publicadas.</p>'; return; }
+  let html = '', diaAnterior = null;
+  for (const ev of eventos) {
+    const dia = chaveDia(ev.fecha_inicio);
+    if (dia !== diaAnterior) { html += `<h2 class="novas-fecha">${escFe(tituloDia(ev.fecha_inicio))}</h2>`; diaAnterior = dia; }
+    html += tarxetaEvento(ev, ev.instalaciones);
+  }
+  cont.innerHTML = html;
+}
+
 async function cargarNovas(){
   const cont = document.getElementById('novas-lista');
   if (ERR_CONFIG_FE) { cont.innerHTML = `<p class="erro">${escFe(ERR_CONFIG_FE)}</p>`; return; }
-  try {
-    const { data: eventos, error } = await sbfe.from('eventos').select('*').order('fecha_inicio', { ascending: false });   // días de máis recente a máis antigo e, dentro de cada día, hora de maior a menor
-    if (error) throw new Error(error.message);
-    if (!eventos.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai novas publicadas.</p>'; return; }
-    const { data: instalaciones } = await sbfe.from('instalaciones').select('id,nombre');
-    const inst = id => instalaciones?.find(i => i.id === id) || null;
 
-    let html = '', diaAnterior = null;
-    for (const ev of eventos) {
-      const dia = chaveDia(ev.fecha_inicio);
-      if (dia !== diaAnterior) { html += `<h2 class="novas-fecha">${escFe(tituloDia(ev.fecha_inicio))}</h2>`; diaAnterior = dia; }
-      html += tarxetaEvento(ev, inst(ev.id_instalacion));
-    }
-    cont.innerHTML = html;
+  // 1) O que se viu a última vez, ao instante
+  let pintadoDeCache = false;
+  try {
+    const gardado = localStorage.getItem(CACHE_NOVAS);
+    if (gardado) { pintarNovas(cont, JSON.parse(gardado)); pintadoDeCache = true; }
+  } catch (e) {}
+
+  // 2) Datos actuais: unha soa petición (a instalación vai incluída na mesma consulta)
+  try {
+    const { data: eventos, error } = await sbfe.from('eventos').select('*, instalaciones(nombre)')
+      .order('fecha_inicio', { ascending: false });   // días de máis recente a máis antigo e, dentro de cada día, hora de maior a menor
+    if (error) throw new Error(error.message);
+    pintarNovas(cont, eventos);
+    try { localStorage.setItem(CACHE_NOVAS, JSON.stringify(eventos)); } catch (e) {}
   } catch (e) {
-    cont.innerHTML = `<p class="erro">Non se puideron cargar as novas: ${escFe(e.message)}</p>`;
+    if (!pintadoDeCache) cont.innerHTML = `<p class="erro">Non se puideron cargar as novas: ${escFe(e.message)}</p>`;
+  } finally {
+    precargarOutrasVistas();
   }
 }
 

@@ -34,4 +34,4 @@ async function cargarEiras(){
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarEiras);
+CARGAS_PENDIENTES.eiras = cargarEiras;   // cárgase a primeira vez que se entra (ver novasfe.js)

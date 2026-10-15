@@ -117,6 +117,16 @@ function desprazarAXornada(cont, idXornada){
   cont.scrollTop = cont.scrollTop + delta - 8;
 }
 
+// Xornada á que desprazarse en cada liga e axuste feito a primeira vez que se ve o Calendario
+// (se os datos chegan co apartado oculto, o desprazamento non pode calcularse ata que se abre).
+let objetivosCalendario = null, calendarioAxustado = false;
+function axustarScrollCalendario(){
+  if (!objetivosCalendario || calendarioAxustado) return;
+  calendarioAxustado = true;
+  const liga = document.querySelector('#vista-calendario .seg.activa')?.dataset.liga || 'feminina';
+  desprazarAXornada(document.getElementById('calendario-' + liga), objetivosCalendario[liga]);
+}
+
 function pintarCalendario(cont, xornadas, partidos, datos){
   if (!xornadas.length) { cont.innerHTML = '<p class="baleiro">Aínda non hai xornadas publicadas.</p>'; return null; }
 
@@ -189,6 +199,9 @@ async function cargarCalendario(){
     const idObxFem = pintarCalendario(contFem, xornFem, partidos.filter(p => idsFem.has(p.id_jornada)), datos);
     const idObxMasc = pintarCalendario(contMasc, xornMasc, partidos.filter(p => idsMasc.has(p.id_jornada)), datos);
 
+    objetivosCalendario = { feminina: idObxFem, masculina: idObxMasc };
+    if (!document.getElementById('vista-calendario').hidden) axustarScrollCalendario();
+
     // Ao entrar, só o panel visible (feminina, por defecto) puido desprazarse de verdade;
     // cando se cambia á outra liga, o seu panel acaba de facerse visible e hai que repetir
     // o cálculo nese intre (un pequeno atraso abonda para que xa estea despregado).
@@ -204,4 +217,4 @@ async function cargarCalendario(){
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarCalendario);
+CARGAS_PENDIENTES.calendario = cargarCalendario;   // cárgase a primeira vez que se entra (ver novasfe.js)

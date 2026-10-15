@@ -74,4 +74,4 @@ async function cargarEquipos(){
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarEquipos);
+CARGAS_PENDIENTES.equipos = cargarEquipos;   // cárgase a primeira vez que se entra (ver novasfe.js)

@@ -177,4 +177,4 @@ async function cargarClasificacion(){
   }
 }
 
-document.addEventListener('DOMContentLoaded', cargarClasificacion);
+CARGAS_PENDIENTES.clasificacion = cargarClasificacion;   // cárgase a primeira vez que se entra (ver novasfe.js)
