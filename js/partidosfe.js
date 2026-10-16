@@ -161,7 +161,7 @@ async function cargarDatosPartidos(){
     { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
     { data: enfrentamientos, error: e6 }, { data: enfrentamiento_parejas, error: e7 },
     { data: chaves_enfrentamiento, error: e8 }, { data: parejas, error: e9 },
-    { data: jugadores, error: e10 },
+    { data: jugadores, error: e10 }, { data: instalaciones, error: e11 },
   ] = await Promise.all([
     sbfe.from('categorias').select('*'),
     sbfe.from('temporadas').select('*').order('fecha_inicio', { ascending: false }),
@@ -174,10 +174,11 @@ async function cargarDatosPartidos(){
     sbfe.from('chaves_enfrentamiento').select('*'),
     sbfe.from('parejas').select('*'),
     sbfe.from('jugadores').select('id,nombre,apellidos'),
+    sbfe.from('instalaciones').select('id,nombre'),
   ]);
-  for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10]) if (err) throw new Error(err.message);
+  for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]) if (err) throw new Error(err.message);
   return { categorias, temporadas, ligas, xornadas, partidos, clubs,
-    enfrentamientos, enfrentamiento_parejas, chaves_enfrentamiento, parejas, jugadores };
+    enfrentamientos, enfrentamiento_parejas, chaves_enfrentamiento, parejas, jugadores, instalaciones };
 }
 
 function encherSelectorTempadas(temporadas){

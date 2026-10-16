@@ -46,6 +46,7 @@ function detalle(){
     <div class="bar"><h2>${esc(nombreLado('local'))} vs ${esc(nombreLado('visitante'))}</h2></div>
     <p class="mut">${esc(fmt(p.fecha_hora, 'dt'))} · ${esc(p.estado)}</p>
     <h3 id="resultado">${resultadoTxt(p)}</h3>
+    <button style="width:100%;margin:0 0 10px" onclick="generarActa(${pid})">📄 Descargar acta (PDF)</button>
     ${partidas.map(partidaHtml).join('')}
     <button class="pri" id="btn-nueva-partida" style="width:100%" onclick="mostrarNuevaPartida()">+ Partida nueva</button>
     <div id="nueva-partida" hidden>
@@ -81,7 +82,8 @@ function partidaHtml(e){
       const pa = D.parejas.find(y => y.id === x.id_pareja);
       const js = [pa.id_jugador_a, pa.id_jugador_b].map(j => {
         const c = D.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === j);
-        return `<label>${esc(lab('jugadores', j))} · chaves<input type="number" inputmode="numeric" min="0" value="${c ? c.chaves : ''}" onchange="setChaves(${e.id},${j},this.value)"></label>`;
+        return `<label>${esc(lab('jugadores', j))} · chaves<input type="number" inputmode="numeric" min="0" value="${c ? c.chaves : ''}" onchange="setChaves(${e.id},${j},this.value)"></label>
+          <label>Tiradas de chaves (ej. 1+1+2)<input type="text" value="${esc(c?.tiradas || '')}" placeholder="1+1+2" onchange="setTiradasChaves(${e.id},${j},this.value)"></label>`;
       }).join('');
       return `<div class="pareja">${js}<button class="del" onclick="quitarPareja(${x.id})">Quitar pareja</button></div>`;
     }).join('');
@@ -90,7 +92,7 @@ function partidaHtml(e){
       <button style="width:100%" onclick="addPareja(${e.id},'${l}')">Añadir pareja</button></details>`;
   };
   return `<div class="card"><div class="bar"><h2>Partida ${e.numero}</h2><button class="del" onclick="borrarPartida(${e.id})">Borrar partida</button></div>
-    <p class="mut">${esc(nom('local'))} <b>vs</b> ${esc(nom('visitante'))}</p>${marcadorHtml(e)}${lado('local')}${lado('visitante')}</div>`;
+    <p class="mut">${esc(nom('local'))} <b>vs</b> ${esc(nom('visitante'))}</p>${marcadorHtml(e)}${tiradasHtml(e)}${lado('local')}${lado('visitante')}</div>`;
 }
 
 async function parejaDe(a, b){
@@ -163,6 +165,43 @@ function marcadorHtml(e){
   const v = x => x == null ? '' : x;
   return `<div class="add"><label>Marcador local<input id="ml_${e.id}" type="number" inputmode="numeric" min="0" value="${v(e.marcador_local)}" onchange="guardarMarcador(${e.id})"></label>
     <label>Marcador visitante<input id="mv_${e.id}" type="number" inputmode="numeric" min="0" value="${v(e.marcador_visitante)}" onchange="guardarMarcador(${e.id})"></label></div>`;
+}
+
+// ---------- Tiradas (acta): puntos y chaves por tirada, p. ej. 1+2+8+0 ----------
+function tiradasHtml(e){
+  return `<div class="add"><label>Tiradas local (puntos, ej. 1+2+8+0)<input id="tl_${e.id}" type="text" value="${esc(e.puntos_tiradas_local || '')}" placeholder="1+2+8+0" onchange="guardarTiradas(${e.id})"></label>
+    <label>Tiradas visitante (puntos)<input id="tv_${e.id}" type="text" value="${esc(e.puntos_tiradas_visitante || '')}" placeholder="0+1+9" onchange="guardarTiradas(${e.id})"></label></div>`;
+}
+
+async function guardarTiradas(id){
+  let l, v;
+  try { l = actaParseSecuencia($('#tl_' + id).value); v = actaParseSecuencia($('#tv_' + id).value); }
+  catch (err) { return msg(err.message); }
+  const { error } = await sb.from('enfrentamientos').update({
+    puntos_tiradas_local: l.length ? l.join('+') : null,
+    puntos_tiradas_visitante: v.length ? v.join('+') : null,
+  }).eq('id', id);
+  if (error) return msg(error.message);
+  await loadTable('enfrentamientos');
+  const e = D.enfrentamientos.find(x => x.id === id);
+  const avisos = [];
+  if (l.length && e.marcador_local != null && actaSuma(l) !== e.marcador_local) avisos.push(`local: tiradas suman ${actaSuma(l)} y el marcador es ${e.marcador_local}`);
+  if (v.length && e.marcador_visitante != null && actaSuma(v) !== e.marcador_visitante) avisos.push(`visitante: tiradas suman ${actaSuma(v)} y el marcador es ${e.marcador_visitante}`);
+  msg(avisos.length ? 'Aviso: ' + avisos.join(' · ') : '');
+}
+
+// Tiradas de chaves de un jugador (1+1+2). Si hay tiradas, las chaves totales pasan a ser su suma.
+async function setTiradasChaves(e, j, v){
+  let arr;
+  try { arr = actaParseSecuencia(v); } catch (err) { return msg(err.message); }
+  const c = D.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e && z.id_jugador === j);
+  const { error } = await sb.from('chaves_enfrentamiento').upsert({
+    id_enfrentamiento: e, id_jugador: j,
+    chaves: arr.length ? actaSuma(arr) : (c ? c.chaves : 0),
+    tiradas: arr.length ? arr.join('+') : null,
+  }, { onConflict: 'id_enfrentamiento,id_jugador' });
+  if (error) return msg(error.message);
+  msg(''); refrescar();
 }
 
 async function guardarMarcador(id){

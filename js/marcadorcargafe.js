@@ -159,7 +159,24 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
   configurarEquipoCargado('mk-a', nomeLocalCargado, [parL.id_jugador_a, parL.id_jugador_b], d, chaveDe, e.marcador_local);
   configurarEquipoCargado('mk-b', nomeVisitanteCargado, [parV.id_jugador_a, parV.id_jugador_b], d, chaveDe, e.marcador_visitante);
 
-  partidaCargada = { idEnfrentamiento };
+  partidaCargada = {
+    idEnfrentamiento, idPartido: partido.id, numero: e.numero,
+    nomeLocal: nomeLocalCargado, nomeVisitante: nomeVisitanteCargado,
+    xog: { a1: parL.id_jugador_a, a2: parL.id_jugador_b, b1: parV.id_jugador_a, b2: parV.id_jugador_b },
+  };
+
+  // Rexistro de tiradas para a acta: se a partida xa tiña tiradas gardadas, retómanse
+  actaReiniciar();
+  ACTA.activa = true;
+  try {
+    ACTA.puntos.a = actaParseSecuencia(e.puntos_tiradas_local);
+    ACTA.puntos.b = actaParseSecuencia(e.puntos_tiradas_visitante);
+    Object.entries(partidaCargada.xog).forEach(([k, id]) => {
+      const c = d.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
+      ACTA.chaves[k] = actaParseSecuencia(c?.tiradas);
+    });
+  } catch (err) { actaReiniciar(); }
+  document.getElementById('vista-marcador').classList.add('mk-acta-on');
 
   $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = false;
@@ -212,7 +229,24 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
       p_clave: claveMarcador,
     });
     if (error) throw new Error(error.message);
-    alert('Resultado enviado. Quedará pendente de validación no panel de administración.');
+    // Tiradas da acta (se falla, o resultado xa está enviado e pódense engadir despois dende o panel)
+    let avisoActa = '';
+    try {
+      actaLeerPanelSeAberto();
+      const tiradasChaves = {};
+      Object.entries(partidaCargada.xog).forEach(([k, id]) => { tiradasChaves[String(id)] = ACTA.chaves[k].join('+'); });
+      const { error: errActa } = await sbfe.rpc('enviar_acta_marcador', {
+        p_id_enfrentamiento: partidaCargada.idEnfrentamiento,
+        p_puntos_local: ACTA.puntos.a.join('+'),
+        p_puntos_visitante: ACTA.puntos.b.join('+'),
+        p_tiradas_chaves: tiradasChaves,
+        p_clave: claveMarcador,
+      });
+      if (errActa) throw new Error(errActa.message);
+    } catch (errActa) {
+      avisoActa = '\n\nAtención: as tiradas da acta non se puideron gardar (' + errActa.message + '). Pódense escribir despois no panel de administración.';
+    }
+    alert('Resultado enviado. Quedará pendente de validación no panel de administración.' + avisoActa);
     rematarCargaPartida();
   } catch (e) {
     alert('Non se puido enviar: ' + e.message + '\n\nSe o contrasinal caducou, vólvese pedir ao premer "Cargar partido" de novo.');
@@ -246,6 +280,10 @@ function rematarCargaPartida(){
   ['mk-add-c', 'mk-add-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
 
   partidaCargada = null;
+  ACTA.activa = false;
+  actaReiniciar();
+  document.getElementById('vista-marcador').classList.remove('mk-acta-on');
+  $mk('#mk-acta-panel').hidden = true;
   $mk('#mk-clave-panel').hidden = true;
   $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = true;
@@ -256,3 +294,101 @@ function rematarCargaPartida(){
 // aos marcadores libres; se xa estabamos en modo libre, simplemente reinicia a páxina
 // (os 4 equipos, non só os puntos) ao seu estado inicial.
 $mk('#mk-salir').addEventListener('click', rematarCargaPartida);
+
+// ---------- Acta: panel de tiradas (editable) y PDF ----------
+const CLAVES_XOG = ['a1', 'a2', 'b1', 'b2'];
+const puntosDe = k => Number(document.querySelector(`#mk-${k} .marcador-puntos`).textContent) || 0;
+const chavesDe = k => Number(document.querySelector(`#mk-${k[0]} .marcador-xog:nth-of-type(${k[1]}) .marcador-chaves`)?.textContent) || 0;
+
+function nomeXogActa(k){ return nomeXogadorP(partidaCargada.xog[k], datosCargaMarcador); }
+
+function actaAbrirPanel(){
+  if (!partidaCargada) return;
+  $mk('#ak-nl').textContent = '· ' + partidaCargada.nomeLocal;
+  $mk('#ak-nv').textContent = '· ' + partidaCargada.nomeVisitante;
+  $mk('#ak-pl').value = ACTA.puntos.a.join('+');
+  $mk('#ak-pv').value = ACTA.puntos.b.join('+');
+  $mk('#ak-chaves').innerHTML = CLAVES_XOG.map(k =>
+    `<label>Chaves · ${escFe(nomeXogActa(k))}<input id="ak-ch-${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+1+2" value="${escFe(ACTA.chaves[k].join('+'))}"></label>`).join('');
+  $mk('#mk-acta-panel').hidden = false;
+  actaRevisarPanel();
+}
+
+// Pasa o que hai nos campos do panel ás tiradas rexistradas (lanza erro se o formato non vale)
+function actaLeerPanel(){
+  const pl = actaParseSecuencia($mk('#ak-pl').value), pv = actaParseSecuencia($mk('#ak-pv').value);
+  const ch = {};
+  CLAVES_XOG.forEach(k => { ch[k] = actaParseSecuencia($mk('#ak-ch-' + k).value); });
+  ACTA.puntos.a = pl; ACTA.puntos.b = pv; ACTA.chaves = ch; ACTA.ultimoChaves = null;
+}
+function actaLeerPanelSeAberto(){ if (!$mk('#mk-acta-panel').hidden) actaLeerPanel(); }
+
+// Compara as tiradas cos puntos e as chaves que marca o marcador
+function actaRevisarPanel(){
+  const av = $mk('#ak-aviso');
+  let pl, pv, ch = {};
+  try {
+    pl = actaParseSecuencia($mk('#ak-pl').value); pv = actaParseSecuencia($mk('#ak-pv').value);
+    CLAVES_XOG.forEach(k => { ch[k] = actaParseSecuencia($mk('#ak-ch-' + k).value); });
+  } catch (err) { av.textContent = err.message; av.classList.remove('ok'); av.hidden = false; return false; }
+  const dif = [];
+  if (actaSuma(pl) !== puntosDe('a')) dif.push(`Puntos local: as tiradas suman ${actaSuma(pl)} e o marcador é ${puntosDe('a')}`);
+  if (actaSuma(pv) !== puntosDe('b')) dif.push(`Puntos visitante: as tiradas suman ${actaSuma(pv)} e o marcador é ${puntosDe('b')}`);
+  CLAVES_XOG.forEach(k => { if (actaSuma(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSuma(ch[k])} e o marcador é ${chavesDe(k)}`); });
+  av.classList.toggle('ok', !dif.length);
+  av.textContent = dif.length ? 'Non cadra: ' + dif.join(' · ') : 'As tiradas cadran cos puntos e coas chaves ✓';
+  av.hidden = false;
+  return !dif.length;
+}
+
+$mk('#mk-acta-abrir').addEventListener('click', actaAbrirPanel);
+$mk('#ak-pechar').addEventListener('click', () => {
+  try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\n¿Pechar igualmente sen gardar os cambios das tiradas?')) return; }
+  $mk('#mk-acta-panel').hidden = true;
+});
+['#ak-pl', '#ak-pv'].forEach(s => $mk(s).addEventListener('input', actaRevisarPanel));
+$mk('#ak-chaves').addEventListener('input', actaRevisarPanel);
+
+function fechaActaMk(p){
+  if (!p.fecha_hora) return '';
+  const d = new Date(p.fecha_hora), z = n => String(n).padStart(2, '0');
+  const f = `${z(d.getDate())}/${z(d.getMonth() + 1)}/${d.getFullYear()}`;
+  return p.sin_hora ? f : `${f} ${z(d.getHours())}:${z(d.getMinutes())}`;
+}
+
+$mk('#ak-pdf').addEventListener('click', async () => {
+  if (!partidaCargada) return;
+  try { actaLeerPanel(); } catch (err) { alert(err.message); return; }
+  const d = datosCargaMarcador;
+  const e = d.enfrentamientos.find(x => x.id === partidaCargada.idEnfrentamiento);
+  const partido = d.partidos.find(p => p.id === partidaCargada.idPartido);
+  const xorn = d.xornadas.find(j => j.id === partido.id_jornada);
+  const liga = d.ligas.find(l => l.id === xorn?.id_liga);
+  const cat = d.categorias.find(c => c.id === liga?.id_categoria)?.nombre;
+  if (cat === 'masculina') return alert('A acta da liga masculina aínda non está dispoñible.');
+  if (!actaRevisarPanel() && !confirm('As tiradas non cadran co marcador. ¿Descargar a acta igualmente?')) return;
+
+  const ptsL = puntosDe('a'), ptsV = puntosDe('b');
+  const outras = d.enfrentamientos.filter(x => x.id_partido === partido.id && x.id !== e.id && x.marcador_local != null && x.marcador_visitante != null);
+  const datos = {
+    fecha: fechaActaMk(partido),
+    campo: d.instalaciones?.find(i => i.id === partido.id_instalacion)?.nombre || '',
+    local: partidaCargada.nomeLocal, visitante: partidaCargada.nomeVisitante,
+    totalLocal: outras.reduce((s, x) => s + x.marcador_local, ptsL),
+    totalVisit: outras.reduce((s, x) => s + x.marcador_visitante, ptsV),
+    nombreArchivo: actaNombreArchivo(partidaCargada.nomeLocal, partidaCargada.nomeVisitante, partido.fecha_hora ? String(partido.fecha_hora).slice(0, 10) : ''),
+    partidas: [{
+      numero: e.numero,
+      jugadoresLocal: [nomeXogActa('a1'), nomeXogActa('a2')],
+      jugadoresVisit: [nomeXogActa('b1'), nomeXogActa('b2')],
+      puntosLocal: ptsL, puntosVisit: ptsV,
+      tiradasLocal: ACTA.puntos.a.join('+'), tiradasVisit: ACTA.puntos.b.join('+'),
+      chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: ACTA.chaves[k].join('+') })),
+    }],
+  };
+  const btn = $mk('#ak-pdf');
+  btn.disabled = true; btn.textContent = 'Xerando…';
+  try { await generarActaPdf(datos); }
+  catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
+  finally { btn.disabled = false; btn.textContent = 'Descargar PDF'; }
+});

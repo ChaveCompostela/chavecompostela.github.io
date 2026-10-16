@@ -83,13 +83,16 @@ function tarjetaPendiente(f){
 
   if (editandoPendienteId === f.id) {
     const camposChaves = (f.chaves || []).map(c =>
-      `<label>${esc(lab('jugadores', c.id_jugador))} · chaves<input type="number" min="0" id="pend-ch-${f.id}-${c.id_jugador}" value="${esc(c.chaves)}"></label>`
+      `<label>${esc(lab('jugadores', c.id_jugador))} · chaves<input type="number" min="0" id="pend-ch-${f.id}-${c.id_jugador}" value="${esc(c.chaves)}"></label>
+       <label>Tiradas de chaves (ej. 1+1+2)<input type="text" id="pend-tc-${f.id}-${c.id_jugador}" value="${esc(c.tiradas || '')}"></label>`
     ).join('');
     return `<div class="card">
       <h3>${esc(ctx.titulo)}</h3>
       <p class="mut">${esc(parLocal)} vs ${esc(parVisit)}</p>
       <label>Marcador local<input type="number" min="0" id="pend-ml-${f.id}" value="${esc(f.marcador_local)}"></label>
       <label>Marcador visitante<input type="number" min="0" id="pend-mv-${f.id}" value="${esc(f.marcador_visitante)}"></label>
+      <label>Tiradas local (puntos, ej. 1+2+8+0)<input type="text" id="pend-tl-${f.id}" value="${esc(f.puntos_tiradas_local || '')}"></label>
+      <label>Tiradas visitante (puntos)<input type="text" id="pend-tv-${f.id}" value="${esc(f.puntos_tiradas_visitante || '')}"></label>
       ${camposChaves}
       <p class="mut" id="pend-err-${f.id}"></p>
       <div class="acc">
@@ -100,12 +103,13 @@ function tarjetaPendiente(f){
   }
 
   const filasChaves = (f.chaves || [])
-    .map(c => `<tr><td>${esc(lab('jugadores', c.id_jugador))}</td><td>${esc(c.chaves)}</td></tr>`).join('');
+    .map(c => `<tr><td>${esc(lab('jugadores', c.id_jugador))}</td><td>${esc(c.chaves)}</td><td>${esc(c.tiradas || '')}</td></tr>`).join('');
   return `<div class="card">
     <p class="mut">Enviado: ${esc(new Date(f.enviado_en).toLocaleString('es-ES'))}</p>
     <h3>${esc(ctx.titulo)}</h3>
     <p>${esc(parLocal)} &nbsp;<b>${esc(f.marcador_local)} - ${esc(f.marcador_visitante)}</b>&nbsp; ${esc(parVisit)}</p>
-    ${filasChaves ? `<table><thead><tr><th>Jugador/a</th><th>Chaves</th></tr></thead><tbody>${filasChaves}</tbody></table>` : ''}
+    ${(f.puntos_tiradas_local || f.puntos_tiradas_visitante) ? `<p class="mut">Tiradas · local: ${esc(f.puntos_tiradas_local || '—')} · visitante: ${esc(f.puntos_tiradas_visitante || '—')}</p>` : ''}
+    ${filasChaves ? `<table><thead><tr><th>Jugador/a</th><th>Chaves</th><th>Tiradas</th></tr></thead><tbody>${filasChaves}</tbody></table>` : ''}
     <div class="acc">
       <button class="pri" onclick="validarPendiente(${f.id})">Validar</button>
       <button onclick="editarPendiente(${f.id})">Editar</button>
@@ -133,12 +137,20 @@ async function guardarEdicionPendiente(id){
   if (!f) return;
   const ml = Number($('#pend-ml-' + id).value);
   const mv = Number($('#pend-mv-' + id).value);
-  const chaves = (f.chaves || []).map(c => ({
-    id_jugador: c.id_jugador,
-    chaves: Number($(`#pend-ch-${id}-${c.id_jugador}`).value) || 0,
-  }));
+  const errAviso = document.getElementById('pend-err-' + id);
+  let tl, tv;
+  try { tl = actaParseSecuencia($('#pend-tl-' + id).value); tv = actaParseSecuencia($('#pend-tv-' + id).value); }
+  catch (err) { if (errAviso) errAviso.textContent = err.message; return; }
+  const chaves = [];
+  for (const c of (f.chaves || [])) {
+    let tc;
+    try { tc = actaParseSecuencia($(`#pend-tc-${id}-${c.id_jugador}`).value); }
+    catch (err) { if (errAviso) errAviso.textContent = err.message; return; }
+    chaves.push({ id_jugador: c.id_jugador, chaves: Number($(`#pend-ch-${id}-${c.id_jugador}`).value) || 0, tiradas: tc.length ? tc.join('+') : '' });
+  }
   const { error } = await sb.from('resultados_pendientes')
-    .update({ marcador_local: ml, marcador_visitante: mv, chaves })
+    .update({ marcador_local: ml, marcador_visitante: mv, chaves,
+      puntos_tiradas_local: tl.length ? tl.join('+') : null, puntos_tiradas_visitante: tv.length ? tv.join('+') : null })
     .eq('id', id);
   if (error) {
     const err = document.getElementById('pend-err-' + id);
@@ -167,13 +179,14 @@ async function aplicarPendiente(id){
   if (e0) return 'Error: ' + e0.message;
 
   const { error: e1 } = await sb.from('enfrentamientos')
-    .update({ marcador_local: pend.marcador_local, marcador_visitante: pend.marcador_visitante })
+    .update({ marcador_local: pend.marcador_local, marcador_visitante: pend.marcador_visitante,
+      puntos_tiradas_local: pend.puntos_tiradas_local || null, puntos_tiradas_visitante: pend.puntos_tiradas_visitante || null })
     .eq('id', pend.id_enfrentamiento);
   if (e1) return 'Error al guardar el marcador: ' + e1.message;
 
   for (const c of (pend.chaves || [])) {
     const { error: e2 } = await sb.from('chaves_enfrentamiento')
-      .upsert({ id_enfrentamiento: pend.id_enfrentamiento, id_jugador: c.id_jugador, chaves: c.chaves },
+      .upsert({ id_enfrentamiento: pend.id_enfrentamiento, id_jugador: c.id_jugador, chaves: c.chaves, tiradas: c.tiradas || null },
         { onConflict: 'id_enfrentamiento,id_jugador' });
     if (e2) return 'Error al guardar las chaves: ' + e2.message;
   }
@@ -219,6 +232,7 @@ async function finalizarPartidoPendiente(idPartido){
 
   await recargarTrasValidar();
   vistaPendientes();
+  if (typeof generarActa === 'function' && confirm('Partido finalizado. ¿Descargar el acta en PDF?')) generarActa(idPartido);
 }
 
 async function descartarPendiente(id){
