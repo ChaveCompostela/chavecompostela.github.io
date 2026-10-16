@@ -234,8 +234,22 @@
     <div id="ak-chaves"></div>
     <p id="ak-aviso" class="erro" hidden></p>
     <div class="marcador-carga-bot">
-      <button id="ak-pdf" class="marcador-pri" type="button">Descargar PDF</button>
+      <button id="ak-pdf" class="marcador-pri" type="button">Xerar acta (PDF)</button>
       <button id="ak-pechar" type="button">Pechar</button>
+    </div>
+    <div id="ak-inc" hidden>
+      <p class="baleiro" style="text-align:left;font-weight:700">¿Houbo incidencias?</p>
+      <div class="marcador-carga-bot">
+        <button id="ak-inc-non" class="marcador-pri" type="button">Non houbo</button>
+        <button id="ak-inc-si" type="button">Si houbo</button>
+      </div>
+      <div id="ak-inc-texto" hidden>
+        <label>Incidencias / observacións<textarea id="ak-inc-area" rows="4" maxlength="400" placeholder="Escribe aquí as incidencias que irán na acta"></textarea></label>
+        <div class="marcador-carga-bot">
+          <button id="ak-inc-xerar" class="marcador-pri" type="button">Xerar acta</button>
+          <button id="ak-inc-volver" type="button">Cancelar</button>
+        </div>
+      </div>
     </div>
   </div>
 
