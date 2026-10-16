@@ -7,34 +7,54 @@ const clamp0 = n => (n < 0 ? 0 : n);
 
 // ---------- Rexistro das tiradas para a acta ----------
 // Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B.
-//  · Puntos: cada pulsación +1/+2/+8/+9/+16 é unha tirada; o botón «+0» rexistra unha tirada sen puntos.
-//    Un «-n» desfai a última tirada de n puntos (ou, se non hai, resta n á última tirada maior):
-//    +1 e despois -1 non deixa nada na acta.
+//  · Puntos: cada pulsación +1/+2/+8/+9/+16 é unha tirada, en orde (ACTA.eventos). Un «-n» desfai a
+//    última tirada de n puntos do equipo (ou, se non hai, resta n á última tirada maior): +1 e despois
+//    -1 non deixa nada na acta, e +2 que era 0 desfaise con -2.
+//  · As tiradas alternan entre os equipos: se o mesmo equipo puntúa dúas veces seguidas, o outro tivo
+//    unha tirada polo medio sen puntos, e esa tirada rexístrase como 0 (actaPuntosDerivados).
+//  · ACTA.base garda tiradas xa escritas (retomadas da base de datos ou editadas no panel da acta).
 //  · Chaves: unha entrada por tirada con chaves, sen ceros (1+1+2). Dúas pulsacións seguidas do
 //    mesmo xogador (sen nada polo medio) contan como a mesma tirada: 1+1 → 2.
-const ACTA = { activa: false, puntos: { a: [], b: [] }, chaves: { a1: [], a2: [], b1: [], b2: [] }, ultimoChaves: null, desaxuste: false };
+const ACTA = { activa: false, base: { a: [], b: [] }, eventos: [], chaves: { a1: [], a2: [], b1: [], b2: [] }, ultimoChaves: null, desaxuste: false };
 
 function actaReiniciar(){
-  ACTA.puntos = { a: [], b: [] };
+  ACTA.base = { a: [], b: [] };
+  ACTA.eventos = [];
   ACTA.chaves = { a1: [], a2: [], b1: [], b2: [] };
   ACTA.ultimoChaves = null;
   ACTA.desaxuste = false;
 }
 
-function actaPuntos(eq, n){            // n > 0 suma, n < 0 resta, n === 0 tirada sen puntos
+// Fixa as tiradas de puntos tal cal (retomadas ou editadas): substitúe todo o rexistro de puntos
+function actaFixarPuntos(a, b){
+  ACTA.base = { a: a.slice(), b: b.slice() };
+  ACTA.eventos = [];
+}
+
+function actaPuntos(eq, n){            // n > 0 suma, n < 0 resta
   ACTA.ultimoChaves = null;            // calquera pulsación de puntos separa as tiradas de chaves
-  const arr = ACTA.puntos[eq];
-  if (n >= 0) { arr.push(n); return; }
-  const v = -n;
+  if (n > 0) { ACTA.eventos.push({ eq, n }); return; }
+  const v = -n, ev = ACTA.eventos;
+  for (let i = ev.length - 1; i >= 0; i--) if (ev[i].eq === eq && ev[i].n === v) { ev.splice(i, 1); return; }
+  for (let i = ev.length - 1; i >= 0; i--) if (ev[i].eq === eq && ev[i].n > v) { ev[i].n -= v; return; }
+  const arr = ACTA.base[eq];
   let i = arr.lastIndexOf(v);
   if (i >= 0) { arr.splice(i, 1); return; }
   for (i = arr.length - 1; i >= 0; i--) if (arr[i] > v) { arr[i] -= v; return; }
   ACTA.desaxuste = true;               // non hai nada que desfacer: as tiradas non cadrarán cos puntos
 }
 
-function actaDesfacer(eq){             // elimina a última tirada do equipo e devolve os seus puntos
-  ACTA.ultimoChaves = null;
-  return ACTA.puntos[eq].length ? ACTA.puntos[eq].pop() : 0;
+// Tiradas de cada equipo na orde en que se xogaron, coas tiradas sen puntos (0) deducidas da alternancia
+function actaPuntosDerivados(){
+  const r = { a: ACTA.base.a.slice(), b: ACTA.base.b.slice() };
+  let ultimo = null;
+  for (const ev of ACTA.eventos) {
+    const outro = ev.eq === 'a' ? 'b' : 'a';
+    if (ev.eq === ultimo) r[outro].push(0);
+    r[ev.eq].push(ev.n);
+    ultimo = ev.eq;
+  }
+  return r;
 }
 
 function actaChaves(clave, delta){     // clave: a1, a2, b1, b2; delta: +1 / -1
@@ -104,21 +124,6 @@ function actualizarLideres(){
 }
 
 document.addEventListener('click', e => {
-  // Botóns da acta: «+0» (tirada sen puntos) e «Desfacer» (quita a última tirada do equipo)
-  const botonActa = e.target.closest('#vista-marcador [data-acta]');
-  if (botonActa) {
-    const equipo = botonActa.closest('.marcador-equipo');
-    const k = claveEquipo(equipo);
-    if (!ACTA.activa || !k) return;
-    if (botonActa.dataset.acta === 'cero') actaPuntos(k, 0);
-    else {
-      const marcador = equipo.querySelector('.marcador-puntos');
-      marcador.textContent = clamp0((Number(marcador.textContent) || 0) - actaDesfacer(k));
-    }
-    actualizarLideres();
-    return;
-  }
-
   // Botóns de sumar/restar puntos ao equipo
   const botonPuntos = e.target.closest('#vista-marcador [data-add]');
   if (botonPuntos) {

@@ -169,14 +169,12 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
   actaReiniciar();
   ACTA.activa = true;
   try {
-    ACTA.puntos.a = actaParseSecuencia(e.puntos_tiradas_local);
-    ACTA.puntos.b = actaParseSecuencia(e.puntos_tiradas_visitante);
+    actaFixarPuntos(actaParseSecuencia(e.puntos_tiradas_local), actaParseSecuencia(e.puntos_tiradas_visitante));
     Object.entries(partidaCargada.xog).forEach(([k, id]) => {
       const c = d.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
       ACTA.chaves[k] = actaParseSecuencia(c?.tiradas);
     });
   } catch (err) { actaReiniciar(); }
-  document.getElementById('vista-marcador').classList.add('mk-acta-on');
 
   $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = false;
@@ -235,10 +233,11 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
       actaLeerPanelSeAberto();
       const tiradasChaves = {};
       Object.entries(partidaCargada.xog).forEach(([k, id]) => { tiradasChaves[String(id)] = ACTA.chaves[k].join('+'); });
+      const pd = actaPuntosDerivados();
       const { error: errActa } = await sbfe.rpc('enviar_acta_marcador', {
         p_id_enfrentamiento: partidaCargada.idEnfrentamiento,
-        p_puntos_local: ACTA.puntos.a.join('+'),
-        p_puntos_visitante: ACTA.puntos.b.join('+'),
+        p_puntos_local: pd.a.join('+'),
+        p_puntos_visitante: pd.b.join('+'),
         p_tiradas_chaves: tiradasChaves,
         p_clave: claveMarcador,
       });
@@ -282,7 +281,6 @@ function rematarCargaPartida(){
   partidaCargada = null;
   ACTA.activa = false;
   actaReiniciar();
-  document.getElementById('vista-marcador').classList.remove('mk-acta-on');
   $mk('#mk-acta-panel').hidden = true;
   $mk('#mk-clave-panel').hidden = true;
   $mk('#mk-carga-panel').hidden = true;
@@ -306,8 +304,9 @@ function actaAbrirPanel(){
   if (!partidaCargada) return;
   $mk('#ak-nl').textContent = '· ' + partidaCargada.nomeLocal;
   $mk('#ak-nv').textContent = '· ' + partidaCargada.nomeVisitante;
-  $mk('#ak-pl').value = ACTA.puntos.a.join('+');
-  $mk('#ak-pv').value = ACTA.puntos.b.join('+');
+  const pd = actaPuntosDerivados();
+  $mk('#ak-pl').value = pd.a.join('+');
+  $mk('#ak-pv').value = pd.b.join('+');
   $mk('#ak-chaves').innerHTML = CLAVES_XOG.map(k =>
     `<label>Chaves · ${escFe(nomeXogActa(k))}<input id="ak-ch-${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+1+2" value="${escFe(ACTA.chaves[k].join('+'))}"></label>`).join('');
   $mk('#mk-acta-panel').hidden = false;
@@ -319,7 +318,7 @@ function actaLeerPanel(){
   const pl = actaParseSecuencia($mk('#ak-pl').value), pv = actaParseSecuencia($mk('#ak-pv').value);
   const ch = {};
   CLAVES_XOG.forEach(k => { ch[k] = actaParseSecuencia($mk('#ak-ch-' + k).value); });
-  ACTA.puntos.a = pl; ACTA.puntos.b = pv; ACTA.chaves = ch; ACTA.ultimoChaves = null;
+  actaFixarPuntos(pl, pv); ACTA.chaves = ch; ACTA.ultimoChaves = null;
 }
 function actaLeerPanelSeAberto(){ if (!$mk('#mk-acta-panel').hidden) actaLeerPanel(); }
 
@@ -382,7 +381,7 @@ $mk('#ak-pdf').addEventListener('click', async () => {
       jugadoresLocal: [nomeXogActa('a1'), nomeXogActa('a2')],
       jugadoresVisit: [nomeXogActa('b1'), nomeXogActa('b2')],
       puntosLocal: ptsL, puntosVisit: ptsV,
-      tiradasLocal: ACTA.puntos.a.join('+'), tiradasVisit: ACTA.puntos.b.join('+'),
+      tiradasLocal: actaPuntosDerivados().a.join('+'), tiradasVisit: actaPuntosDerivados().b.join('+'),
       chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: ACTA.chaves[k].join('+') })),
     }],
   };
