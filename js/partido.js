@@ -184,7 +184,7 @@ async function guardarTiradas(id){
   if (error) return msg(error.message);
   await loadTable('enfrentamientos');
   const e = D.enfrentamientos.find(x => x.id === id);
-  const avisos = [];
+  const avisos = l.length && v.length ? actaRevisarTiradas(l, v).map(s => s.charAt(0).toUpperCase() + s.slice(1)) : [];
   if (l.length && e.marcador_local != null && actaSuma(l) !== e.marcador_local) avisos.push(`local: tiradas suman ${actaSuma(l)} y el marcador es ${e.marcador_local}`);
   if (v.length && e.marcador_visitante != null && actaSuma(v) !== e.marcador_visitante) avisos.push(`visitante: tiradas suman ${actaSuma(v)} y el marcador es ${e.marcador_visitante}`);
   msg(avisos.length ? 'Aviso: ' + avisos.join(' · ') : '');

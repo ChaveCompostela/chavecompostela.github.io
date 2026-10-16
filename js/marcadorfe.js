@@ -10,8 +10,9 @@ const clamp0 = n => (n < 0 ? 0 : n);
 //  · Puntos: cada pulsación +1/+2/+8/+9/+16 é unha tirada, en orde (ACTA.eventos). Un «-n» desfai a
 //    última tirada de n puntos do equipo (ou, se non hai, resta n á última tirada maior): +1 e despois
 //    -1 non deixa nada na acta, e +2 que era 0 desfaise con -2.
-//  · As tiradas alternan entre os equipos: se o mesmo equipo puntúa dúas veces seguidas, o outro tivo
-//    unha tirada polo medio sen puntos, e esa tirada rexístrase como 0 (actaPuntosDerivados).
+//  · As tiradas van sincronizadas: en cada tirada só puntúa unha parella, e a outra fai 0. Así, cada
+//    pulsación de puntos engade a mesma tirada aos dous equipos (n ao que puntúa, 0 ao outro) e as dúas
+//    secuencias teñen sempre o mesmo número de tiradas (actaPuntosDerivados).
 //  · ACTA.base garda tiradas xa escritas (retomadas da base de datos ou editadas no panel da acta).
 //  · Chaves: unha entrada por tirada con chaves, sen ceros (1+1+2). Dúas pulsacións seguidas do
 //    mesmo xogador (sen nada polo medio) contan como a mesma tirada: 1+1 → 2.
@@ -44,15 +45,12 @@ function actaPuntos(eq, n){            // n > 0 suma, n < 0 resta
   ACTA.desaxuste = true;               // non hai nada que desfacer: as tiradas non cadrarán cos puntos
 }
 
-// Tiradas de cada equipo na orde en que se xogaron, coas tiradas sen puntos (0) deducidas da alternancia
+// Tiradas de cada equipo na orde en que se xogaron: cada pulsación é unha tirada na que o outro equipo fai 0
 function actaPuntosDerivados(){
   const r = { a: ACTA.base.a.slice(), b: ACTA.base.b.slice() };
-  let ultimo = null;
   for (const ev of ACTA.eventos) {
-    const outro = ev.eq === 'a' ? 'b' : 'a';
-    if (ev.eq === ultimo) r[outro].push(0);
     r[ev.eq].push(ev.n);
-    ultimo = ev.eq;
+    r[ev.eq === 'a' ? 'b' : 'a'].push(0);
   }
   return r;
 }

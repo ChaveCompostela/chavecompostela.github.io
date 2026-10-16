@@ -69,9 +69,46 @@ function datosActaDePartido(idPartido){
   };
 }
 
-async function generarActa(idPartido){
+// Flujo: comprobar tiradas → preguntar si hubo incidencias → generar el PDF
+let _actaDatos = null;
+
+function generarActa(idPartido){
   const datos = datosActaDePartido(idPartido);
   if (!datos) return;
+  // Las tiradas de puntos deben coincidir entre los dos bandos y con el marcador
+  const avisos = [];
+  datos.partidas.forEach(p => {
+    try {
+      const a = actaParseSecuencia(p.tiradasLocal), b = actaParseSecuencia(p.tiradasVisit);
+      if (a.length || b.length) {
+        actaRevisarTiradas(a, b).forEach(s => avisos.push(`Partida ${p.numero}: ${s}`));
+        if (a.length && p.puntosLocal != null && actaSuma(a) !== p.puntosLocal) avisos.push(`Partida ${p.numero}: las tiradas del local suman ${actaSuma(a)} y el marcador es ${p.puntosLocal}`);
+        if (b.length && p.puntosVisit != null && actaSuma(b) !== p.puntosVisit) avisos.push(`Partida ${p.numero}: las tiradas del visitante suman ${actaSuma(b)} y el marcador es ${p.puntosVisit}`);
+      }
+    } catch (err) { avisos.push(`Partida ${p.numero}: ${err.message}`); }
+  });
+  if (avisos.length && !confirm('Revisa las tiradas:\n\n· ' + avisos.join('\n· ') + '\n\n¿Generar el acta igualmente?')) return;
+  _actaDatos = datos;
+  sheet(`<h2>Acta · incidencias</h2>
+    <p>¿Hubo incidencias en el encuentro?</p>
+    <div class="bar"><button class="pri" onclick="actaGenerar('')">No hubo</button><button onclick="actaEscribirIncidencias()">Sí hubo</button></div>
+    <div id="acta-inc" hidden>
+      <label>Incidencias / observaciones (irán en el acta)<textarea id="acta-inc-txt" rows="5" maxlength="400" placeholder="Escribe aquí las incidencias"></textarea></label>
+      <div class="bar"><button onclick="cerrar()">Cancelar</button><button class="pri" onclick="actaGenerar(document.getElementById('acta-inc-txt').value)">Generar acta</button></div>
+    </div>
+    <div class="bar"><button onclick="cerrar()">Cancelar</button></div>`);
+}
+
+function actaEscribirIncidencias(){
+  document.getElementById('acta-inc').hidden = false;
+  document.getElementById('acta-inc-txt').focus();
+}
+
+async function actaGenerar(incidencias){
+  if (!_actaDatos) return;
+  const datos = _actaDatos;
+  datos.incidencias = String(incidencias || '').trim();
+  cerrar();
   try { await generarActaPdf(datos); }
   catch (err) { alert('No se pudo generar el acta: ' + err.message); }
 }

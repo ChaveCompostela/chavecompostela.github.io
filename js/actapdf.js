@@ -87,6 +87,33 @@ function _actaSecuenciaCeldas(doc, seq, x, yTop, w, hCelda, tamMax){
   else doc.text(String(seq), x, yTop + hCelda * 0.72);
 }
 
+// Texto de incidencias sobre las 4 líneas del formulario (la primera es más corta: va tras el rótulo)
+function _actaEnvolver(doc, texto, anchos){
+  const lineas = [];
+  String(texto).split(/\r?\n/).forEach(par => {
+    let cur = '';
+    par.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean).forEach(w => {
+      const max = anchos[Math.min(lineas.length, anchos.length - 1)];
+      if (cur && doc.getTextWidth(cur + ' ' + w) > max) { lineas.push(cur); cur = w; } else cur = cur ? cur + ' ' + w : w;
+    });
+    if (cur) lineas.push(cur);
+  });
+  return lineas;
+}
+function _actaIncidencias(doc, texto){
+  const ys = [250.2, 260.7, 269.9, 279.2], xs = [76.5, 18.5, 18.5, 18.5], ws = [115, 173, 173, 173];
+  doc.setFont('helvetica', 'normal');
+  for (let s = 9; s >= 7; s -= 0.5) {
+    doc.setFontSize(s);
+    const lineas = _actaEnvolver(doc, texto, ws);
+    if (lineas.length <= 4 || s === 7) {
+      if (lineas.length > 4) lineas[3] = lineas[3].slice(0, -3) + '...';
+      lineas.slice(0, 4).forEach((l, i) => doc.text(l, xs[i], ys[i]));
+      return;
+    }
+  }
+}
+
 function _actaPagina(doc, c, p){
   const rect = (x, y, w, h) => doc.rect(x, y, w, h);
   const linea = (x1, y1, x2, y2) => doc.line(x1, y1, x2, y2 ?? y1);
@@ -173,8 +200,7 @@ function _actaPagina(doc, c, p){
   [[149.3, 155.7], [161.6, 167.8], [173.7, 180.1], [185.95, 192.2]].forEach(([yTop, yTxt], i) => {
     dato(nombres[i] ? `${(i % 2) + 1}. ${nombres[i]}` : `${(i % 2) + 1}.`, 38, yTxt, 44, 9.5);
     const ch = (p.chaves || [])[i] || {};
-    const txt = ch.tiradas || (ch.total > 0 ? String(ch.total) : '');   // sin detalle de tiradas: solo el total
-    _actaSecuenciaCeldas(doc, txt, 85.5, yTop, 32, 6.15, 9.5);
+    _actaSecuenciaCeldas(doc, actaChavesConTotal(ch), 85.5, yTop, 32, 6.15, 9.5);
   });
   // Columna «Puntos»: tiradas de cada bando (sin detalle: solo el total)
   _actaSecuenciaCaja(doc, p.tiradasLocal || num(p.puntosLocal), 121, 150.3, 69.5, 22.6, 10);
@@ -188,6 +214,7 @@ function _actaPagina(doc, c, p){
   neg('INCIDENCIAS / OBSERVACIÓNS:', 18, 250.7, 9);
   linea(75.6, 251.2, 193.2, 251.2);
   [261.6, 270.8, 280.1].forEach(y => linea(18, y, 193.2, y));
+  if (c.incidencias) _actaIncidencias(doc, c.incidencias);
 }
 
 async function generarActaPdf(c){
@@ -199,6 +226,22 @@ async function generarActaPdf(c){
 }
 
 // Utilidades comunes a las dos apps ---------------------------------------------------------
+// Chaves de un jugador para el acta: «1+2+1+1=5» (varias tiradas) o «2» (una sola). Sin tiradas, solo el total; sin chaves, vacío.
+function actaChavesConTotal(ch){
+  const arr = ch && ch.tiradas ? String(ch.tiradas).split('+').map(Number).filter(n => !isNaN(n)) : [];
+  if (arr.length > 1) return `${arr.join('+')}=${arr.reduce((s, v) => s + v, 0)}`;
+  if (arr.length === 1) return String(arr[0]);
+  return ch && ch.total > 0 ? String(ch.total) : '';
+}
+// Revisión de las tiradas de puntos: mismo número de tiradas en los dos bandos y puntos en un solo bando por tirada
+function actaRevisarTiradas(a, b){
+  const av = [];
+  if (a.length !== b.length) av.push(`las tiradas no coinciden: ${a.length} del local y ${b.length} del visitante`);
+  for (let i = 0; i < Math.min(a.length, b.length); i++) {
+    if (a[i] > 0 && b[i] > 0) { av.push(`en la tirada ${i + 1} puntúan los dos bandos (${a[i]} y ${b[i]})`); break; }
+  }
+  return av;
+}
 // «1+2+8+0» → [1,2,8,0]; vacío → []; lanza un error si el formato no es válido
 function actaParseSecuencia(s){
   const t = String(s ?? '').replace(/\s+/g, '');

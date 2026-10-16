@@ -330,7 +330,7 @@ function actaRevisarPanel(){
     pl = actaParseSecuencia($mk('#ak-pl').value); pv = actaParseSecuencia($mk('#ak-pv').value);
     CLAVES_XOG.forEach(k => { ch[k] = actaParseSecuencia($mk('#ak-ch-' + k).value); });
   } catch (err) { av.textContent = err.message; av.classList.remove('ok'); av.hidden = false; return false; }
-  const dif = [];
+  const dif = actaRevisarTiradas(pl, pv).map(s => s.charAt(0).toUpperCase() + s.slice(1));
   if (actaSuma(pl) !== puntosDe('a')) dif.push(`Puntos local: as tiradas suman ${actaSuma(pl)} e o marcador é ${puntosDe('a')}`);
   if (actaSuma(pv) !== puntosDe('b')) dif.push(`Puntos visitante: as tiradas suman ${actaSuma(pv)} e o marcador é ${puntosDe('b')}`);
   CLAVES_XOG.forEach(k => { if (actaSuma(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSuma(ch[k])} e o marcador é ${chavesDe(k)}`); });
@@ -344,6 +344,7 @@ $mk('#mk-acta-abrir').addEventListener('click', actaAbrirPanel);
 $mk('#ak-pechar').addEventListener('click', () => {
   try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\n¿Pechar igualmente sen gardar os cambios das tiradas?')) return; }
   $mk('#mk-acta-panel').hidden = true;
+  $mk('#ak-inc').hidden = true;
 });
 ['#ak-pl', '#ak-pv'].forEach(s => $mk(s).addEventListener('input', actaRevisarPanel));
 $mk('#ak-chaves').addEventListener('input', actaRevisarPanel);
@@ -355,39 +356,57 @@ function fechaActaMk(p){
   return p.sin_hora ? f : `${f} ${z(d.getHours())}:${z(d.getMinutes())}`;
 }
 
-$mk('#ak-pdf').addEventListener('click', async () => {
-  if (!partidaCargada) return;
-  try { actaLeerPanel(); } catch (err) { alert(err.message); return; }
+function actaCategoriaMk(){
   const d = datosCargaMarcador;
-  const e = d.enfrentamientos.find(x => x.id === partidaCargada.idEnfrentamiento);
   const partido = d.partidos.find(p => p.id === partidaCargada.idPartido);
   const xorn = d.xornadas.find(j => j.id === partido.id_jornada);
   const liga = d.ligas.find(l => l.id === xorn?.id_liga);
-  const cat = d.categorias.find(c => c.id === liga?.id_categoria)?.nombre;
-  if (cat === 'masculina') return alert('A acta da liga masculina aínda non está dispoñible.');
-  if (!actaRevisarPanel() && !confirm('As tiradas non cadran co marcador. ¿Descargar a acta igualmente?')) return;
+  return d.categorias.find(c => c.id === liga?.id_categoria)?.nombre;
+}
 
+// 1.º paso: comprobar as tiradas e preguntar se houbo incidencias
+$mk('#ak-pdf').addEventListener('click', () => {
+  if (!partidaCargada) return;
+  try { actaLeerPanel(); } catch (err) { alert(err.message); return; }
+  if (actaCategoriaMk() === 'masculina') return alert('A acta da liga masculina aínda non está dispoñible.');
+  if (!actaRevisarPanel() && !confirm('As tiradas non cadran. ¿Seguir igualmente coa acta?')) return;
+  $mk('#ak-inc-texto').hidden = true;
+  $mk('#ak-inc').hidden = false;
+  $mk('#ak-inc').scrollIntoView({ block: 'nearest' });
+});
+$mk('#ak-inc-non').addEventListener('click', () => xerarActaMarcador(''));
+$mk('#ak-inc-si').addEventListener('click', () => { $mk('#ak-inc-texto').hidden = false; $mk('#ak-inc-area').focus(); });
+$mk('#ak-inc-xerar').addEventListener('click', () => xerarActaMarcador($mk('#ak-inc-area').value));
+$mk('#ak-inc-volver').addEventListener('click', () => { $mk('#ak-inc').hidden = true; });
+
+// 2.º paso: xerar o PDF (cos puntos, as chaves e, se as houbo, as incidencias)
+async function xerarActaMarcador(incidencias){
+  const d = datosCargaMarcador;
+  const e = d.enfrentamientos.find(x => x.id === partidaCargada.idEnfrentamiento);
+  const partido = d.partidos.find(p => p.id === partidaCargada.idPartido);
   const ptsL = puntosDe('a'), ptsV = puntosDe('b');
   const outras = d.enfrentamientos.filter(x => x.id_partido === partido.id && x.id !== e.id && x.marcador_local != null && x.marcador_visitante != null);
+  const pd = actaPuntosDerivados();
   const datos = {
     fecha: fechaActaMk(partido),
     campo: d.instalaciones?.find(i => i.id === partido.id_instalacion)?.nombre || '',
     local: partidaCargada.nomeLocal, visitante: partidaCargada.nomeVisitante,
     totalLocal: outras.reduce((s, x) => s + x.marcador_local, ptsL),
     totalVisit: outras.reduce((s, x) => s + x.marcador_visitante, ptsV),
+    incidencias: String(incidencias || '').trim(),
     nombreArchivo: actaNombreArchivo(partidaCargada.nomeLocal, partidaCargada.nomeVisitante, partido.fecha_hora ? String(partido.fecha_hora).slice(0, 10) : ''),
     partidas: [{
       numero: e.numero,
       jugadoresLocal: [nomeXogActa('a1'), nomeXogActa('a2')],
       jugadoresVisit: [nomeXogActa('b1'), nomeXogActa('b2')],
       puntosLocal: ptsL, puntosVisit: ptsV,
-      tiradasLocal: actaPuntosDerivados().a.join('+'), tiradasVisit: actaPuntosDerivados().b.join('+'),
+      tiradasLocal: pd.a.join('+'), tiradasVisit: pd.b.join('+'),
       chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: ACTA.chaves[k].join('+') })),
     }],
   };
-  const btn = $mk('#ak-pdf');
-  btn.disabled = true; btn.textContent = 'Xerando…';
-  try { await generarActaPdf(datos); }
+  const botones = [$mk('#ak-inc-non'), $mk('#ak-inc-xerar')];
+  botones.forEach(b => { b.disabled = true; });
+  try { await generarActaPdf(datos); $mk('#ak-inc').hidden = true; }
   catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
-  finally { btn.disabled = false; btn.textContent = 'Descargar PDF'; }
-});
+  finally { botones.forEach(b => { b.disabled = false; }); }
+}
