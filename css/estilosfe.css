@@ -473,10 +473,13 @@ a.partido-lugar{color:var(--granate)}
 .mk-full .mk-chb{width:44px;height:36px;font-size:15px}
 
 /* Acta: panel das tiradas */
-.marcador-carga input[type=text]{
+.marcador-carga textarea,.marcador-carga input[type=text]{
   font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--raia);border-radius:8px;
   background:var(--fondo);color:var(--texto);width:100%;
 }
+#ak-inc{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--raia);padding-top:8px}
+#ak-inc[hidden],#ak-inc-texto[hidden]{display:none}
+#ak-inc-texto{display:flex;flex-direction:column;gap:8px}
 #ak-chaves{display:flex;flex-direction:column;gap:8px}
 #ak-aviso{text-align:left;font-size:12px;padding:8px 10px}
 #ak-aviso.ok{color:#1b8a3a}
