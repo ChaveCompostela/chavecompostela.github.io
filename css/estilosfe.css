@@ -471,3 +471,15 @@ a.partido-lugar{color:var(--granate)}
 .mk-full .marcador-xog-nome{font-size:15px}
 .mk-full .marcador-chaves{font-size:22px;min-width:24px}
 .mk-full .mk-chb{width:44px;height:36px;font-size:15px}
+
+/* Acta: panel das tiradas */
+.marcador-carga input[type=text]{
+  font:inherit;font-size:13px;padding:7px 8px;border:1px solid var(--raia);border-radius:8px;
+  background:var(--fondo);color:var(--texto);width:100%;
+}
+#ak-chaves{display:flex;flex-direction:column;gap:8px}
+#ak-aviso{text-align:left;font-size:12px;padding:8px 10px}
+#ak-aviso.ok{color:#1b8a3a}
+#mk-enviar-panel .marcador-carga-bot{flex-wrap:wrap}
+#mk-enviar-panel .marcador-carga-bot button{flex:1 1 40%}
+#mk-enviar-cancelar{flex-basis:100% !important}
