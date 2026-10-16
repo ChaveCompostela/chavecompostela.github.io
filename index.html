@@ -221,7 +221,21 @@
     <p class="baleiro" id="mk-enviar-info"></p>
     <div class="marcador-carga-bot">
       <button id="mk-enviar-confirmar" class="marcador-pri">Enviar resultado</button>
+      <button id="mk-acta-abrir" type="button">📄 Acta</button>
       <button id="mk-enviar-cancelar">✕ Deixar de anotar esta partida</button>
+    </div>
+  </div>
+
+  <!-- Acta: tiradas en puntos e chaves (editables) e descarga do PDF -->
+  <div id="mk-acta-panel" class="marcador-carga" hidden>
+    <p class="baleiro" style="text-align:left;font-size:12px">Tiradas separadas por «+». Puntos: 0 se non puntuou. Chaves: só as tiradas nas que hai chaves.</p>
+    <label>Puntos <span id="ak-nl">local</span><input id="ak-pl" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+2+8+0"></label>
+    <label>Puntos <span id="ak-nv">visitante</span><input id="ak-pv" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="0+1+9"></label>
+    <div id="ak-chaves"></div>
+    <p id="ak-aviso" class="erro" hidden></p>
+    <div class="marcador-carga-bot">
+      <button id="ak-pdf" class="marcador-pri" type="button">Descargar PDF</button>
+      <button id="ak-pechar" type="button">Pechar</button>
     </div>
   </div>
 
@@ -244,6 +258,7 @@
         <button data-add="16">+16</button>
         <button data-add="-16">-16</button>
       </div>
+      <div class="mk-acta-bot"><button type="button" data-acta="cero">+0</button><button type="button" data-acta="desfacer">↶ Desfacer</button></div>
       <div class="mk-xog">
         <h4 class="mk-xog-tit">Chaves</h4>
         <div class="marcador-xog">
@@ -282,6 +297,7 @@
         <button data-add="16">+16</button>
         <button data-add="-16">-16</button>
       </div>
+      <div class="mk-acta-bot"><button type="button" data-acta="cero">+0</button><button type="button" data-acta="desfacer">↶ Desfacer</button></div>
       <div class="mk-xog">
         <h4 class="mk-xog-tit">Chaves</h4>
         <div class="marcador-xog">
@@ -448,6 +464,7 @@
 <script src="js/eirasfe.js"></script>
 <script src="js/partidosfe.js?v=2"></script>
 <script src="js/marcadorfe.js"></script>
+<script src="js/actapdf.js"></script>
 <script src="js/marcadorcargafe.js"></script>
 <script src="js/pushfe.js"></script>
 <script src="js/appfe.js"></script>
