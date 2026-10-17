@@ -83,7 +83,7 @@ function partidaHtml(e){
       const js = [pa.id_jugador_a, pa.id_jugador_b].map(j => {
         const c = D.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === j);
         return `<label>${esc(lab('jugadores', j))} · chaves<input type="number" inputmode="numeric" min="0" value="${c ? c.chaves : ''}" onchange="setChaves(${e.id},${j},this.value)"></label>
-          <label>Tiradas de chaves (chaves@tirada, ej. 1@3+2@7)<input type="text" value="${esc(c?.tiradas || '')}" placeholder="1@3+2@7" onchange="setTiradasChaves(${e.id},${j},this.value)"></label>`;
+          <label>Tiradas de chaves (chaves@tirada, r = anulada; ej. 1@3+2@7r)<input type="text" value="${esc(c?.tiradas || '')}" placeholder="1@3+2@7" onchange="setTiradasChaves(${e.id},${j},this.value)"></label>`;
       }).join('');
       return `<div class="pareja">${js}<button class="del" onclick="quitarPareja(${x.id})">Quitar pareja</button></div>`;
     }).join('');

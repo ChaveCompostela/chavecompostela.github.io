@@ -338,7 +338,8 @@ function actaRevisarPanel(){
     pl = actaParseSecuencia($mk('#ak-pl').value); pv = actaParseSecuencia($mk('#ak-pv').value);
     CLAVES_XOG.forEach(k => { ch[k] = actaParseChaves($mk('#ak-ch-' + k).value); });
   } catch (err) { av.textContent = err.message; av.classList.remove('ok'); av.hidden = false; return false; }
-  const dif = actaRevisarTiradas(pl, pv).map(s => s.charAt(0).toUpperCase() + s.slice(1));
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const dif = actaRevisarTiradas(pl, pv).map(cap).concat(actaRevisarCoherencia(pl, pv, ch).map(cap));
   if (actaSuma(pl) !== puntosDe('a')) dif.push(`Puntos local: as tiradas suman ${actaSuma(pl)} e o marcador é ${puntosDe('a')}`);
   if (actaSuma(pv) !== puntosDe('b')) dif.push(`Puntos visitante: as tiradas suman ${actaSuma(pv)} e o marcador é ${puntosDe('b')}`);
   CLAVES_XOG.forEach(k => { if (actaSumaChaves(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSumaChaves(ch[k])} e o marcador é ${chavesDe(k)}`); });

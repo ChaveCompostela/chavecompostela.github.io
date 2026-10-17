@@ -84,7 +84,7 @@ function tarjetaPendiente(f){
   if (editandoPendienteId === f.id) {
     const camposChaves = (f.chaves || []).map(c =>
       `<label>${esc(lab('jugadores', c.id_jugador))} · chaves<input type="number" min="0" id="pend-ch-${f.id}-${c.id_jugador}" value="${esc(c.chaves)}"></label>
-       <label>Tiradas de chaves (chaves@tirada, ej. 1@3+2@7)<input type="text" id="pend-tc-${f.id}-${c.id_jugador}" value="${esc(c.tiradas || '')}"></label>`
+       <label>Tiradas de chaves (chaves@tirada, r = anulada; ej. 1@3+2@7r)<input type="text" id="pend-tc-${f.id}-${c.id_jugador}" value="${esc(c.tiradas || '')}"></label>`
     ).join('');
     return `<div class="card">
       <h3>${esc(ctx.titulo)}</h3>

@@ -24,16 +24,18 @@ const _ACTA_TXT = {
   es: {
     pdfLib: () => 'No se pudo cargar la librería de PDF. Revisa la conexión a internet.',
     fmtPuntos: () => 'Formato no válido: usa números separados por «+», por ejemplo 1+2+8+0',
-    fmtChaves: () => 'Formato no válido en las chaves: usa 1+2+1 o, con la tirada, 1@3+2@7 (chaves@tirada)',
+    fmtChaves: () => 'Formato no válido en las chaves: usa 1+2+1, con la tirada 1@3+2@7 (chaves@tirada) y una «r» para las chaves anuladas (1@3r)',
     tirNoCoinc: (a, b) => `las tiradas no coinciden: ${a} del local y ${b} del visitante`,
     tirDoble: (i, a, b) => `en la tirada ${i} puntúan los dos bandos (${a} y ${b})`,
+    chavesNoCuadran: (i, n, a, b) => `tirada ${i}: ${n} puntos y chaves ${a}-${b} (¿chaves matadas o error?)`,
   },
   gl: {
     pdfLib: () => 'Non se puido cargar a librería de PDF. Comproba a conexión a internet.',
     fmtPuntos: () => 'Formato non válido: usa números separados por «+», por exemplo 1+2+8+0',
-    fmtChaves: () => 'Formato non válido nas chaves: usa 1+2+1 ou, coa tirada, 1@3+2@7 (chaves@tirada)',
+    fmtChaves: () => 'Formato non válido nas chaves: usa 1+2+1, coa tirada 1@3+2@7 (chaves@tirada) e unha «r» para as chaves anuladas (1@3r)',
     tirNoCoinc: (a, b) => `as tiradas non coinciden: ${a} do local e ${b} do visitante`,
     tirDoble: (i, a, b) => `na tirada ${i} puntúan os dous bandos (${a} e ${b})`,
+    chavesNoCuadran: (i, n, a, b) => `tirada ${i}: ${n} puntos e chaves ${a}-${b} (chaves matadas ou erro?)`,
   },
 };
 const _actaT = (clave, ...args) => _ACTA_TXT[ACTA_IDIOMA][clave](...args);
@@ -92,8 +94,9 @@ function _actaSecuenciaCaja(doc, seq, x, y, w, h, tamMax){
 function _actaSegChaves(entries, s, conTotal){
   const segs = [];
   entries.forEach((e, i) => {
-    segs.push({ t: String(e.n), s, b: entries.length === 1 && conTotal });
-    if (e.t != null) segs.push({ t: String(e.t), s: s * 0.62, dy: s * 0.3528 * 0.2 });
+    const col = e.r ? [200, 0, 0] : null;   // chave anulada (matada): en rojo
+    segs.push({ t: String(e.n), s, b: entries.length === 1 && conTotal, c: col });
+    if (e.t != null) segs.push({ t: String(e.t), s: s * 0.62, dy: s * 0.3528 * 0.2, c: col });
     if (i < entries.length - 1) segs.push({ t: '+', s });
   });
   return segs;
@@ -104,9 +107,11 @@ function _actaAnchoSegs(doc, segs){
 function _actaDibujarSegs(doc, segs, x, y){
   segs.forEach(sg => {
     doc.setFont('helvetica', sg.b ? 'bold' : 'normal'); doc.setFontSize(sg.s);
+    doc.setTextColor(...(sg.c || [0, 0, 0]));
     doc.text(sg.t, x, y + (sg.dy || 0));
     x += doc.getTextWidth(sg.t);
   });
+  doc.setTextColor(0, 0, 0);
 }
 function _actaChavesCeldas(doc, ch, x, yTop, w, hCelda, tamMax){
   let entries = [];
@@ -281,15 +286,72 @@ async function generarActaPdf(c){
 }
 
 // Utilidades comunes a las dos apps ---------------------------------------------------------
-// Chaves: «1+2+1» (chaves por tirada) o con la tirada en que se hicieron, «1@3+2@7+1@10» (chaves@tirada)
+// Chaves: «1+2+1» (chaves por tirada), con la tirada en que se hicieron «1@3+2@7» y, si la chave se anuló
+// (chaves matadas: los dos bandos dan a la chave en la misma tirada), una «r» detrás: «1@3r» (sale en rojo en el acta)
 function actaParseChaves(s){
   const x = String(s ?? '').replace(/\s+/g, '');
   if (!x) return [];
-  if (!/^\d+(@\d+)?(\+\d+(@\d+)?)*$/.test(x)) throw new Error(_actaT('fmtChaves'));
-  return x.split('+').map(p => { const [n, tt] = p.split('@'); return { n: Number(n), t: tt == null ? null : Number(tt) }; });
+  if (!/^\d+(@\d+)?r?(\+\d+(@\d+)?r?)*$/.test(x)) throw new Error(_actaT('fmtChaves'));
+  return x.split('+').map(p => { const m = p.match(/^(\d+)(?:@(\d+))?(r?)$/); return { n: Number(m[1]), t: m[2] == null ? null : Number(m[2]), r: m[3] === 'r' }; });
 }
-const actaChavesTexto = arr => arr.map(e => (e.t != null ? `${e.n}@${e.t}` : String(e.n))).join('+');
+const actaChavesTexto = arr => arr.map(e => `${e.n}${e.t != null ? '@' + e.t : ''}${e.r ? 'r' : ''}`).join('+');
 const actaSumaChaves = arr => arr.reduce((s, e) => s + e.n, 0);
+
+// Combinaciones posibles en una tirada. n = puntos anotados; cS = chaves del bando que puntúa; cO = chaves del otro.
+// Las chaves de los dos bandos en la misma tirada se anulan (8-8, 16-8, 16-16): por eso salen «matadas» y en rojo.
+const _ACTA_FINALES = {
+  0: { normal: [], matadas: [[2, 2]] },
+  1: { normal: [[0, 0]], matadas: [[1, 1]] },
+  2: { normal: [[0, 0]], matadas: [] },
+  8: { normal: [[1, 0]], matadas: [[2, 1]] },
+  9: { normal: [[1, 0]], matadas: [] },
+  16: { normal: [[2, 0]], matadas: [] },
+};
+// 'normal' | 'matadas' (anulación posible) | 'incompleta' (puede completarse con más chaves) | 'invalida'
+function actaClasificar(n, cS, cO){
+  const f = _ACTA_FINALES[n];
+  if (!f) return 'invalida';
+  const igual = x => x[0] === cS && x[1] === cO;
+  if (f.normal.some(igual)) return 'normal';
+  if (f.matadas.some(igual)) return 'matadas';
+  return [...f.normal, ...f.matadas].some(x => cS <= x[0] && cO <= x[1]) ? 'incompleta' : 'invalida';
+}
+
+// Revisa tiradas ya escritas: avisa de las que tienen puntos y chaves que no cuadran (y no llevan chaves anuladas)
+function actaRevisarCoherencia(pa, pb, ch){
+  const av = [];
+  const largo = Math.max(pa.length, pb.length);
+  for (let i = 0; i < largo; i++) {
+    const t = i + 1, a = pa[i] || 0, b = pb[i] || 0;
+    let cA = 0, cB = 0, hayRoja = false, hayTirada = false;
+    Object.entries(ch || {}).forEach(([k, arr]) => arr.forEach(e => {
+      if (e.t !== t) return;
+      hayTirada = true; if (e.r) hayRoja = true;
+      if (k[0] === 'a') cA += e.n; else cB += e.n;
+    }));
+    if (hayRoja) continue;
+    const n = Math.max(a, b);
+    const cls = n === 0 ? actaClasificar(0, cA, cB) : (a >= b ? actaClasificar(n, cA, cB) : actaClasificar(n, cB, cA));
+    const hayChaves = cA + cB > 0;
+    if ((cls === 'invalida' && hayChaves) || (cls === 'incompleta' && (hayChaves || n >= 8))) av.push(_actaT('chavesNoCuadran', t, n, cA, cB));
+  }
+  return av;
+}
+
+// Ventana con varias opciones; devuelve el índice elegido
+function actaOpciones(titulo, texto, opciones){
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:14px';
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    ov.innerHTML = `<div style="background:#fff;color:#111;border-radius:14px;padding:16px;max-width:420px;width:100%;font:15px system-ui,-apple-system,sans-serif">
+      <h3 style="margin:0 0 6px;font-size:17px">${esc(titulo)}</h3>
+      <p style="margin:0 0 12px;font-size:14px;line-height:1.4;color:#333">${esc(texto)}</p>
+      <div style="display:flex;flex-direction:column;gap:8px">${opciones.map((o, i) => `<button type="button" data-i="${i}" style="font:inherit;font-size:14px;padding:11px 12px;border:1px solid ${i === 0 ? '#7a1f35' : '#bbb'};border-radius:10px;background:${i === 0 ? '#7a1f35' : '#f4f4f4'};color:${i === 0 ? '#fff' : '#111'};text-align:left">${esc(o)}</button>`).join('')}</div></div>`;
+    document.body.append(ov);
+    ov.addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; ov.remove(); resolve(Number(b.dataset.i)); });
+  });
+}
 
 // Revisión de las tiradas de puntos: mismo número de tiradas en los dos bandos y puntos en un solo bando por tirada
 function actaRevisarTiradas(a, b){

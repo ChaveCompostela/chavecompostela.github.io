@@ -82,6 +82,9 @@ function generarActa(idPartido){
       const a = actaParseSecuencia(p.tiradasLocal), b = actaParseSecuencia(p.tiradasVisit);
       if (a.length || b.length) {
         actaRevisarTiradas(a, b).forEach(s => avisos.push(`Partida ${p.numero}: ${s}`));
+        const ch = {};
+        ['a1', 'a2', 'b1', 'b2'].forEach((k, i) => { try { ch[k] = actaParseChaves((p.chaves[i] || {}).tiradas); } catch (e) { ch[k] = []; } });
+        actaRevisarCoherencia(a, b, ch).forEach(s => avisos.push(`Partida ${p.numero}: ${s}`));
         if (a.length && p.puntosLocal != null && actaSuma(a) !== p.puntosLocal) avisos.push(`Partida ${p.numero}: las tiradas del local suman ${actaSuma(a)} y el marcador es ${p.puntosLocal}`);
         if (b.length && p.puntosVisit != null && actaSuma(b) !== p.puntosVisit) avisos.push(`Partida ${p.numero}: las tiradas del visitante suman ${actaSuma(b)} y el marcador es ${p.puntosVisit}`);
       }

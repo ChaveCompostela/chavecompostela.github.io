@@ -7,15 +7,18 @@ const clamp0 = n => (n < 0 ? 0 : n);
 
 // ---------- Rexistro das tiradas para a acta ----------
 // Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B. Todo vai nun único
-// rexistro cronolóxico (ACTA.log) do que se deducen as secuencias (actaDerivar):
-//  · Puntos: cada pulsación +1/+2/+8/+9/+16 é unha tirada, e en cada tirada só puntúa unha parella: a
-//    outra fai 0. Así as dúas secuencias teñen sempre as mesmas tiradas (A=1+2+0, B=0+0+8).
-//    Un «-n» quita a última tirada de n puntos do equipo (ou resta n á última maior): +1 e despois -1
-//    non deixa nada na acta, e un +2 que era 0 desfaise con -2.
-//  · Chaves: unha entrada por tirada con chaves, sen ceros, co número da tirada en que se fixeron
-//    (1@3+2@7 → «1₃+2₇» na acta). Pulsacións seguidas do mesmo xogador (sen nada polo medio) son a mesma
-//    tirada: 1+1 → 2. A tirada é a do punto veciño do mesmo equipo (de preferencia un de 8 ou máis, que
-//    son os que levan chave); se non hai ningún veciño, a última tirada rexistrada.
+// rexistro cronolóxico (ACTA.log) do que se deducen as secuencias (actaDerivar).
+// Regras do xogo:
+//  · En cada tirada só puntúa unha parella (a outra fai 0): cada pulsación de puntos é unha tirada e engade
+//    n ao que puntúa e 0 ao outro. «-n» quita a última tirada de n puntos do equipo (ou resta n á última maior).
+//  · ORDE: primeiro os puntos e despois as chaves. Cada chave vai á última tirada rexistrada, así se sabe a que
+//    tirada pertence (subíndice na acta).
+//  · Chaves matadas: se os dous bandos dan á chave na mesma tirada, anúlanse (8-8, 16-8, 16-16): as chaves
+//    cóntanse a cada xogador pero non hai eses puntos, e na acta saen en VERMELLO (a parte anulada).
+//    Combinacións posibles (puntos · chaves do que puntúa-do outro): 1·1-1, 8·2-1 e 0·2-2 (ninguén puntúa).
+//  · O marcador pregunta cando as chaves non cadran cos puntos (actaClasificar): se se marcan chaves sen puntos,
+//    ou chaves a ambos bandos, por se son chaves matadas ou un erro; e avisa ao pasar a outra tirada se a
+//    anterior quedou sen cadrar (p. ex. 8 puntos sen chave).
 //  · ACTA.base garda o xa escrito (retomado da base de datos ou editado no panel da acta).
 const ACTA = { activa: false, base: null, log: [], desaxuste: false };
 
@@ -27,16 +30,54 @@ function actaReiniciar(){
 actaReiniciar();
 
 // Fixa as tiradas tal cal (retomadas ou editadas): substitúe todo o rexistro.
-// pa/pb: [n, ...] · ch: { a1: [{n, t}], ... }
+// pa/pb: [n, ...] · ch: { a1: [{n, t, r}], ... }
 function actaFixar(pa, pb, ch){
   ACTA.base = { a: pa.slice(), b: pb.slice(), ch: { a1: [], a2: [], b1: [], b2: [], ...Object.fromEntries(Object.entries(ch || {}).map(([k, v]) => [k, v.map(e => ({ ...e }))])) } };
   ACTA.log = [];
 }
 
-function actaPuntos(eq, n){            // n > 0 suma, n < 0 resta
-  if (n > 0) { ACTA.log.push({ k: 'p', eq, n }); return; }
+const actaTiradaActual = () => { for (let i = ACTA.log.length - 1; i >= 0; i--) if (ACTA.log[i].k === 'p') return ACTA.log[i]; return null; };
+
+// Chaves de cada bando (a, b) rexistradas nunha tirada, máis as que se queren probar
+function actaConteo(p, extra){
+  const c = { a: 0, b: 0 };
+  ACTA.log.forEach(ev => { if (ev.k === 'c' && ev.p === p) c[ev.clave[0]]++; });
+  (extra || []).forEach(cl => { c[cl[0]]++; });
+  return c;
+}
+// Clasifica unha tirada segundo os seus puntos e chaves (ver actaClasificar)
+function actaEstadoTirada(p, extra){
+  const c = actaConteo(p, extra);
+  if (!p || p.eq == null || p.n === 0) return { c, cls: actaClasificar(0, c.a, c.b) };
+  return { c, cls: actaClasificar(p.n, c[p.eq], c[p.eq === 'a' ? 'b' : 'a']) };
+}
+
+// Pulsación de puntos (n > 0). Devolve true se se anota. Avisa se a tirada anterior quedou sen cadrar.
+async function actaPuntoPulsado(eq, n){
+  const p = actaTiradaActual();
+  if (p && !p.ok) {
+    const { c, cls } = actaEstadoTirada(p);
+    if (cls === 'incompleta' || cls === 'invalida') {
+      const op = await actaOpciones('A tirada anterior non cadra',
+        `A última tirada leva ${p.n} puntos e chaves ${c.a}-${c.b} (local-visitante). Lembra: primeiro os puntos e despois as chaves; os 8, 9 e 16 puntos levan chave.`,
+        ['Volver e corrixir', 'Seguir igualmente']);
+      if (op === 0) return false;
+      p.ok = true;
+    }
+  }
+  ACTA.log.push({ k: 'p', eq, n });
+  return true;
+}
+
+function actaPuntos(eq, n){            // n < 0: resta (desfai)
   const v = -n, L = ACTA.log;
-  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n === v) { L.splice(i, 1); return; }
+  const quitar = i => {                // as chaves da tirada quitada pasan á anterior
+    const ev = L[i];
+    const previo = L.slice(0, i).reverse().find(x => x.k === 'p') || null;
+    L.splice(i, 1);
+    L.forEach(x => { if (x.k === 'c' && x.p === ev) x.p = previo; });
+  };
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n === v) { quitar(i); return; }
   for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n > v) { L[i].n -= v; return; }
   const arr = ACTA.base[eq];
   let i = arr.lastIndexOf(v);
@@ -44,8 +85,34 @@ function actaPuntos(eq, n){            // n > 0 suma, n < 0 resta
   ACTA.desaxuste = true;               // non hai nada que desfacer: as tiradas non cadrarán cos puntos
 }
 
-function actaChaves(clave, delta){     // clave: a1, a2, b1, b2; delta: +1 / -1
-  if (delta > 0) { ACTA.log.push({ k: 'c', clave }); return; }
+// Pulsación +1 de chave dun xogador (a1, a2, b1, b2). Devolve true se se anota; pregunta se non cadra.
+async function actaChavePulsada(clave){
+  let p = actaTiradaActual();
+  if (p && p.ok) { ACTA.log.push({ k: 'c', clave, p }); return true; }
+  const { c, cls } = p ? actaEstadoTirada(p, [clave]) : { c: { a: 0, b: 0 }, cls: 'invalida' };
+  if (cls === 'normal' || cls === 'incompleta') { ACTA.log.push({ k: 'c', clave, p }); return true; }
+  if (cls === 'matadas') {
+    const op = await actaOpciones('Chaves matadas?',
+      `A tirada leva ${p.n} puntos e chaves nos dous bandos (${c.a}-${c.b}). Se as chaves se anulan na mesma tirada non hai eses puntos e na acta saen en vermello.`,
+      ['Si, chaves matadas', 'Foi un erro']);
+    if (op !== 0) return false;
+    p.ok = true; ACTA.log.push({ k: 'c', clave, p }); return true;
+  }
+  // non cadra: erro ou chaves matadas?
+  const texto = p
+    ? `Esta chave non cadra cos ${p.n} puntos da última tirada (chaves ${c.a}-${c.b} con ela). Se non marcaches puntos nesta tirada, pode ser unha tirada de chaves matadas sen puntos.`
+    : 'Marcaches unha chave sen puntos nesta tirada. Pode ser un erro ou unha tirada de chaves matadas.';
+  const ops = p ? ['Foi un erro (non anotar a chave)', 'Chaves matadas nesta tirada', 'Nova tirada sen puntos (chaves matadas)']
+                : ['Foi un erro (non anotar a chave)', 'Nova tirada sen puntos (chaves matadas)'];
+  const op = await actaOpciones('As chaves non cadran cos puntos', texto, ops);
+  if (op === 0) return false;
+  if (p && op === 1) { p.ok = true; ACTA.log.push({ k: 'c', clave, p }); return true; }
+  const nueva = { k: 'p', eq: null, n: 0, ok: true };
+  ACTA.log.push(nueva, { k: 'c', clave, p: nueva });
+  return true;
+}
+
+function actaChaves(clave, delta){     // delta -1: quita a última chave anotada do xogador
   const L = ACTA.log;
   for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'c' && L[i].clave === clave) { L.splice(i, 1); return; }
   const arr = ACTA.base.ch[clave];
@@ -54,33 +121,42 @@ function actaChaves(clave, delta){     // clave: a1, a2, b1, b2; delta: +1 / -1
   if (arr[arr.length - 1].n <= 0) arr.pop();
 }
 
-// Deduce as secuencias finais: { puntos: {a: [...], b: [...]}, chaves: {a1: [{n, t}], ...} }
+// Deduce as secuencias finais: { puntos: {a: [...], b: [...]}, chaves: {a1: [{n, t, r}], ...} }
+// Chaves anuladas: nunha tirada con chaves dos dous bandos, min(chaves local, chaves visitante) de cada un son
+// anuladas (r: true) e as demais normais.
 function actaDerivar(){
   const pa = ACTA.base.a.slice(), pb = ACTA.base.b.slice();
   const ch = {};
   Object.keys(ACTA.base.ch).forEach(k => { ch[k] = ACTA.base.ch[k].map(e => ({ ...e })); });
-  const L = ACTA.log;
   let tir = Math.max(pa.length, pb.length);
-  const tirDe = new Array(L.length).fill(null);
-  L.forEach((ev, i) => {
+  const num = new Map();
+  ACTA.log.forEach(ev => {
     if (ev.k !== 'p') return;
-    tir++; tirDe[i] = tir;
-    (ev.eq === 'a' ? pa : pb).push(ev.n);
-    (ev.eq === 'a' ? pb : pa).push(0);
+    num.set(ev, ++tir);
+    (ev.eq === 'a' ? pa : pb).push(ev.eq == null ? 0 : ev.n);
+    if (ev.eq == null) pa.push(0);
+    else (ev.eq === 'a' ? pb : pa).push(0);
   });
-  let i = 0;
-  while (i < L.length) {
-    if (L[i].k !== 'c') { i++; continue; }
-    let j = i;
-    while (j + 1 < L.length && L[j + 1].k === 'c' && L[j + 1].clave === L[i].clave) j++;
-    const clave = L[i].clave, eq = clave[0];
-    const prev = i > 0 && L[i - 1].k === 'p' ? { ev: L[i - 1], t: tirDe[i - 1] } : null;
-    const next = j + 1 < L.length && L[j + 1].k === 'p' ? { ev: L[j + 1], t: tirDe[j + 1] } : null;
-    const mismo = x => !!x && x.ev.eq === eq, conChave = x => mismo(x) && x.ev.n >= 8;
-    const elixido = [conChave(prev) && prev, conChave(next) && next, mismo(prev) && prev, mismo(next) && next, prev, next].find(Boolean);
-    ch[clave].push({ n: j - i + 1, t: elixido ? elixido.t : (tir || null) });
-    i = j + 1;
-  }
+  // ev.eq == null (tirada sen puntos): ámbalas dúas reciben 0
+  const porTirada = new Map();
+  ACTA.log.forEach(ev => {
+    if (ev.k !== 'c') return;
+    const t = ev.p ? num.get(ev.p) : (tir || null);
+    if (!porTirada.has(t)) porTirada.set(t, { a1: 0, a2: 0, b1: 0, b2: 0 });
+    porTirada.get(t)[ev.clave]++;
+  });
+  porTirada.forEach((cnt, t) => {
+    const red = Math.min(cnt.a1 + cnt.a2, cnt.b1 + cnt.b2);
+    ['a', 'b'].forEach(eq => {
+      let resto = red;
+      [eq + '1', eq + '2'].forEach(k => {
+        const n = cnt[k]; if (!n) return;
+        const r = Math.min(n, resto); resto -= r;
+        if (r > 0) ch[k].push({ n: r, t, r: true });
+        if (n - r > 0) ch[k].push({ n: n - r, t, r: false });
+      });
+    });
+  });
   return { puntos: { a: pa, b: pb }, chaves: ch };
 }
 
@@ -144,10 +220,12 @@ document.addEventListener('click', e => {
   if (botonPuntos) {
     const equipo = botonPuntos.closest('.marcador-equipo');
     const marcador = equipo.querySelector('.marcador-puntos');
-    const actual = Number(marcador.textContent) || 0;
-    marcador.textContent = clamp0(actual + Number(botonPuntos.dataset.add));
-    if (ACTA.activa) { const k = claveEquipo(equipo); if (k) actaPuntos(k, Number(botonPuntos.dataset.add)); }
-    actualizarLideres();
+    const delta = Number(botonPuntos.dataset.add);
+    const k = ACTA.activa ? claveEquipo(equipo) : null;
+    const aplicar = () => { marcador.textContent = clamp0((Number(marcador.textContent) || 0) + delta); actualizarLideres(); };
+    if (k && delta > 0) { actaPuntoPulsado(k, delta).then(ok => { if (ok) aplicar(); }); return; }
+    if (k) actaPuntos(k, delta);
+    aplicar();
     return;
   }
 
@@ -156,10 +234,12 @@ document.addEventListener('click', e => {
   if (botonChave) {
     const fila = botonChave.closest('.marcador-xog');
     const contador = fila.querySelector('.marcador-chaves');
-    const actual = Number(contador.textContent) || 0;
-    contador.textContent = clamp0(actual + Number(botonChave.dataset.chaves));
-    if (ACTA.activa) { const k = claveXogador(fila); if (k) actaChaves(k, Number(botonChave.dataset.chaves)); }
-    actualizarLideres();
+    const delta = Number(botonChave.dataset.chaves);
+    const k = ACTA.activa ? claveXogador(fila) : null;
+    const aplicar = () => { contador.textContent = clamp0((Number(contador.textContent) || 0) + delta); actualizarLideres(); };
+    if (k && delta > 0) { actaChavePulsada(k).then(ok => { if (ok) aplicar(); }); return; }
+    if (k) actaChaves(k, delta);
+    aplicar();
     return;
   }
 
