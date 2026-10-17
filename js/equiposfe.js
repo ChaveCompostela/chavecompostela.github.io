@@ -43,8 +43,17 @@ document.addEventListener('click', e => {
   if (!fila) return;
   const lista = fila.nextElementSibling;
   const aberto = fila.getAttribute('aria-expanded') === 'true';
+  if (!aberto) {
+    // Só un equipo aberto á vez: péchase calquera outro (todos se poden abrir e pechar igualmente)
+    document.querySelectorAll('#vista-equipos .equipo-fila[aria-expanded="true"]').forEach(outra => {
+      if (outra === fila) return;
+      outra.setAttribute('aria-expanded', 'false');
+      if (outra.nextElementSibling) outra.nextElementSibling.hidden = true;
+    });
+  }
   fila.setAttribute('aria-expanded', String(!aberto));
   lista.hidden = aberto;
+  if (!aberto) fila.closest('.equipo-card').scrollIntoView({ block: 'nearest' });   // o peche doutro pode mover a lista
 });
 
 async function cargarEquipos(){
