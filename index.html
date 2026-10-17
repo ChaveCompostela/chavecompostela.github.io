@@ -16,7 +16,7 @@
 <link rel="manifest" href="manifestfe.webmanifest">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tlpkxrwwdosrzqcqwybq.supabase.co" crossorigin>
-<link rel="stylesheet" href="css/estilosfe.css">
+<link rel="stylesheet" href="css/estilosfe.css?v=30">
 </head>
 <body>
 <div id="app">
@@ -228,7 +228,7 @@
 
   <!-- Acta: tiradas en puntos e chaves (editables) e descarga do PDF -->
   <div id="mk-acta-panel" class="marcador-carga" hidden>
-    <p class="baleiro" style="text-align:left;font-size:12px">Tiradas separadas por «+». Puntos: 0 se non puntuou. Chaves: só as tiradas nas que hai chaves.</p>
+    <p class="baleiro" style="text-align:left;font-size:12px">Puntos: unha tirada por cada pulsación e, en cada tirada, só puntúa unha parella (a outra fai 0). Chaves: chaves@tirada, por exemplo 1@3+2@7 (a tirada é opcional).</p>
     <label>Puntos <span id="ak-nl">local</span><input id="ak-pl" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+2+8+0"></label>
     <label>Puntos <span id="ak-nv">visitante</span><input id="ak-pv" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="0+1+9"></label>
     <div id="ak-chaves"></div>
@@ -238,7 +238,7 @@
       <button id="ak-pechar" type="button">Pechar</button>
     </div>
     <div id="ak-inc" hidden>
-      <p class="baleiro" style="text-align:left;font-weight:700">¿Houbo incidencias?</p>
+      <p class="baleiro" style="text-align:left;font-weight:700">Houbo incidencias?</p>
       <div class="marcador-carga-bot">
         <button id="ak-inc-non" class="marcador-pri" type="button">Non houbo</button>
         <button id="ak-inc-si" type="button">Si houbo</button>
@@ -468,18 +468,18 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/configfe.js"></script>
-<script src="js/novasfe.js"></script>
-<script src="js/calendariofe.js"></script>
-<script src="js/clasificacionfe.js"></script>
-<script src="js/equiposfe.js"></script>
-<script src="js/eirasfe.js"></script>
-<script src="js/partidosfe.js?v=2"></script>
-<script src="js/marcadorfe.js"></script>
-<script src="js/actapdf.js"></script>
-<script src="js/marcadorcargafe.js"></script>
-<script src="js/pushfe.js"></script>
-<script src="js/appfe.js"></script>
+<script src="js/configfe.js?v=30"></script>
+<script src="js/novasfe.js?v=30"></script>
+<script src="js/calendariofe.js?v=30"></script>
+<script src="js/clasificacionfe.js?v=30"></script>
+<script src="js/equiposfe.js?v=30"></script>
+<script src="js/eirasfe.js?v=30"></script>
+<script src="js/partidosfe.js?v=30"></script>
+<script src="js/marcadorfe.js?v=30"></script>
+<script src="js/actapdf.js?v=30"></script>
+<script src="js/marcadorcargafe.js?v=30"></script>
+<script src="js/pushfe.js?v=30"></script>
+<script src="js/appfe.js?v=30"></script>
 
 </body>
 </html>
