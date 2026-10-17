@@ -109,6 +109,9 @@ async function actaGenerar(incidencias){
   const datos = _actaDatos;
   datos.incidencias = String(incidencias || '').trim();
   cerrar();
+  const firmas = await actaPedirFirmas('es');   // dos recuadros para firmar con el dedo o un lápiz táctil
+  if (firmas === null) return;
+  datos.firmas = firmas;
   try { await generarActaPdf(datos); }
   catch (err) { alert('No se pudo generar el acta: ' + err.message); }
 }

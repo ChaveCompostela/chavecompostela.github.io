@@ -6,65 +6,82 @@
 const clamp0 = n => (n < 0 ? 0 : n);
 
 // ---------- Rexistro das tiradas para a acta ----------
-// Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B.
-//  · Puntos: cada pulsación +1/+2/+8/+9/+16 é unha tirada, en orde (ACTA.eventos). Un «-n» desfai a
-//    última tirada de n puntos do equipo (ou, se non hai, resta n á última tirada maior): +1 e despois
-//    -1 non deixa nada na acta, e +2 que era 0 desfaise con -2.
-//  · As tiradas van sincronizadas: en cada tirada só puntúa unha parella, e a outra fai 0. Así, cada
-//    pulsación de puntos engade a mesma tirada aos dous equipos (n ao que puntúa, 0 ao outro) e as dúas
-//    secuencias teñen sempre o mesmo número de tiradas (actaPuntosDerivados).
-//  · ACTA.base garda tiradas xa escritas (retomadas da base de datos ou editadas no panel da acta).
-//  · Chaves: unha entrada por tirada con chaves, sen ceros (1+1+2). Dúas pulsacións seguidas do
-//    mesmo xogador (sen nada polo medio) contan como a mesma tirada: 1+1 → 2.
-const ACTA = { activa: false, base: { a: [], b: [] }, eventos: [], chaves: { a1: [], a2: [], b1: [], b2: [] }, ultimoChaves: null, desaxuste: false };
+// Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B. Todo vai nun único
+// rexistro cronolóxico (ACTA.log) do que se deducen as secuencias (actaDerivar):
+//  · Puntos: cada pulsación +1/+2/+8/+9/+16 é unha tirada, e en cada tirada só puntúa unha parella: a
+//    outra fai 0. Así as dúas secuencias teñen sempre as mesmas tiradas (A=1+2+0, B=0+0+8).
+//    Un «-n» quita a última tirada de n puntos do equipo (ou resta n á última maior): +1 e despois -1
+//    non deixa nada na acta, e un +2 que era 0 desfaise con -2.
+//  · Chaves: unha entrada por tirada con chaves, sen ceros, co número da tirada en que se fixeron
+//    (1@3+2@7 → «1₃+2₇» na acta). Pulsacións seguidas do mesmo xogador (sen nada polo medio) son a mesma
+//    tirada: 1+1 → 2. A tirada é a do punto veciño do mesmo equipo (de preferencia un de 8 ou máis, que
+//    son os que levan chave); se non hai ningún veciño, a última tirada rexistrada.
+//  · ACTA.base garda o xa escrito (retomado da base de datos ou editado no panel da acta).
+const ACTA = { activa: false, base: null, log: [], desaxuste: false };
 
 function actaReiniciar(){
-  ACTA.base = { a: [], b: [] };
-  ACTA.eventos = [];
-  ACTA.chaves = { a1: [], a2: [], b1: [], b2: [] };
-  ACTA.ultimoChaves = null;
+  ACTA.base = { a: [], b: [], ch: { a1: [], a2: [], b1: [], b2: [] } };
+  ACTA.log = [];
   ACTA.desaxuste = false;
 }
+actaReiniciar();
 
-// Fixa as tiradas de puntos tal cal (retomadas ou editadas): substitúe todo o rexistro de puntos
-function actaFixarPuntos(a, b){
-  ACTA.base = { a: a.slice(), b: b.slice() };
-  ACTA.eventos = [];
+// Fixa as tiradas tal cal (retomadas ou editadas): substitúe todo o rexistro.
+// pa/pb: [n, ...] · ch: { a1: [{n, t}], ... }
+function actaFixar(pa, pb, ch){
+  ACTA.base = { a: pa.slice(), b: pb.slice(), ch: { a1: [], a2: [], b1: [], b2: [], ...Object.fromEntries(Object.entries(ch || {}).map(([k, v]) => [k, v.map(e => ({ ...e }))])) } };
+  ACTA.log = [];
 }
 
 function actaPuntos(eq, n){            // n > 0 suma, n < 0 resta
-  ACTA.ultimoChaves = null;            // calquera pulsación de puntos separa as tiradas de chaves
-  if (n > 0) { ACTA.eventos.push({ eq, n }); return; }
-  const v = -n, ev = ACTA.eventos;
-  for (let i = ev.length - 1; i >= 0; i--) if (ev[i].eq === eq && ev[i].n === v) { ev.splice(i, 1); return; }
-  for (let i = ev.length - 1; i >= 0; i--) if (ev[i].eq === eq && ev[i].n > v) { ev[i].n -= v; return; }
+  if (n > 0) { ACTA.log.push({ k: 'p', eq, n }); return; }
+  const v = -n, L = ACTA.log;
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n === v) { L.splice(i, 1); return; }
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n > v) { L[i].n -= v; return; }
   const arr = ACTA.base[eq];
   let i = arr.lastIndexOf(v);
-  if (i >= 0) { arr.splice(i, 1); return; }
-  for (i = arr.length - 1; i >= 0; i--) if (arr[i] > v) { arr[i] -= v; return; }
+  if (i >= 0) { arr.splice(i, 1); ACTA.base[eq === 'a' ? 'b' : 'a'].splice(i, 1); return; }   // quita a tirada enteira
   ACTA.desaxuste = true;               // non hai nada que desfacer: as tiradas non cadrarán cos puntos
 }
 
-// Tiradas de cada equipo na orde en que se xogaron: cada pulsación é unha tirada na que o outro equipo fai 0
-function actaPuntosDerivados(){
-  const r = { a: ACTA.base.a.slice(), b: ACTA.base.b.slice() };
-  for (const ev of ACTA.eventos) {
-    r[ev.eq].push(ev.n);
-    r[ev.eq === 'a' ? 'b' : 'a'].push(0);
-  }
-  return r;
+function actaChaves(clave, delta){     // clave: a1, a2, b1, b2; delta: +1 / -1
+  if (delta > 0) { ACTA.log.push({ k: 'c', clave }); return; }
+  const L = ACTA.log;
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'c' && L[i].clave === clave) { L.splice(i, 1); return; }
+  const arr = ACTA.base.ch[clave];
+  if (!arr.length) { ACTA.desaxuste = true; return; }
+  arr[arr.length - 1].n -= 1;
+  if (arr[arr.length - 1].n <= 0) arr.pop();
 }
 
-function actaChaves(clave, delta){     // clave: a1, a2, b1, b2; delta: +1 / -1
-  const arr = ACTA.chaves[clave];
-  if (delta > 0) {
-    if (ACTA.ultimoChaves === clave && arr.length) arr[arr.length - 1] += delta; else arr.push(delta);
-    ACTA.ultimoChaves = clave;
-    return;
+// Deduce as secuencias finais: { puntos: {a: [...], b: [...]}, chaves: {a1: [{n, t}], ...} }
+function actaDerivar(){
+  const pa = ACTA.base.a.slice(), pb = ACTA.base.b.slice();
+  const ch = {};
+  Object.keys(ACTA.base.ch).forEach(k => { ch[k] = ACTA.base.ch[k].map(e => ({ ...e })); });
+  const L = ACTA.log;
+  let tir = Math.max(pa.length, pb.length);
+  const tirDe = new Array(L.length).fill(null);
+  L.forEach((ev, i) => {
+    if (ev.k !== 'p') return;
+    tir++; tirDe[i] = tir;
+    (ev.eq === 'a' ? pa : pb).push(ev.n);
+    (ev.eq === 'a' ? pb : pa).push(0);
+  });
+  let i = 0;
+  while (i < L.length) {
+    if (L[i].k !== 'c') { i++; continue; }
+    let j = i;
+    while (j + 1 < L.length && L[j + 1].k === 'c' && L[j + 1].clave === L[i].clave) j++;
+    const clave = L[i].clave, eq = clave[0];
+    const prev = i > 0 && L[i - 1].k === 'p' ? { ev: L[i - 1], t: tirDe[i - 1] } : null;
+    const next = j + 1 < L.length && L[j + 1].k === 'p' ? { ev: L[j + 1], t: tirDe[j + 1] } : null;
+    const mismo = x => !!x && x.ev.eq === eq, conChave = x => mismo(x) && x.ev.n >= 8;
+    const elixido = [conChave(prev) && prev, conChave(next) && next, mismo(prev) && prev, mismo(next) && next, prev, next].find(Boolean);
+    ch[clave].push({ n: j - i + 1, t: elixido ? elixido.t : (tir || null) });
+    i = j + 1;
   }
-  if (!arr.length) { ACTA.desaxuste = true; return; }
-  arr[arr.length - 1] += delta;
-  if (arr[arr.length - 1] <= 0) arr.pop();
+  return { puntos: { a: pa, b: pb }, chaves: ch };
 }
 
 const claveEquipo = eq => (eq && eq.id === 'mk-a' ? 'a' : eq && eq.id === 'mk-b' ? 'b' : null);

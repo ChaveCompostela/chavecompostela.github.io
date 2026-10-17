@@ -84,7 +84,7 @@ function tarjetaPendiente(f){
   if (editandoPendienteId === f.id) {
     const camposChaves = (f.chaves || []).map(c =>
       `<label>${esc(lab('jugadores', c.id_jugador))} · chaves<input type="number" min="0" id="pend-ch-${f.id}-${c.id_jugador}" value="${esc(c.chaves)}"></label>
-       <label>Tiradas de chaves (ej. 1+1+2)<input type="text" id="pend-tc-${f.id}-${c.id_jugador}" value="${esc(c.tiradas || '')}"></label>`
+       <label>Tiradas de chaves (chaves@tirada, ej. 1@3+2@7)<input type="text" id="pend-tc-${f.id}-${c.id_jugador}" value="${esc(c.tiradas || '')}"></label>`
     ).join('');
     return `<div class="card">
       <h3>${esc(ctx.titulo)}</h3>
@@ -144,9 +144,9 @@ async function guardarEdicionPendiente(id){
   const chaves = [];
   for (const c of (f.chaves || [])) {
     let tc;
-    try { tc = actaParseSecuencia($(`#pend-tc-${id}-${c.id_jugador}`).value); }
+    try { tc = actaParseChaves($(`#pend-tc-${id}-${c.id_jugador}`).value); }
     catch (err) { if (errAviso) errAviso.textContent = err.message; return; }
-    chaves.push({ id_jugador: c.id_jugador, chaves: Number($(`#pend-ch-${id}-${c.id_jugador}`).value) || 0, tiradas: tc.length ? tc.join('+') : '' });
+    chaves.push({ id_jugador: c.id_jugador, chaves: Number($(`#pend-ch-${id}-${c.id_jugador}`).value) || 0, tiradas: tc.length ? actaChavesTexto(tc) : '' });
   }
   const { error } = await sb.from('resultados_pendientes')
     .update({ marcador_local: ml, marcador_visitante: mv, chaves,

@@ -169,11 +169,12 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
   actaReiniciar();
   ACTA.activa = true;
   try {
-    actaFixarPuntos(actaParseSecuencia(e.puntos_tiradas_local), actaParseSecuencia(e.puntos_tiradas_visitante));
+    const ch = {};
     Object.entries(partidaCargada.xog).forEach(([k, id]) => {
       const c = d.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
-      ACTA.chaves[k] = actaParseSecuencia(c?.tiradas);
+      ch[k] = actaParseChaves(c?.tiradas);
     });
+    actaFixar(actaParseSecuencia(e.puntos_tiradas_local), actaParseSecuencia(e.puntos_tiradas_visitante), ch);
   } catch (err) { actaReiniciar(); }
 
   $mk('#mk-carga-panel').hidden = true;
@@ -232,8 +233,9 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
     try {
       actaLeerPanelSeAberto();
       const tiradasChaves = {};
-      Object.entries(partidaCargada.xog).forEach(([k, id]) => { tiradasChaves[String(id)] = ACTA.chaves[k].join('+'); });
-      const pd = actaPuntosDerivados();
+      const der = actaDerivar();
+      Object.entries(partidaCargada.xog).forEach(([k, id]) => { tiradasChaves[String(id)] = actaChavesTexto(der.chaves[k]); });
+      const pd = der.puntos;
       const { error: errActa } = await sbfe.rpc('enviar_acta_marcador', {
         p_id_enfrentamiento: partidaCargada.idEnfrentamiento,
         p_puntos_local: pd.a.join('+'),
@@ -304,11 +306,11 @@ function actaAbrirPanel(){
   if (!partidaCargada) return;
   $mk('#ak-nl').textContent = '· ' + partidaCargada.nomeLocal;
   $mk('#ak-nv').textContent = '· ' + partidaCargada.nomeVisitante;
-  const pd = actaPuntosDerivados();
+  const der = actaDerivar(), pd = der.puntos;
   $mk('#ak-pl').value = pd.a.join('+');
   $mk('#ak-pv').value = pd.b.join('+');
   $mk('#ak-chaves').innerHTML = CLAVES_XOG.map(k =>
-    `<label>Chaves · ${escFe(nomeXogActa(k))}<input id="ak-ch-${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+1+2" value="${escFe(ACTA.chaves[k].join('+'))}"></label>`).join('');
+    `<label>Chaves · ${escFe(nomeXogActa(k))}<input id="ak-ch-${k}" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1@3+2@7" value="${escFe(actaChavesTexto(der.chaves[k]))}"></label>`).join('');
   $mk('#mk-acta-panel').hidden = false;
   actaRevisarPanel();
 }
@@ -317,8 +319,8 @@ function actaAbrirPanel(){
 function actaLeerPanel(){
   const pl = actaParseSecuencia($mk('#ak-pl').value), pv = actaParseSecuencia($mk('#ak-pv').value);
   const ch = {};
-  CLAVES_XOG.forEach(k => { ch[k] = actaParseSecuencia($mk('#ak-ch-' + k).value); });
-  actaFixarPuntos(pl, pv); ACTA.chaves = ch; ACTA.ultimoChaves = null;
+  CLAVES_XOG.forEach(k => { ch[k] = actaParseChaves($mk('#ak-ch-' + k).value); });
+  actaFixar(pl, pv, ch);
 }
 function actaLeerPanelSeAberto(){ if (!$mk('#mk-acta-panel').hidden) actaLeerPanel(); }
 
@@ -328,12 +330,12 @@ function actaRevisarPanel(){
   let pl, pv, ch = {};
   try {
     pl = actaParseSecuencia($mk('#ak-pl').value); pv = actaParseSecuencia($mk('#ak-pv').value);
-    CLAVES_XOG.forEach(k => { ch[k] = actaParseSecuencia($mk('#ak-ch-' + k).value); });
+    CLAVES_XOG.forEach(k => { ch[k] = actaParseChaves($mk('#ak-ch-' + k).value); });
   } catch (err) { av.textContent = err.message; av.classList.remove('ok'); av.hidden = false; return false; }
   const dif = actaRevisarTiradas(pl, pv).map(s => s.charAt(0).toUpperCase() + s.slice(1));
   if (actaSuma(pl) !== puntosDe('a')) dif.push(`Puntos local: as tiradas suman ${actaSuma(pl)} e o marcador é ${puntosDe('a')}`);
   if (actaSuma(pv) !== puntosDe('b')) dif.push(`Puntos visitante: as tiradas suman ${actaSuma(pv)} e o marcador é ${puntosDe('b')}`);
-  CLAVES_XOG.forEach(k => { if (actaSuma(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSuma(ch[k])} e o marcador é ${chavesDe(k)}`); });
+  CLAVES_XOG.forEach(k => { if (actaSumaChaves(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSumaChaves(ch[k])} e o marcador é ${chavesDe(k)}`); });
   av.classList.toggle('ok', !dif.length);
   av.textContent = dif.length ? 'Non cadra: ' + dif.join(' · ') : 'As tiradas cadran cos puntos e coas chaves ✓';
   av.hidden = false;
@@ -386,7 +388,7 @@ async function xerarActaMarcador(incidencias){
   const partido = d.partidos.find(p => p.id === partidaCargada.idPartido);
   const ptsL = puntosDe('a'), ptsV = puntosDe('b');
   const outras = d.enfrentamientos.filter(x => x.id_partido === partido.id && x.id !== e.id && x.marcador_local != null && x.marcador_visitante != null);
-  const pd = actaPuntosDerivados();
+  const der = actaDerivar(), pd = der.puntos;
   const datos = {
     fecha: fechaActaMk(partido),
     campo: d.instalaciones?.find(i => i.id === partido.id_instalacion)?.nombre || '',
@@ -401,9 +403,12 @@ async function xerarActaMarcador(incidencias){
       jugadoresVisit: [nomeXogActa('b1'), nomeXogActa('b2')],
       puntosLocal: ptsL, puntosVisit: ptsV,
       tiradasLocal: pd.a.join('+'), tiradasVisit: pd.b.join('+'),
-      chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: ACTA.chaves[k].join('+') })),
+      chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: actaChavesTexto(der.chaves[k]) })),
     }],
   };
+  const firmas = await actaPedirFirmas('gl');      // dous recuadros para asinar co dedo ou lapis táctil
+  if (firmas === null) return;
+  datos.firmas = firmas;
   const botones = [$mk('#ak-inc-non'), $mk('#ak-inc-xerar')];
   botones.forEach(b => { b.disabled = true; });
   try { await generarActaPdf(datos); $mk('#ak-inc').hidden = true; }

@@ -83,7 +83,7 @@ function partidaHtml(e){
       const js = [pa.id_jugador_a, pa.id_jugador_b].map(j => {
         const c = D.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === j);
         return `<label>${esc(lab('jugadores', j))} · chaves<input type="number" inputmode="numeric" min="0" value="${c ? c.chaves : ''}" onchange="setChaves(${e.id},${j},this.value)"></label>
-          <label>Tiradas de chaves (ej. 1+1+2)<input type="text" value="${esc(c?.tiradas || '')}" placeholder="1+1+2" onchange="setTiradasChaves(${e.id},${j},this.value)"></label>`;
+          <label>Tiradas de chaves (chaves@tirada, ej. 1@3+2@7)<input type="text" value="${esc(c?.tiradas || '')}" placeholder="1@3+2@7" onchange="setTiradasChaves(${e.id},${j},this.value)"></label>`;
       }).join('');
       return `<div class="pareja">${js}<button class="del" onclick="quitarPareja(${x.id})">Quitar pareja</button></div>`;
     }).join('');
@@ -193,12 +193,12 @@ async function guardarTiradas(id){
 // Tiradas de chaves de un jugador (1+1+2). Si hay tiradas, las chaves totales pasan a ser su suma.
 async function setTiradasChaves(e, j, v){
   let arr;
-  try { arr = actaParseSecuencia(v); } catch (err) { return msg(err.message); }
+  try { arr = actaParseChaves(v); } catch (err) { return msg(err.message); }
   const c = D.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e && z.id_jugador === j);
   const { error } = await sb.from('chaves_enfrentamiento').upsert({
     id_enfrentamiento: e, id_jugador: j,
-    chaves: arr.length ? actaSuma(arr) : (c ? c.chaves : 0),
-    tiradas: arr.length ? arr.join('+') : null,
+    chaves: arr.length ? actaSumaChaves(arr) : (c ? c.chaves : 0),
+    tiradas: arr.length ? actaChavesTexto(arr) : null,
   }, { onConflict: 'id_enfrentamiento,id_jugador' });
   if (error) return msg(error.message);
   msg(''); refrescar();

@@ -66,25 +66,51 @@ function _actaSecuenciaCaja(doc, seq, x, y, w, h, tamMax){
   }
 }
 
-// Secuencia de chaves en las dos celdas apiladas de cada jugador: una línea si cabe; si no, se reparte en dos
-function _actaSecuenciaCeldas(doc, seq, x, yTop, w, hCelda, tamMax){
-  if (!seq) return;
-  const tk = String(seq).split('+');
-  const mitad = Math.ceil(tk.length / 2);
-  const l1 = tk.length > 1 ? tk.slice(0, mitad).join('+') + '+' : seq;
-  const l2 = tk.length > 1 ? tk.slice(mitad).join('+') : '';
-  doc.setFont('helvetica', 'normal');
-  for (let s = tamMax; s >= 6; s -= 0.5) {
-    doc.setFontSize(s);
-    if (doc.getTextWidth(String(seq)) <= w) { doc.text(String(seq), x, yTop + hCelda * 0.72); return; }
-    if (l2 && doc.getTextWidth(l1) <= w && doc.getTextWidth(l2) <= w) {
-      doc.text(l1, x, yTop + hCelda * 0.72);
-      doc.text(l2, x, yTop + hCelda * 1.72);
-      return;
+// ---- Chaves de un jugador: «1₃+2₇+1₁₀=4» (chaves y, en subíndice, la tirada en que se hicieron; total en negrita) ----
+// entries: [{n, t}] (t = número de tirada, o null si no se sabe). Se dibuja segmento a segmento porque la fuente
+// estándar del PDF no tiene subíndices: el número de tirada va en cuerpo pequeño y desplazado hacia abajo.
+function _actaSegChaves(entries, s, conTotal){
+  const segs = [];
+  entries.forEach((e, i) => {
+    segs.push({ t: String(e.n), s, b: entries.length === 1 && conTotal });
+    if (e.t != null) segs.push({ t: String(e.t), s: s * 0.62, dy: s * 0.3528 * 0.2 });
+    if (i < entries.length - 1) segs.push({ t: '+', s });
+  });
+  return segs;
+}
+function _actaAnchoSegs(doc, segs){
+  return segs.reduce((w, sg) => { doc.setFont('helvetica', sg.b ? 'bold' : 'normal'); doc.setFontSize(sg.s); return w + doc.getTextWidth(sg.t); }, 0);
+}
+function _actaDibujarSegs(doc, segs, x, y){
+  segs.forEach(sg => {
+    doc.setFont('helvetica', sg.b ? 'bold' : 'normal'); doc.setFontSize(sg.s);
+    doc.text(sg.t, x, y + (sg.dy || 0));
+    x += doc.getTextWidth(sg.t);
+  });
+}
+function _actaChavesCeldas(doc, ch, x, yTop, w, hCelda, tamMax){
+  let entries = [];
+  try { entries = actaParseChaves(ch && ch.tiradas); } catch (e) {}
+  if (!entries.length && ch && ch.total > 0) entries = [{ n: ch.total, t: null }];   // sin detalle de tiradas: solo el total
+  if (!entries.length) return;
+  const total = entries.reduce((s, e) => s + e.n, 0);
+  const cierre = s => (entries.length > 1 ? [{ t: '=', s }, { t: String(total), s, b: true }] : []);
+  const y1 = yTop + hCelda * 0.72, y2 = yTop + hCelda * 1.72;
+  const mitad = Math.ceil(entries.length / 2);
+  for (let s = tamMax; s >= 6.5; s -= 0.5) {
+    const una = _actaSegChaves(entries, s, true).concat(cierre(s));
+    if (_actaAnchoSegs(doc, una) <= w) { _actaDibujarSegs(doc, una, x, y1); return; }
+    if (entries.length > 1) {
+      const l1 = _actaSegChaves(entries.slice(0, mitad), s, false).concat([{ t: '+', s }]);
+      const l2 = _actaSegChaves(entries.slice(mitad), s, false).concat(cierre(s));
+      if (_actaAnchoSegs(doc, l1) <= w && _actaAnchoSegs(doc, l2) <= w) { _actaDibujarSegs(doc, l1, x, y1); _actaDibujarSegs(doc, l2, x, y2); return; }
     }
   }
-  if (l2) { doc.text(l1, x, yTop + hCelda * 0.72); doc.text(l2, x, yTop + hCelda * 1.72); }
-  else doc.text(String(seq), x, yTop + hCelda * 0.72);
+  const s = 6.5;
+  if (entries.length > 1) {
+    _actaDibujarSegs(doc, _actaSegChaves(entries.slice(0, mitad), s, false).concat([{ t: '+', s }]), x, y1);
+    _actaDibujarSegs(doc, _actaSegChaves(entries.slice(mitad), s, false).concat(cierre(s)), x, y2);
+  } else _actaDibujarSegs(doc, _actaSegChaves(entries, s, true), x, y1);
 }
 
 // Texto de incidencias sobre las 4 líneas del formulario (la primera es más corta: va tras el rótulo)
@@ -164,9 +190,10 @@ function _actaPagina(doc, c, p){
   linea(82.4, 99, 102.7, 99);
   neg(`Puntos ${n}.ª Partida:`, 108.4, 97.3, 8.5);
   linea(170, 99, 190.2, 99);
-  doc.setFont('helvetica', 'bold');
-  _actaTexto(doc, num(p.puntosLocal), 92.5, 98, 19, 11, { align: 'center' });
-  _actaTexto(doc, num(p.puntosVisit), 180, 98, 19, 11, { align: 'center' });
+  // El equipo ganador (más puntos) va en negrita; en caso de empate, ninguno
+  const gp = p.puntosLocal != null && p.puntosVisit != null ? Math.sign(p.puntosLocal - p.puntosVisit) : 0;
+  doc.setFont('helvetica', gp > 0 ? 'bold' : 'normal'); _actaTexto(doc, num(p.puntosLocal), 92.5, 98, 19, 11, { align: 'center' });
+  doc.setFont('helvetica', gp < 0 ? 'bold' : 'normal'); _actaTexto(doc, num(p.puntosVisit), 180, 98, 19, 11, { align: 'center' });
 
   // Resultado global
   rect(18, 107.8, 174.5, 9.1);
@@ -175,9 +202,9 @@ function _actaPagina(doc, c, p){
   linea(109.6, 114.8, 136, 114.8);
   neg('Visitante:', 141.3, 113.6, 9.5);
   linea(161.2, 114.8, 187.7, 114.8);
-  doc.setFont('helvetica', 'bold');
-  _actaTexto(doc, num(c.totalLocal), 122.8, 113.9, 24, 11, { align: 'center' });
-  _actaTexto(doc, num(c.totalVisit), 174.4, 113.9, 24, 11, { align: 'center' });
+  const gg = c.totalLocal != null && c.totalVisit != null ? Math.sign(c.totalLocal - c.totalVisit) : 0;
+  doc.setFont('helvetica', gg > 0 ? 'bold' : 'normal'); _actaTexto(doc, num(c.totalLocal), 122.8, 113.9, 24, 11, { align: 'center' });
+  doc.setFont('helvetica', gg < 0 ? 'bold' : 'normal'); _actaTexto(doc, num(c.totalVisit), 174.4, 113.9, 24, 11, { align: 'center' });
 
   // Anotación individual de tiradas
   rect(17.6, 126, 174.6, 7.8);
@@ -200,7 +227,7 @@ function _actaPagina(doc, c, p){
   [[149.3, 155.7], [161.6, 167.8], [173.7, 180.1], [185.95, 192.2]].forEach(([yTop, yTxt], i) => {
     dato(nombres[i] ? `${(i % 2) + 1}. ${nombres[i]}` : `${(i % 2) + 1}.`, 38, yTxt, 44, 9.5);
     const ch = (p.chaves || [])[i] || {};
-    _actaSecuenciaCeldas(doc, actaChavesConTotal(ch), 85.5, yTop, 32, 6.15, 9.5);
+    _actaChavesCeldas(doc, ch, 85.5, yTop, 32, 6.15, 9.5);
   });
   // Columna «Puntos»: tiradas de cada bando (sin detalle: solo el total)
   _actaSecuenciaCaja(doc, p.tiradasLocal || num(p.puntosLocal), 121, 150.3, 69.5, 22.6, 10);
@@ -215,6 +242,14 @@ function _actaPagina(doc, c, p){
   linea(75.6, 251.2, 193.2, 251.2);
   [261.6, 270.8, 280.1].forEach(y => linea(18, y, 193.2, y));
   if (c.incidencias) _actaIncidencias(doc, c.incidencias);
+
+  // Firmas de las delegadas (imágenes dibujadas a mano en el móvil), en el hueco sobre «Fdo:»
+  [[c.firmas && c.firmas.local, 18.5], [c.firmas && c.firmas.visitante, 108.4]].forEach(([f, bx]) => {
+    if (!f || !f.data) return;
+    const bw = 84, bh = 27, by = 208;
+    const k = Math.min(bw / f.w, bh / f.h), w = f.w * k, h = f.h * k;
+    try { doc.addImage(f.data, 'PNG', bx + (bw - w) / 2, by + (bh - h) / 2, w, h); } catch (err) {}
+  });
 }
 
 async function generarActaPdf(c){
@@ -226,13 +261,16 @@ async function generarActaPdf(c){
 }
 
 // Utilidades comunes a las dos apps ---------------------------------------------------------
-// Chaves de un jugador para el acta: «1+2+1+1=5» (varias tiradas) o «2» (una sola). Sin tiradas, solo el total; sin chaves, vacío.
-function actaChavesConTotal(ch){
-  const arr = ch && ch.tiradas ? String(ch.tiradas).split('+').map(Number).filter(n => !isNaN(n)) : [];
-  if (arr.length > 1) return `${arr.join('+')}=${arr.reduce((s, v) => s + v, 0)}`;
-  if (arr.length === 1) return String(arr[0]);
-  return ch && ch.total > 0 ? String(ch.total) : '';
+// Chaves: «1+2+1» (chaves por tirada) o con la tirada en que se hicieron, «1@3+2@7+1@10» (chaves@tirada)
+function actaParseChaves(s){
+  const x = String(s ?? '').replace(/\s+/g, '');
+  if (!x) return [];
+  if (!/^\d+(@\d+)?(\+\d+(@\d+)?)*$/.test(x)) throw new Error('Formato no válido en las chaves: usa 1+2+1 o, con la tirada, 1@3+2@7 (chaves@tirada)');
+  return x.split('+').map(p => { const [n, tt] = p.split('@'); return { n: Number(n), t: tt == null ? null : Number(tt) }; });
 }
+const actaChavesTexto = arr => arr.map(e => (e.t != null ? `${e.n}@${e.t}` : String(e.n))).join('+');
+const actaSumaChaves = arr => arr.reduce((s, e) => s + e.n, 0);
+
 // Revisión de las tiradas de puntos: mismo número de tiradas en los dos bandos y puntos en un solo bando por tirada
 function actaRevisarTiradas(a, b){
   const av = [];
@@ -253,4 +291,50 @@ const actaSuma = arr => arr.reduce((s, v) => s + v, 0);
 function actaNombreArchivo(local, visitante, fecha){
   const l = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
   return `acta_${l(local)}_vs_${l(visitante)}_${fecha ? l(fecha) : 'sin_fecha'}`;
+}
+
+// ---- Panel de firmas: dos recuadros para firmar con el dedo o un lápiz táctil ----
+// Devuelve {local, visitante} (cada uno {data, w, h} o null si se dejó en blanco) o null si se cancela.
+function actaPedirFirmas(idioma){
+  const T = idioma === 'gl'
+    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar' }
+    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar' };
+  return new Promise(resolve => {
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:10px;overflow:auto;-webkit-overflow-scrolling:touch';
+    const btn = 'font:inherit;font-size:14px;padding:10px 14px;border:1px solid #bbb;border-radius:10px;background:#f4f4f4;color:#111';
+    ov.innerHTML = `<div style="background:#fff;color:#111;border-radius:14px;padding:14px;max-width:560px;width:100%;font:15px system-ui,-apple-system,sans-serif">
+      <h3 style="margin:0 0 4px;font-size:18px">${T.titulo}</h3>
+      <p style="margin:0 0 6px;font-size:13px;color:#555">${T.ayuda}</p>
+      ${[T.loc, T.vis].map((tit, i) => `<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:14px">${tit}</b><button type="button" data-borrar="${i}" style="${btn};padding:6px 12px">${T.borrar}</button></div>
+        <canvas data-firma="${i}" style="width:100%;height:150px;border:2px dashed #999;border-radius:10px;background:#fff;touch-action:none;display:block"></canvas></div>`).join('')}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        <button type="button" data-acc="firmada" style="${btn};background:#7a1f35;color:#fff;border-color:#7a1f35">${T.firmada}</button>
+        <button type="button" data-acc="sin" style="${btn}">${T.sin}</button>
+        <button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>
+      </div></div>`;
+    document.body.append(ov);
+    const lienzos = [...ov.querySelectorAll('canvas')], tiene = [false, false];
+    const dpr = window.devicePixelRatio || 1;
+    lienzos.forEach((cv, i) => {
+      const r = cv.getBoundingClientRect();
+      cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+      const cx = cv.getContext('2d');
+      cx.scale(dpr, dpr); cx.lineWidth = 2.4; cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.strokeStyle = '#111';
+      let dibujando = false;
+      const pos = ev => { const q = cv.getBoundingClientRect(); return [ev.clientX - q.left, ev.clientY - q.top]; };
+      cv.addEventListener('pointerdown', ev => { dibujando = true; cv.setPointerCapture(ev.pointerId); const [x, y] = pos(ev); cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + 0.01, y + 0.01); cx.stroke(); tiene[i] = true; ev.preventDefault(); });
+      cv.addEventListener('pointermove', ev => { if (!dibujando) return; const [x, y] = pos(ev); cx.lineTo(x, y); cx.stroke(); cx.beginPath(); cx.moveTo(x, y); ev.preventDefault(); });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => cv.addEventListener(n, () => { dibujando = false; }));
+    });
+    const cerrar = v => { ov.remove(); resolve(v); };
+    ov.addEventListener('click', ev => {
+      const b = ev.target.closest('button'); if (!b) return;
+      if (b.dataset.borrar != null) { const i = Number(b.dataset.borrar), cv = lienzos[i]; cv.getContext('2d').clearRect(0, 0, cv.width / dpr, cv.height / dpr); tiene[i] = false; return; }
+      if (b.dataset.acc === 'cancelar') return cerrar(null);
+      if (b.dataset.acc === 'sin') return cerrar({ local: null, visitante: null });
+      const f = i => (tiene[i] ? { data: lienzos[i].toDataURL('image/png'), w: lienzos[i].width, h: lienzos[i].height } : null);
+      cerrar({ local: f(0), visitante: f(1) });
+    });
+  });
 }
