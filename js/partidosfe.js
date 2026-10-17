@@ -215,8 +215,17 @@ document.addEventListener('click', e => {
   const desp = fila.nextElementSibling;
   if (!desp) return;
   const aberto = fila.getAttribute('aria-expanded') === 'true';
+  if (!aberto) {
+    // Só un partido aberto á vez: péchase calquera outro (sen perder a posibilidade de abrir e pechar cada un)
+    document.querySelectorAll('#vista-partidos .partido-fila-partido[aria-expanded="true"]').forEach(outra => {
+      if (outra === fila) return;
+      outra.setAttribute('aria-expanded', 'false');
+      if (outra.nextElementSibling) outra.nextElementSibling.hidden = true;
+    });
+  }
   fila.setAttribute('aria-expanded', String(!aberto));
   desp.hidden = aberto;
+  if (!aberto) fila.closest('.partido-card-partido').scrollIntoView({ block: 'nearest' });   // o peche doutro pode mover a lista
 });
 
 // ---------- Arranque ----------

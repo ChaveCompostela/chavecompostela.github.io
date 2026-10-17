@@ -18,13 +18,33 @@
 
 const ACTA_ROJO = [153, 0, 0];
 
+// Idioma de los mensajes: el panel usa castellano ('es') y la app pública gallego ('gl'; lo fija marcadorcargafe.js)
+let ACTA_IDIOMA = 'es';
+const _ACTA_TXT = {
+  es: {
+    pdfLib: () => 'No se pudo cargar la librería de PDF. Revisa la conexión a internet.',
+    fmtPuntos: () => 'Formato no válido: usa números separados por «+», por ejemplo 1+2+8+0',
+    fmtChaves: () => 'Formato no válido en las chaves: usa 1+2+1 o, con la tirada, 1@3+2@7 (chaves@tirada)',
+    tirNoCoinc: (a, b) => `las tiradas no coinciden: ${a} del local y ${b} del visitante`,
+    tirDoble: (i, a, b) => `en la tirada ${i} puntúan los dos bandos (${a} y ${b})`,
+  },
+  gl: {
+    pdfLib: () => 'Non se puido cargar a librería de PDF. Comproba a conexión a internet.',
+    fmtPuntos: () => 'Formato non válido: usa números separados por «+», por exemplo 1+2+8+0',
+    fmtChaves: () => 'Formato non válido nas chaves: usa 1+2+1 ou, coa tirada, 1@3+2@7 (chaves@tirada)',
+    tirNoCoinc: (a, b) => `as tiradas non coinciden: ${a} do local e ${b} do visitante`,
+    tirDoble: (i, a, b) => `na tirada ${i} puntúan os dous bandos (${a} e ${b})`,
+  },
+};
+const _actaT = (clave, ...args) => _ACTA_TXT[ACTA_IDIOMA][clave](...args);
+
 function _actaCargarJsPdf(){
   return new Promise((ok, ko) => {
     if (window.jspdf) return ok();
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     s.onload = ok;
-    s.onerror = () => ko(new Error('No se pudo cargar la librería de PDF. Revisa la conexión a internet.'));
+    s.onerror = () => ko(new Error(_actaT('pdfLib')));
     document.head.append(s);
   });
 }
@@ -265,7 +285,7 @@ async function generarActaPdf(c){
 function actaParseChaves(s){
   const x = String(s ?? '').replace(/\s+/g, '');
   if (!x) return [];
-  if (!/^\d+(@\d+)?(\+\d+(@\d+)?)*$/.test(x)) throw new Error('Formato no válido en las chaves: usa 1+2+1 o, con la tirada, 1@3+2@7 (chaves@tirada)');
+  if (!/^\d+(@\d+)?(\+\d+(@\d+)?)*$/.test(x)) throw new Error(_actaT('fmtChaves'));
   return x.split('+').map(p => { const [n, tt] = p.split('@'); return { n: Number(n), t: tt == null ? null : Number(tt) }; });
 }
 const actaChavesTexto = arr => arr.map(e => (e.t != null ? `${e.n}@${e.t}` : String(e.n))).join('+');
@@ -274,9 +294,9 @@ const actaSumaChaves = arr => arr.reduce((s, e) => s + e.n, 0);
 // Revisión de las tiradas de puntos: mismo número de tiradas en los dos bandos y puntos en un solo bando por tirada
 function actaRevisarTiradas(a, b){
   const av = [];
-  if (a.length !== b.length) av.push(`las tiradas no coinciden: ${a.length} del local y ${b.length} del visitante`);
+  if (a.length !== b.length) av.push(_actaT('tirNoCoinc', a.length, b.length));
   for (let i = 0; i < Math.min(a.length, b.length); i++) {
-    if (a[i] > 0 && b[i] > 0) { av.push(`en la tirada ${i + 1} puntúan los dos bandos (${a[i]} y ${b[i]})`); break; }
+    if (a[i] > 0 && b[i] > 0) { av.push(_actaT('tirDoble', i + 1, a[i], b[i])); break; }
   }
   return av;
 }
@@ -284,7 +304,7 @@ function actaRevisarTiradas(a, b){
 function actaParseSecuencia(s){
   const t = String(s ?? '').replace(/\s+/g, '');
   if (!t) return [];
-  if (!/^\d+(\+\d+)*$/.test(t)) throw new Error('Formato no válido: usa números separados por «+», por ejemplo 1+2+8+0');
+  if (!/^\d+(\+\d+)*$/.test(t)) throw new Error(_actaT('fmtPuntos'));
   return t.split('+').map(Number);
 }
 const actaSuma = arr => arr.reduce((s, v) => s + v, 0);

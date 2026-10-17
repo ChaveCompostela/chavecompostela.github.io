@@ -85,6 +85,6 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) limp
 btnLogo.addEventListener('click', () => {
   const hayMarcador = [...document.querySelectorAll('#vista-marcador .marcador-puntos, #vista-marcador .marcador-chaves')]
     .some(el => (el.textContent || '0').trim() !== '0');
-  if (hayMarcador && !confirm('Hai un marcador en curso: se recargas, perderase. ¿Recargar igualmente?')) return;
+  if (hayMarcador && !confirm('Hai un marcador en curso: se recargas, perderase. Recargar igualmente?')) return;
   location.reload();
 });

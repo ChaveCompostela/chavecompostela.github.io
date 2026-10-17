@@ -182,7 +182,7 @@ document.addEventListener('click', e => {
 
 // Reiniciar: pon a cero os números (puntos e chaves) de todos os equipos visibles.
 document.getElementById('mk-reset')?.addEventListener('click', () => {
-  if (!confirm('¿Reiniciar todos os marcadores a cero?')) return;
+  if (!confirm('Reiniciar todos os marcadores a cero?')) return;
   document.querySelectorAll(
     '#vista-marcador .marcador-equipo:not([hidden]) .marcador-puntos, ' +
     '#vista-marcador .marcador-equipo:not([hidden]) .marcador-chaves'

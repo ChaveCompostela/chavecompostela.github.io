@@ -8,6 +8,12 @@ let datosCargaMarcador = null;
 let partidaCargada = null;   // { idEnfrentamiento, xogadores: { a1,a2,b1,b2 } }
 
 const $mk = sel => document.querySelector(sel);
+ACTA_IDIOMA = 'gl';   // os mensaxes da acta (actapdf.js) saen en galego
+
+// Mensaxes de erro do servidor (a base de datos devólveos en castelán)
+const erroGl = m => String(m)
+  .replace('Clave incorrecta', 'Contrasinal incorrecto')
+  .replace('No hay un resultado pendiente para esa partida', 'Non hai un resultado pendente para esa partida');
 
 // ---------- Botón "Cargar partido": pide a clave (en asteriscos) e, se é correcta, mostra os desplegables ----------
 $mk('#mk-cargar').addEventListener('click', () => {
@@ -245,12 +251,12 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
       });
       if (errActa) throw new Error(errActa.message);
     } catch (errActa) {
-      avisoActa = '\n\nAtención: as tiradas da acta non se puideron gardar (' + errActa.message + '). Pódense escribir despois no panel de administración.';
+      avisoActa = '\n\nAtención: as tiradas da acta non se puideron gardar (' + erroGl(errActa.message) + '). Pódense escribir despois no panel de administración.';
     }
     alert('Resultado enviado. Quedará pendente de validación no panel de administración.' + avisoActa);
     rematarCargaPartida();
   } catch (e) {
-    alert('Non se puido enviar: ' + e.message + '\n\nSe o contrasinal caducou, vólvese pedir ao premer "Cargar partido" de novo.');
+    alert('Non se puido enviar: ' + erroGl(e.message) + '\n\nSe o contrasinal caducou, vólvese pedir ao premer "Cargar partido" de novo.');
     claveMarcador = null;
   } finally {
     btn.disabled = false; btn.textContent = 'Enviar resultado';
@@ -344,7 +350,7 @@ function actaRevisarPanel(){
 
 $mk('#mk-acta-abrir').addEventListener('click', actaAbrirPanel);
 $mk('#ak-pechar').addEventListener('click', () => {
-  try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\n¿Pechar igualmente sen gardar os cambios das tiradas?')) return; }
+  try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\nPechar igualmente sen gardar os cambios das tiradas?')) return; }
   $mk('#mk-acta-panel').hidden = true;
   $mk('#ak-inc').hidden = true;
 });
@@ -371,7 +377,7 @@ $mk('#ak-pdf').addEventListener('click', () => {
   if (!partidaCargada) return;
   try { actaLeerPanel(); } catch (err) { alert(err.message); return; }
   if (actaCategoriaMk() === 'masculina') return alert('A acta da liga masculina aínda non está dispoñible.');
-  if (!actaRevisarPanel() && !confirm('As tiradas non cadran. ¿Seguir igualmente coa acta?')) return;
+  if (!actaRevisarPanel() && !confirm('As tiradas non cadran. Seguir igualmente coa acta?')) return;
   $mk('#ak-inc-texto').hidden = true;
   $mk('#ak-inc').hidden = false;
   $mk('#ak-inc').scrollIntoView({ block: 'nearest' });
