@@ -491,3 +491,10 @@ a.partido-lugar{color:var(--granate)}
 .marcador-tirada{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px;font-size:12px;font-weight:700;color:var(--granate)}
 .marcador-tirada[hidden]{display:none}
 @media (prefers-color-scheme:dark){.marcador-tirada{color:var(--ouro-claro)}}
+
+/* Pantalla completa con acta: «Tirada N · pecha en X s», «Pechar tirada» e «✕ Saír» na mesma liña */
+#vista-marcador.mk-full{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);column-gap:8px}
+#vista-marcador.mk-full[hidden]{display:none}
+.mk-full #mk-tirada{grid-column:1;grid-row:1;margin:0 0 4px}
+.mk-full .mk-full-salir{grid-column:2;grid-row:1;align-self:center;margin:0 0 4px}
+.mk-full .marcador-campo{grid-column:1 / -1;grid-row:2;min-height:0}
