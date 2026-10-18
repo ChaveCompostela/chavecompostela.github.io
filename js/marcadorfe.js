@@ -52,17 +52,20 @@ function actaEstadoTirada(p, extra){
   return { c, cls: actaClasificar(p.n, c[p.eq], c[p.eq === 'a' ? 'b' : 'a']) };
 }
 
+// Conteos de chaves que o xogador xa deu por válidos en esta tirada (p.vale) ou ao seguir igualmente (p.sigue)
+const dentroDeVale = (p, c) => !!p && !!p.vale && c.a <= p.vale.a && c.b <= p.vale.b;
+
 // Pulsación de puntos (n > 0). Devolve true se se anota. Avisa se a tirada anterior quedou sen cadrar.
 async function actaPuntoPulsado(eq, n){
   const p = actaTiradaActual();
-  if (p && !p.ok) {
+  if (p && !p.sigue) {
     const { c, cls } = actaEstadoTirada(p);
-    if (cls === 'incompleta' || cls === 'invalida') {
+    if ((cls === 'incompleta' || cls === 'invalida') && !dentroDeVale(p, c)) {
       const op = await actaOpciones('A tirada anterior non cadra',
-        `A última tirada leva ${p.n} puntos e chaves ${c.a}-${c.b} (local-visitante). Lembra: primeiro os puntos e despois as chaves; os 8, 9 e 16 puntos levan chave.`,
+        `A última tirada leva ${p.n} puntos e chaves ${c.a}-${c.b} (local-visitante). Lembra: primeiro os puntos e despois as chaves; os 8, 9 e 16 puntos levan chave, e unha chave solta sen puntos pode ser un erro.`,
         ['Volver e corrixir', 'Seguir igualmente']);
       if (op === 0) return false;
-      p.ok = true;
+      p.sigue = true;
     }
   }
   ACTA.log.push({ k: 'p', eq, n });
@@ -85,36 +88,57 @@ function actaPuntos(eq, n){            // n < 0: resta (desfai)
   ACTA.desaxuste = true;               // non hai nada que desfacer: as tiradas non cadrarán cos puntos
 }
 
-// Pulsación +1 de chave dun xogador (a1, a2, b1, b2). Devolve true se se anota; pregunta se non cadra.
+// Pulsación +1 de chave dun xogador (a1, a2, b1, b2). Devolve true se se anota.
+//  · Se cabe na última tirada (puntos + chaves posibles), vai a ela; ao chegar a unha combinación de chaves
+//    matadas, pregunta.
+//  · Se non cabe (ou non hai tirada), a chave pasa a unha tirada NOVA sen puntos («tentativa») sen preguntar:
+//    unha chave solta, sen que o outro equipo marque a súa, non é aínda motivo de aviso (avísase ao pasar á
+//    seguinte tirada). Cando o outro equipo marca tamén chave nesa tirada sen puntos, pregunta se son matadas.
 async function actaChavePulsada(clave){
-  let p = actaTiradaActual();
-  if (p && p.ok) { ACTA.log.push({ k: 'c', clave, p }); return true; }
-  const { c, cls } = p ? actaEstadoTirada(p, [clave]) : { c: { a: 0, b: 0 }, cls: 'invalida' };
-  if (cls === 'normal' || cls === 'incompleta') { ACTA.log.push({ k: 'c', clave, p }); return true; }
+  const p = actaTiradaActual();
+  const pon = pp => { ACTA.log.push({ k: 'c', clave, p: pp }); return true; };
+  const nuevaTentativa = () => { const q = { k: 'p', eq: null, n: 0, tent: true }; ACTA.log.push(q); return pon(q); };
+  if (!p) return nuevaTentativa();
+  const { c, cls } = actaEstadoTirada(p, [clave]);
+  if (dentroDeVale(p, c)) return pon(p);
+
+  if (p.eq == null) {                                  // tirada sen puntos (chaves matadas)
+    if (c.a > 2 || c.b > 2) {
+      const op = await actaOpciones('Demasiadas chaves nesta tirada',
+        `Cada bando só pode dar a 2 chaves por tirada (agora ${c.a}-${c.b}). Pode ser un erro.`, ['Foi un erro (non anotar a chave)', 'Seguir igualmente']);
+      if (op === 0) return false;
+      p.vale = { a: Math.max(c.a, 2), b: Math.max(c.b, 2) }; return pon(p);
+    }
+    if (c.a > 0 && c.b > 0) {
+      const op = await actaOpciones('Chaves matadas?',
+        'Marcaches chaves aos dous bandos sen puntos nesta tirada. Se se anulan, non hai eses puntos e na acta saen en vermello.',
+        ['Si, chaves matadas', 'Foi un erro']);
+      if (op !== 0) return false;
+      p.vale = { a: 2, b: 2 }; return pon(p);
+    }
+    return pon(p);                                     // chave solta: non se avisa aínda
+  }
+
+  if (cls === 'normal' || cls === 'incompleta') return pon(p);
   if (cls === 'matadas') {
     const op = await actaOpciones('Chaves matadas?',
       `A tirada leva ${p.n} puntos e chaves nos dous bandos (${c.a}-${c.b}). Se as chaves se anulan na mesma tirada non hai eses puntos e na acta saen en vermello.`,
       ['Si, chaves matadas', 'Foi un erro']);
     if (op !== 0) return false;
-    p.ok = true; ACTA.log.push({ k: 'c', clave, p }); return true;
+    p.vale = c; return pon(p);
   }
-  // non cadra: erro ou chaves matadas?
-  const texto = p
-    ? `Esta chave non cadra cos ${p.n} puntos da última tirada (chaves ${c.a}-${c.b} con ela). Se non marcaches puntos nesta tirada, pode ser unha tirada de chaves matadas sen puntos.`
-    : 'Marcaches unha chave sen puntos nesta tirada. Pode ser un erro ou unha tirada de chaves matadas.';
-  const ops = p ? ['Foi un erro (non anotar a chave)', 'Chaves matadas nesta tirada', 'Nova tirada sen puntos (chaves matadas)']
-                : ['Foi un erro (non anotar a chave)', 'Nova tirada sen puntos (chaves matadas)'];
-  const op = await actaOpciones('As chaves non cadran cos puntos', texto, ops);
-  if (op === 0) return false;
-  if (p && op === 1) { p.ok = true; ACTA.log.push({ k: 'c', clave, p }); return true; }
-  const nueva = { k: 'p', eq: null, n: 0, ok: true };
-  ACTA.log.push(nueva, { k: 'c', clave, p: nueva });
-  return true;
+  return nuevaTentativa();                             // non cadra coa tirada anterior: tirada nova sen puntos
 }
 
 function actaChaves(clave, delta){     // delta -1: quita a última chave anotada do xogador
   const L = ACTA.log;
-  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'c' && L[i].clave === clave) { L.splice(i, 1); return; }
+  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'c' && L[i].clave === clave) {
+    const p = L[i].p;
+    L.splice(i, 1);
+    // unha tirada tentativa sen ningunha chave xa non ten sentido: quítase
+    if (p && p.tent && !L.some(x => x.k === 'c' && x.p === p)) { const j = L.indexOf(p); if (j >= 0) L.splice(j, 1); }
+    return;
+  }
   const arr = ACTA.base.ch[clave];
   if (!arr.length) { ACTA.desaxuste = true; return; }
   arr[arr.length - 1].n -= 1;
