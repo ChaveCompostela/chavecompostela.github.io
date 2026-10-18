@@ -104,6 +104,17 @@ function actaChaves(clave, delta){       // delta -1: quita unha chave do xogado
   if (arr[arr.length - 1].n <= 0) arr.pop();
 }
 
+// Describe en breve que falla nunha tirada (só o erro)
+function actaMotivo(ev){
+  if (ev.problemas.length) return ev.problemas.join(', ');
+  const cS = ev.S === 'a' ? ev.cA : ev.cB;
+  if (ev.n === 0) return `hai chaves (${ev.cA}-${ev.cB}) pero ningún punto`;
+  if (ev.n === 8 || ev.n === 9) return cS < 1 ? `${ev.n} puntos sen ningunha chave do equipo que puntúa` : `chaves ${ev.cA}-${ev.cB} con ${ev.n} puntos`;
+  if (ev.n === 16) return cS < 2 ? `16 puntos con só ${cS} chave${cS === 1 ? '' : 's'} do equipo que puntúa` : `chaves ${ev.cA}-${ev.cB} con 16 puntos`;
+  if (ev.n === 1 || ev.n === 2) return `chaves ${ev.cA}-${ev.cB} con ${ev.n} punto${ev.n === 1 ? '' : 's'}`;
+  return `${ev.n} puntos non é unha puntuación posible`;
+}
+
 // Avalía unha tirada: { cls: 'normal'|'matadas'|'incompleta'|'invalida', n, S, cA, cB, problemas }
 function actaEvaluarTirada(td){
   const cA = td.ch.a1 + td.ch.a2, cB = td.ch.b1 + td.ch.b2;
@@ -127,16 +138,18 @@ async function actaCerrarTirada(){
   try {
     const ev = actaEvaluarTirada(td), num = actaNumeroTirada();
     if (ev.cls !== 'normal') {
-      const nome = ev.n ? `${ev.n} puntos para o ${ev.S === 'a' ? 'local' : 'visitante'}` : '0 puntos';
+      const pl = n => `${n} punto${n === 1 ? '' : 's'}`;
+      const nome = td.pa > 0 && td.pb > 0 ? `${pl(td.pa)} do local e ${pl(td.pb)} do visitante`
+        : ev.n ? `${pl(ev.n)} para o ${ev.S === 'a' ? 'local' : 'visitante'}` : '0 puntos';
       let op;
       if (ev.cls === 'matadas') {
         op = await actaOpciones('Chaves matadas',
-          `Tirada ${num}: ${nome} e chaves ${ev.cA}-${ev.cB} (local-visitante). As chaves anúlanse: cóntanse a cada xogador pero non eses puntos, e na acta saen en vermello. É correcto?`,
+          `Tirada ${num}: ${nome} e chaves ${ev.cA}-${ev.cB} (local-visitante). As chaves anúlanse e saen en vermello na acta. É correcto?`,
           ['Correcto, seguinte tirada', 'Corrixir']);
         op = op === 0 ? 1 : 0;           // 1 = dar por boa
       } else {
         op = await actaOpciones('A tirada non cadra',
-          `Tirada ${num}: ${nome} e chaves ${ev.cA}-${ev.cB} (local-visitante)${ev.problemas.length ? ': ' + ev.problemas.join(', ') : ''}. Combinacións posibles: 1 ou 2 puntos sen chaves; 8 ou 9 cunha chave; 16 con 2 chaves; e, con chaves matadas, 1 punto con chaves 1-1, 8 con 2-1 e 0 con 2-2.`,
+          `Tirada ${num}: ${nome} e chaves ${ev.cA}-${ev.cB} (local-visitante). Erro: ${actaMotivo(ev)}.`,
           ['Corrixir', 'Correcto, seguinte tirada']);
       }
       if (op !== 1) { actaMarcar(); return false; }       // corrixir: a tirada segue aberta e volve a correr o tempo

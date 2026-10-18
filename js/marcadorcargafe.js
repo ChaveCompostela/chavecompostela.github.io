@@ -360,17 +360,20 @@ function actaRevisarPanel(){
   return !dif.length;
 }
 
+// O botón «Acta» alterna: se o panel está pechado ábrese (pechando antes a tirada aberta) e se está aberto péchase
 $mk('#mk-acta-abrir').addEventListener('click', async () => {
   if (!partidaCargada) return;
+  if (!$mk('#mk-acta-panel').hidden) { actaPecharPanel(); return; }
   if (!(await actaCerrarTirada())) return;      // se hai que corrixir a tirada, queda aberta
   actaAbrirPanel();
 });
 $mk('#mk-tirada-cerrar').addEventListener('click', () => { actaCerrarTirada(); });
-$mk('#ak-pechar').addEventListener('click', () => {
+function actaPecharPanel(){
   try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\nPechar igualmente sen gardar os cambios das tiradas?')) return; }
   $mk('#mk-acta-panel').hidden = true;
   $mk('#ak-inc').hidden = true;
-});
+}
+$mk('#ak-pechar').addEventListener('click', actaPecharPanel);
 ['#ak-pl', '#ak-pv'].forEach(s => $mk(s).addEventListener('input', actaRevisarPanel));
 $mk('#ak-chaves').addEventListener('input', actaRevisarPanel);
 

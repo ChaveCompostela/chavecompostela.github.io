@@ -58,6 +58,27 @@ async function _actaImagen(ruta){
   } catch (e) { return null; }
 }
 
+// Logo de las actas: icons/escudo-axc.svg, dibujado en un canvas y pasado a PNG (jsPDF no admite SVG).
+// Si falla, se usa icons/escudo-256.png.
+async function _actaLogoSvg(){
+  try {
+    let svg = await (await fetch('icons/escudo-axc.svg')).text();
+    svg = svg.replace(/<svg\b([^>]*)>/i, (m, attrs) => {
+      const w = (attrs.match(/\swidth="([\d.]+)(?:px)?"/i) || [])[1], h = (attrs.match(/\sheight="([\d.]+)(?:px)?"/i) || [])[1];
+      let limpio = attrs.replace(/\s(width|height)="[^"]*"/gi, '');
+      if (!/\sviewBox=/i.test(limpio) && w && h) limpio += ` viewBox="0 0 ${w} ${h}"`;   // sin viewBox, que escale como el original
+      return `<svg${limpio} width="512" height="512">`;
+    });
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ko; i.src = url; });
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 512;
+    cv.getContext('2d').drawImage(img, 0, 0, 512, 512);
+    URL.revokeObjectURL(url);
+    return cv.toDataURL('image/png');
+  } catch (e) { return _actaImagen('icons/escudo-256.png'); }
+}
+
 // Texto en una línea, reduciendo el cuerpo hasta que quepa en el ancho dado
 function _actaTexto(doc, t, x, y, anchoMax, tam, opts){
   let s = tam;
@@ -279,7 +300,7 @@ function _actaPagina(doc, c, p){
 
 async function generarActaPdf(c){
   await _actaCargarJsPdf();
-  c.logo = c.logo || await _actaImagen('icons/escudo-256.png');
+  c.logo = c.logo || await _actaLogoSvg();
   const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
   c.partidas.forEach((p, i) => { if (i) doc.addPage(); _actaPagina(doc, c, p); });
   doc.save((c.nombreArchivo || 'acta') + '.pdf');
