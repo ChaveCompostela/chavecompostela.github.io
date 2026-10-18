@@ -486,3 +486,8 @@ a.partido-lugar{color:var(--granate)}
 #mk-enviar-panel .marcador-carga-bot{flex-wrap:wrap}
 #mk-enviar-panel .marcador-carga-bot button{flex:1 1 40%}
 #mk-enviar-cancelar{flex-basis:100% !important}
+
+/* Acta: barra da tirada actual */
+.marcador-tirada{flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 4px;font-size:12px;font-weight:700;color:var(--granate)}
+.marcador-tirada[hidden]{display:none}
+@media (prefers-color-scheme:dark){.marcador-tirada{color:var(--ouro-claro)}}
