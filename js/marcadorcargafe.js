@@ -182,6 +182,7 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
     });
     actaFixar(actaParseSecuencia(e.puntos_tiradas_local), actaParseSecuencia(e.puntos_tiradas_visitante), ch);
   } catch (err) { actaReiniciar(); }
+  actaPintarTirada();                    // barra «Tirada N · pecha en X s»
 
   $mk('#mk-carga-panel').hidden = true;
   $mk('#mk-enviar-panel').hidden = false;
@@ -211,6 +212,8 @@ function configurarEquipoCargado(idEquipo, nomeClub, idsXogadores, d, chaveDe, m
 // ---------- Enviar resultado ----------
 $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
   if (!partidaCargada) return;
+  // A tirada aberta péchase (e avalíase) antes de enviar
+  if (!(await actaCerrarTirada())) { alert('Corrixe a tirada aberta e volve premer «Enviar resultado».'); return; }
   const chaves = [];
   ['mk-a', 'mk-b'].forEach(idEquipo => {
     document.getElementById(idEquipo).querySelectorAll('.marcador-xog[data-id-jugador]').forEach(fila => {
@@ -357,7 +360,12 @@ function actaRevisarPanel(){
   return !dif.length;
 }
 
-$mk('#mk-acta-abrir').addEventListener('click', actaAbrirPanel);
+$mk('#mk-acta-abrir').addEventListener('click', async () => {
+  if (!partidaCargada) return;
+  if (!(await actaCerrarTirada())) return;      // se hai que corrixir a tirada, queda aberta
+  actaAbrirPanel();
+});
+$mk('#mk-tirada-cerrar').addEventListener('click', () => { actaCerrarTirada(); });
 $mk('#ak-pechar').addEventListener('click', () => {
   try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\nPechar igualmente sen gardar os cambios das tiradas?')) return; }
   $mk('#mk-acta-panel').hidden = true;

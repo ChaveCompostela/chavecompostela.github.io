@@ -6,178 +6,170 @@
 const clamp0 = n => (n < 0 ? 0 : n);
 
 // ---------- Rexistro das tiradas para a acta ----------
-// Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B. Todo vai nun único
-// rexistro cronolóxico (ACTA.log) do que se deducen as secuencias (actaDerivar).
-// Regras do xogo:
-//  · En cada tirada só puntúa unha parella (a outra fai 0): cada pulsación de puntos é unha tirada e engade
-//    n ao que puntúa e 0 ao outro. «-n» quita a última tirada de n puntos do equipo (ou resta n á última maior).
-//  · ORDE: primeiro os puntos e despois as chaves. Cada chave vai á última tirada rexistrada, así se sabe a que
-//    tirada pertence (subíndice na acta).
-//  · Chaves matadas: se os dous bandos dan á chave na mesma tirada, anúlanse (8-8, 16-8, 16-16): as chaves
-//    cóntanse a cada xogador pero non hai eses puntos, e na acta saen en VERMELLO (a parte anulada).
-//    Combinacións posibles (puntos · chaves do que puntúa-do outro): 1·1-1, 8·2-1 e 0·2-2 (ninguén puntúa).
-//  · O marcador pregunta cando as chaves non cadran cos puntos (actaClasificar): se se marcan chaves sen puntos,
-//    ou chaves a ambos bandos, por se son chaves matadas ou un erro; e avisa ao pasar a outra tirada se a
-//    anterior quedou sen cadrar (p. ex. 8 puntos sen chave).
-//  · ACTA.base garda o xa escrito (retomado da base de datos ou editado no panel da acta).
-const ACTA = { activa: false, base: null, log: [], desaxuste: false };
+// Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B.
+// Unha TIRADA péchase soa cando pasan ACTA_SEGUNDOS segundos sen anotar nada (ou co botón «Pechar tirada»).
+// Dentro dunha tirada anótase en calquera orde (puntos e chaves, de calquera equipo). Ao pecharse avalíase:
+//  · en cada tirada só puntúa un equipo (a suma dos seus puntos), e cada equipo lanza un xogador con 2 pesos;
+//  · combinacións posibles (puntos · chaves do que puntúa-do outro): 1 ou 2 · 0-0 · 8 ou 9 · 1-0 · 16 · 2-0 ·
+//    e, con chaves matadas (as chaves dos dous bandos anúlanse na mesma tirada): 1·1-1, 8·2-1 e 0·2-2;
+//  · se é normal, pasa á seguinte tirada sen preguntar; se hai chaves matadas ou algo non cadra, avisa e permite
+//    corrixir (a tirada segue aberta) ou dala por boa e pasar á seguinte.
+// As chaves matadas contan para o total de cada xogador e saen en VERMELLO na acta (a parte anulada).
+// «-n» quita puntos / «-1» quita unha chave da tirada aberta; se esta está baleira, reabre a anterior.
+const ACTA_SEGUNDOS = 10;
+const ACTA = { activa: false, base: null, tiradas: [], actual: null, timer: null, reloxo: null, cerrando: false, desaxuste: false, fin: 0 };
+
+const actaTiradaNova = () => ({ pa: 0, pb: 0, ch: { a1: 0, a2: 0, b1: 0, b2: 0 } });
+const actaVacia = td => !td || (td.pa === 0 && td.pb === 0 && td.ch.a1 + td.ch.a2 + td.ch.b1 + td.ch.b2 === 0);
+const actaNumeroTirada = () => Math.max(ACTA.base.a.length, ACTA.base.b.length) + ACTA.tiradas.length + 1;
+
+function actaDetener(){
+  clearTimeout(ACTA.timer); clearInterval(ACTA.reloxo);
+  ACTA.timer = null; ACTA.reloxo = null;
+}
 
 function actaReiniciar(){
+  actaDetener();
   ACTA.base = { a: [], b: [], ch: { a1: [], a2: [], b1: [], b2: [] } };
-  ACTA.log = [];
+  ACTA.tiradas = [];
+  ACTA.actual = actaTiradaNova();
+  ACTA.cerrando = false;
   ACTA.desaxuste = false;
+  actaPintarTirada();
 }
 actaReiniciar();
 
 // Fixa as tiradas tal cal (retomadas ou editadas): substitúe todo o rexistro.
 // pa/pb: [n, ...] · ch: { a1: [{n, t, r}], ... }
 function actaFixar(pa, pb, ch){
+  actaReiniciar();
   ACTA.base = { a: pa.slice(), b: pb.slice(), ch: { a1: [], a2: [], b1: [], b2: [], ...Object.fromEntries(Object.entries(ch || {}).map(([k, v]) => [k, v.map(e => ({ ...e }))])) } };
-  ACTA.log = [];
+  actaPintarTirada();
 }
 
-const actaTiradaActual = () => { for (let i = ACTA.log.length - 1; i >= 0; i--) if (ACTA.log[i].k === 'p') return ACTA.log[i]; return null; };
-
-// Chaves de cada bando (a, b) rexistradas nunha tirada, máis as que se queren probar
-function actaConteo(p, extra){
-  const c = { a: 0, b: 0 };
-  ACTA.log.forEach(ev => { if (ev.k === 'c' && ev.p === p) c[ev.clave[0]]++; });
-  (extra || []).forEach(cl => { c[cl[0]]++; });
-  return c;
-}
-// Clasifica unha tirada segundo os seus puntos e chaves (ver actaClasificar)
-function actaEstadoTirada(p, extra){
-  const c = actaConteo(p, extra);
-  if (!p || p.eq == null || p.n === 0) return { c, cls: actaClasificar(0, c.a, c.b) };
-  return { c, cls: actaClasificar(p.n, c[p.eq], c[p.eq === 'a' ? 'b' : 'a']) };
+// Barra «Tirada N · pecha en X s» (só visible coa acta activa)
+function actaPintarTirada(){
+  const barra = document.getElementById('mk-tirada'), txt = document.getElementById('mk-tirada-txt');
+  if (!barra || !txt) return;
+  barra.hidden = !ACTA.activa;
+  if (!ACTA.activa) return;
+  const n = actaNumeroTirada();
+  if (actaVacia(ACTA.actual)) { txt.textContent = `Tirada ${n} · sen anotacións`; return; }
+  const seg = Math.max(0, Math.ceil((ACTA.fin - Date.now()) / 1000));
+  txt.textContent = `Tirada ${n} · pecha en ${seg} s`;
 }
 
-// Conteos de chaves que o xogador xa deu por válidos en esta tirada (p.vale) ou ao seguir igualmente (p.sigue)
-const dentroDeVale = (p, c) => !!p && !!p.vale && c.a <= p.vale.a && c.b <= p.vale.b;
+// Cada anotación reinicia o reloxo da tirada aberta
+function actaMarcar(){
+  clearTimeout(ACTA.timer); clearInterval(ACTA.reloxo);
+  if (actaVacia(ACTA.actual)) { ACTA.timer = null; ACTA.reloxo = null; actaPintarTirada(); return; }
+  ACTA.fin = Date.now() + ACTA_SEGUNDOS * 1000;
+  ACTA.timer = setTimeout(() => { actaCerrarTirada(); }, ACTA_SEGUNDOS * 1000);
+  ACTA.reloxo = setInterval(actaPintarTirada, 250);
+  actaPintarTirada();
+}
 
-// Pulsación de puntos (n > 0). Devolve true se se anota. Avisa se a tirada anterior quedou sen cadrar.
-async function actaPuntoPulsado(eq, n){
-  const p = actaTiradaActual();
-  if (p && !p.sigue) {
-    const { c, cls } = actaEstadoTirada(p);
-    if ((cls === 'incompleta' || cls === 'invalida') && !dentroDeVale(p, c)) {
-      const op = await actaOpciones('A tirada anterior non cadra',
-        `A última tirada leva ${p.n} puntos e chaves ${c.a}-${c.b} (local-visitante). Lembra: primeiro os puntos e despois as chaves; os 8, 9 e 16 puntos levan chave, e unha chave solta sen puntos pode ser un erro.`,
-        ['Volver e corrixir', 'Seguir igualmente']);
-      if (op === 0) return false;
-      p.sigue = true;
-    }
-  }
-  ACTA.log.push({ k: 'p', eq, n });
+function actaPuntoPulsado(eq, n){        // n > 0
+  ACTA.actual[eq === 'a' ? 'pa' : 'pb'] += n;
+  actaMarcar();
+}
+function actaChavePulsada(clave){        // +1 de chave dun xogador (a1, a2, b1, b2)
+  ACTA.actual.ch[clave]++;
+  actaMarcar();
+}
+
+// Se a tirada aberta está baleira, reabre a anterior (para corrixila) e devólvea como tirada aberta
+function actaReabrirAnterior(){
+  if (!actaVacia(ACTA.actual) || !ACTA.tiradas.length) return false;
+  ACTA.actual = ACTA.tiradas.pop();
   return true;
 }
 
-function actaPuntos(eq, n){            // n < 0: resta (desfai)
-  const v = -n, L = ACTA.log;
-  const quitar = i => {                // as chaves da tirada quitada pasan á anterior
-    const ev = L[i];
-    const previo = L.slice(0, i).reverse().find(x => x.k === 'p') || null;
-    L.splice(i, 1);
-    L.forEach(x => { if (x.k === 'c' && x.p === ev) x.p = previo; });
-  };
-  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n === v) { quitar(i); return; }
-  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'p' && L[i].eq === eq && L[i].n > v) { L[i].n -= v; return; }
-  const arr = ACTA.base[eq];
-  let i = arr.lastIndexOf(v);
-  if (i >= 0) { arr.splice(i, 1); ACTA.base[eq === 'a' ? 'b' : 'a'].splice(i, 1); return; }   // quita a tirada enteira
-  ACTA.desaxuste = true;               // non hai nada que desfacer: as tiradas non cadrarán cos puntos
+function actaPuntos(eq, n){              // n < 0: resta (desfai)
+  const v = -n, campo = eq === 'a' ? 'pa' : 'pb';
+  if (ACTA.actual[campo] < v) actaReabrirAnterior();
+  if (ACTA.actual[campo] >= v) { ACTA.actual[campo] -= v; actaMarcar(); return; }
+  const arr = ACTA.base[eq];             // tiradas xa escritas (retomadas ou editadas)
+  const i = arr.lastIndexOf(v);
+  if (i >= 0) { arr.splice(i, 1); ACTA.base[eq === 'a' ? 'b' : 'a'].splice(i, 1); actaPintarTirada(); return; }
+  ACTA.desaxuste = true;                 // non hai nada que desfacer: as tiradas non cadrarán cos puntos
 }
 
-// Pulsación +1 de chave dun xogador (a1, a2, b1, b2). Devolve true se se anota.
-//  · Se cabe na última tirada (puntos + chaves posibles), vai a ela; ao chegar a unha combinación de chaves
-//    matadas, pregunta.
-//  · Se non cabe (ou non hai tirada), a chave pasa a unha tirada NOVA sen puntos («tentativa») sen preguntar:
-//    unha chave solta, sen que o outro equipo marque a súa, non é aínda motivo de aviso (avísase ao pasar á
-//    seguinte tirada). Nunha tirada sen puntos só se pregunta ao chegar a 2-2; mentres tanto agárdase.
-async function actaChavePulsada(clave){
-  const p = actaTiradaActual();
-  const pon = pp => { ACTA.log.push({ k: 'c', clave, p: pp }); return true; };
-  const nuevaTentativa = () => { const q = { k: 'p', eq: null, n: 0, tent: true }; ACTA.log.push(q); return pon(q); };
-  if (!p) return nuevaTentativa();
-  const { c, cls } = actaEstadoTirada(p, [clave]);
-  if (dentroDeVale(p, c)) return pon(p);
-
-  if (p.eq == null) {                                  // tirada sen puntos (chaves matadas)
-    if (c.a > 2 || c.b > 2) {
-      const op = await actaOpciones('Demasiadas chaves nesta tirada',
-        `Cada bando só pode dar a 2 chaves por tirada (agora ${c.a}-${c.b}). Pode ser un erro.`, ['Foi un erro (non anotar a chave)', 'Seguir igualmente']);
-      if (op === 0) return false;
-      p.vale = { a: Math.max(c.a, 2), b: Math.max(c.b, 2) }; return pon(p);
-    }
-    if (c.a === 2 && c.b === 2) {                      // sen puntos só hai matadas ao chegar a 2-2: ata entón, agárdase
-      const op = await actaOpciones('Chaves matadas?',
-        'Marcaches 2 chaves a cada bando sen puntos nesta tirada. Se se anulan, non hai puntos e na acta saen en vermello.',
-        ['Si, chaves matadas', 'Foi un erro']);
-      if (op !== 0) return false;
-      p.vale = { a: 2, b: 2 }; return pon(p);
-    }
-    return pon(p);                                     // chave solta: non se avisa aínda
-  }
-
-  if (cls === 'normal' || cls === 'incompleta') return pon(p);
-  if (cls === 'matadas') {
-    const op = await actaOpciones('Chaves matadas?',
-      `A tirada leva ${p.n} puntos e chaves nos dous bandos (${c.a}-${c.b}). Se as chaves se anulan na mesma tirada non hai eses puntos e na acta saen en vermello.`,
-      ['Si, chaves matadas', 'Foi un erro']);
-    if (op !== 0) return false;
-    p.vale = c; return pon(p);
-  }
-  return nuevaTentativa();                             // non cadra coa tirada anterior: tirada nova sen puntos
-}
-
-function actaChaves(clave, delta){     // delta -1: quita a última chave anotada do xogador
-  const L = ACTA.log;
-  for (let i = L.length - 1; i >= 0; i--) if (L[i].k === 'c' && L[i].clave === clave) {
-    const p = L[i].p;
-    L.splice(i, 1);
-    // unha tirada tentativa sen ningunha chave xa non ten sentido: quítase
-    if (p && p.tent && !L.some(x => x.k === 'c' && x.p === p)) { const j = L.indexOf(p); if (j >= 0) L.splice(j, 1); }
-    return;
-  }
+function actaChaves(clave, delta){       // delta -1: quita unha chave do xogador
+  if (ACTA.actual.ch[clave] < 1) actaReabrirAnterior();
+  if (ACTA.actual.ch[clave] >= 1) { ACTA.actual.ch[clave]--; actaMarcar(); return; }
   const arr = ACTA.base.ch[clave];
   if (!arr.length) { ACTA.desaxuste = true; return; }
   arr[arr.length - 1].n -= 1;
   if (arr[arr.length - 1].n <= 0) arr.pop();
 }
 
+// Avalía unha tirada: { cls: 'normal'|'matadas'|'incompleta'|'invalida', n, S, cA, cB, problemas }
+function actaEvaluarTirada(td){
+  const cA = td.ch.a1 + td.ch.a2, cB = td.ch.b1 + td.ch.b2;
+  const problemas = [];
+  if (td.pa > 0 && td.pb > 0) problemas.push('puntúan os dous equipos na mesma tirada');
+  if (td.ch.a1 > 0 && td.ch.a2 > 0) problemas.push('hai chaves dos dous xogadores do equipo local');
+  if (td.ch.b1 > 0 && td.ch.b2 > 0) problemas.push('hai chaves dos dous xogadores do equipo visitante');
+  const n = Math.max(td.pa, td.pb), S = td.pa >= td.pb ? 'a' : 'b';
+  let cls = n === 0 ? actaClasificar(0, cA, cB) : (S === 'a' ? actaClasificar(n, cA, cB) : actaClasificar(n, cB, cA));
+  if (problemas.length) cls = 'invalida';
+  return { cls, n, S, cA, cB, problemas };
+}
+
+// Pecha a tirada aberta. Devolve true se queda pechada (ou non había nada) e false se hai que corrixila.
+async function actaCerrarTirada(){
+  if (ACTA.cerrando) return false;
+  actaDetener();
+  const td = ACTA.actual;
+  if (actaVacia(td)) { actaPintarTirada(); return true; }
+  ACTA.cerrando = true;
+  try {
+    const ev = actaEvaluarTirada(td), num = actaNumeroTirada();
+    if (ev.cls !== 'normal') {
+      const nome = ev.n ? `${ev.n} puntos para o ${ev.S === 'a' ? 'local' : 'visitante'}` : '0 puntos';
+      let op;
+      if (ev.cls === 'matadas') {
+        op = await actaOpciones('Chaves matadas',
+          `Tirada ${num}: ${nome} e chaves ${ev.cA}-${ev.cB} (local-visitante). As chaves anúlanse: cóntanse a cada xogador pero non eses puntos, e na acta saen en vermello. É correcto?`,
+          ['Correcto, seguinte tirada', 'Corrixir']);
+        op = op === 0 ? 1 : 0;           // 1 = dar por boa
+      } else {
+        op = await actaOpciones('A tirada non cadra',
+          `Tirada ${num}: ${nome} e chaves ${ev.cA}-${ev.cB} (local-visitante)${ev.problemas.length ? ': ' + ev.problemas.join(', ') : ''}. Combinacións posibles: 1 ou 2 puntos sen chaves; 8 ou 9 cunha chave; 16 con 2 chaves; e, con chaves matadas, 1 punto con chaves 1-1, 8 con 2-1 e 0 con 2-2.`,
+          ['Corrixir', 'Correcto, seguinte tirada']);
+      }
+      if (op !== 1) { actaMarcar(); return false; }       // corrixir: a tirada segue aberta e volve a correr o tempo
+    }
+    ACTA.tiradas.push(td);
+    ACTA.actual = actaTiradaNova();
+    return true;
+  } finally {
+    ACTA.cerrando = false;
+    actaPintarTirada();
+  }
+}
+
 // Deduce as secuencias finais: { puntos: {a: [...], b: [...]}, chaves: {a1: [{n, t, r}], ...} }
-// Chaves anuladas: nunha tirada con chaves dos dous bandos, min(chaves local, chaves visitante) de cada un son
-// anuladas (r: true) e as demais normais.
+// Inclúe a tirada aberta. Chaves anuladas: nunha tirada con chaves dos dous equipos, min(chaves local, chaves
+// visitante) de cada un son anuladas (r: true) e as demais normais.
 function actaDerivar(){
   const pa = ACTA.base.a.slice(), pb = ACTA.base.b.slice();
   const ch = {};
   Object.keys(ACTA.base.ch).forEach(k => { ch[k] = ACTA.base.ch[k].map(e => ({ ...e })); });
   let tir = Math.max(pa.length, pb.length);
-  const num = new Map();
-  ACTA.log.forEach(ev => {
-    if (ev.k !== 'p') return;
-    num.set(ev, ++tir);
-    (ev.eq === 'a' ? pa : pb).push(ev.eq == null ? 0 : ev.n);
-    if (ev.eq == null) pa.push(0);
-    else (ev.eq === 'a' ? pb : pa).push(0);
-  });
-  // ev.eq == null (tirada sen puntos): ámbalas dúas reciben 0
-  const porTirada = new Map();
-  ACTA.log.forEach(ev => {
-    if (ev.k !== 'c') return;
-    const t = ev.p ? num.get(ev.p) : (tir || null);
-    if (!porTirada.has(t)) porTirada.set(t, { a1: 0, a2: 0, b1: 0, b2: 0 });
-    porTirada.get(t)[ev.clave]++;
-  });
-  porTirada.forEach((cnt, t) => {
-    const red = Math.min(cnt.a1 + cnt.a2, cnt.b1 + cnt.b2);
+  const todas = actaVacia(ACTA.actual) ? ACTA.tiradas : [...ACTA.tiradas, ACTA.actual];
+  todas.forEach(td => {
+    tir++;
+    pa.push(td.pa); pb.push(td.pb);
+    const red = Math.min(td.ch.a1 + td.ch.a2, td.ch.b1 + td.ch.b2);
     ['a', 'b'].forEach(eq => {
       let resto = red;
       [eq + '1', eq + '2'].forEach(k => {
-        const n = cnt[k]; if (!n) return;
+        const n = td.ch[k]; if (!n) return;
         const r = Math.min(n, resto); resto -= r;
-        if (r > 0) ch[k].push({ n: r, t, r: true });
-        if (n - r > 0) ch[k].push({ n: n - r, t, r: false });
+        if (r > 0) ch[k].push({ n: r, t: tir, r: true });
+        if (n - r > 0) ch[k].push({ n: n - r, t: tir, r: false });
       });
     });
   });
@@ -245,11 +237,10 @@ document.addEventListener('click', e => {
     const equipo = botonPuntos.closest('.marcador-equipo');
     const marcador = equipo.querySelector('.marcador-puntos');
     const delta = Number(botonPuntos.dataset.add);
+    marcador.textContent = clamp0((Number(marcador.textContent) || 0) + delta);
     const k = ACTA.activa ? claveEquipo(equipo) : null;
-    const aplicar = () => { marcador.textContent = clamp0((Number(marcador.textContent) || 0) + delta); actualizarLideres(); };
-    if (k && delta > 0) { actaPuntoPulsado(k, delta).then(ok => { if (ok) aplicar(); }); return; }
-    if (k) actaPuntos(k, delta);
-    aplicar();
+    if (k) { if (delta > 0) actaPuntoPulsado(k, delta); else actaPuntos(k, delta); }
+    actualizarLideres();
     return;
   }
 
@@ -259,11 +250,10 @@ document.addEventListener('click', e => {
     const fila = botonChave.closest('.marcador-xog');
     const contador = fila.querySelector('.marcador-chaves');
     const delta = Number(botonChave.dataset.chaves);
+    contador.textContent = clamp0((Number(contador.textContent) || 0) + delta);
     const k = ACTA.activa ? claveXogador(fila) : null;
-    const aplicar = () => { contador.textContent = clamp0((Number(contador.textContent) || 0) + delta); actualizarLideres(); };
-    if (k && delta > 0) { actaChavePulsada(k).then(ok => { if (ok) aplicar(); }); return; }
-    if (k) actaChaves(k, delta);
-    aplicar();
+    if (k) { if (delta > 0) actaChavePulsada(k); else actaChaves(k, delta); }
+    actualizarLideres();
     return;
   }
 
