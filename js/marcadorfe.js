@@ -262,12 +262,14 @@ document.addEventListener('click', e => {
 
 // Reiniciar: pon a cero os números (puntos e chaves) de todos os equipos visibles.
 document.getElementById('mk-reset')?.addEventListener('click', () => {
-  if (!confirm('Reiniciar todos os marcadores a cero?')) return;
+  const conActa = ACTA.activa;
+  if (!confirm(conActa ? 'Reiniciar todos os marcadores a cero? Tamén se borrarán as tiradas da acta.' : 'Reiniciar todos os marcadores a cero?')) return;
   document.querySelectorAll(
     '#vista-marcador .marcador-equipo:not([hidden]) .marcador-puntos, ' +
     '#vista-marcador .marcador-equipo:not([hidden]) .marcador-chaves'
   ).forEach(el => { el.textContent = '0'; });
-  actaReiniciar();
+  actaReiniciar();                      // tiradas de puntos e chaves da acta
+  if (typeof actaPanelReiniciado === 'function') actaPanelReiniciado();   // panel da acta e incidencias
   actualizarLideres();
 });
 

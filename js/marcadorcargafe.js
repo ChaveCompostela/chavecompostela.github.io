@@ -308,6 +308,14 @@ const chavesDe = k => Number(document.querySelector(`#mk-${k[0]} .marcador-xog:n
 
 function nomeXogActa(k){ return nomeXogadorP(partidaCargada.xog[k], datosCargaMarcador); }
 
+// Despois de reiniciar o marcador: o panel da acta (se está aberto) amosa as tiradas baleiras e bórranse as incidencias escritas
+function actaPanelReiniciado(){
+  $mk('#ak-inc-area').value = '';
+  $mk('#ak-inc-texto').hidden = true;
+  $mk('#ak-inc').hidden = true;
+  if (partidaCargada && !$mk('#mk-acta-panel').hidden) actaAbrirPanel();
+}
+
 function actaAbrirPanel(){
   if (!partidaCargada) return;
   $mk('#ak-nl').textContent = '· ' + partidaCargada.nomeLocal;
