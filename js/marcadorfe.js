@@ -93,7 +93,7 @@ function actaPuntos(eq, n){            // n < 0: resta (desfai)
 //    matadas, pregunta.
 //  · Se non cabe (ou non hai tirada), a chave pasa a unha tirada NOVA sen puntos («tentativa») sen preguntar:
 //    unha chave solta, sen que o outro equipo marque a súa, non é aínda motivo de aviso (avísase ao pasar á
-//    seguinte tirada). Cando o outro equipo marca tamén chave nesa tirada sen puntos, pregunta se son matadas.
+//    seguinte tirada). Nunha tirada sen puntos só se pregunta ao chegar a 2-2; mentres tanto agárdase.
 async function actaChavePulsada(clave){
   const p = actaTiradaActual();
   const pon = pp => { ACTA.log.push({ k: 'c', clave, p: pp }); return true; };
@@ -109,9 +109,9 @@ async function actaChavePulsada(clave){
       if (op === 0) return false;
       p.vale = { a: Math.max(c.a, 2), b: Math.max(c.b, 2) }; return pon(p);
     }
-    if (c.a > 0 && c.b > 0) {
+    if (c.a === 2 && c.b === 2) {                      // sen puntos só hai matadas ao chegar a 2-2: ata entón, agárdase
       const op = await actaOpciones('Chaves matadas?',
-        'Marcaches chaves aos dous bandos sen puntos nesta tirada. Se se anulan, non hai eses puntos e na acta saen en vermello.',
+        'Marcaches 2 chaves a cada bando sen puntos nesta tirada. Se se anulan, non hai puntos e na acta saen en vermello.',
         ['Si, chaves matadas', 'Foi un erro']);
       if (op !== 0) return false;
       p.vale = { a: 2, b: 2 }; return pon(p);
