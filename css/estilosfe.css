@@ -498,3 +498,8 @@ a.partido-lugar{color:var(--granate)}
 .mk-full #mk-tirada{grid-column:1;grid-row:1;margin:0 0 4px}
 .mk-full .mk-full-salir{grid-column:2;grid-row:1;align-self:center;margin:0 0 4px}
 .mk-full .marcador-campo{grid-column:1 / -1;grid-row:2;min-height:0}
+
+/* Botóns bloqueados segundo o estado da tirada (acta) e botón +2 das chaves */
+.mk-bot button:disabled,.mk-chb:disabled{opacity:.28;pointer-events:none}
+.marcador-xog-bot .mk-chb{width:23px}
+.mk-full .marcador-xog-bot .mk-chb{width:44px}
