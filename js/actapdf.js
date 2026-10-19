@@ -303,7 +303,20 @@ async function generarActaPdf(c){
   c.logo = c.logo || await _actaLogoSvg();
   const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
   c.partidas.forEach((p, i) => { if (i) doc.addPage(); _actaPagina(doc, c, p); });
-  doc.save((c.nombreArchivo || 'acta') + '.pdf');
+  await _actaEntregar(doc, (c.nombreArchivo || 'acta') + '.pdf');
+}
+
+// Entrega el PDF: en el móvil abre la hoja de compartir (guardar en Archivos/Drive, enviar por WhatsApp…);
+// si no está disponible, o en escritorio, lo descarga.
+async function _actaEntregar(doc, nombre){
+  try {
+    const movil = typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') && navigator.canShare;
+    if (movil && typeof doc.output === 'function' && typeof File !== 'undefined') {
+      const file = new File([doc.output('blob')], nombre, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: nombre }); return; }
+    }
+  } catch (e) { if (e && e.name === 'AbortError') return; }   // el usuario cerró la hoja de compartir: no se descarga
+  doc.save(nombre);
 }
 
 // Utilidades comunes a las dos apps ---------------------------------------------------------
@@ -397,25 +410,28 @@ function actaNombreArchivo(local, visitante, fecha){
 }
 
 // ---- Panel de firmas: dos recuadros para firmar con el dedo o un lápiz táctil ----
-// Devuelve {local, visitante} (cada uno {data, w, h} o null si se dejó en blanco) o null si se cancela.
-function actaPedirFirmas(idioma){
+// Sin conEnvio (panel de administración): botones «Generar acta firmada» / «Generar sin firmas» / «Cancelar»;
+//   devuelve {local, visitante} (cada uno {data, w, h} o null si se dejó en blanco) o null si se cancela.
+// Con conEnvio (Marcador): primero solo «Seguinte»; al pulsarlo, los recuadros quedan fijos y aparecen
+//   «Enviar resultado con acta» / «Xerar acta» / «Cancelar»; devuelve {accion: 'enviar'|'xerar'|'cancelar', local, visitante}.
+function actaPedirFirmas(idioma, conEnvio){
   const T = idioma === 'gl'
-    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar' }
-    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar' };
+    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', seguinte: 'Seguinte', enviar: 'Enviar resultado con acta', xerar: 'Xerar acta' }
+    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar', seguinte: 'Siguiente', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:10px;overflow:auto;-webkit-overflow-scrolling:touch';
     const btn = 'font:inherit;font-size:14px;padding:10px 14px;border:1px solid #bbb;border-radius:10px;background:#f4f4f4;color:#111';
+    const pri = `${btn};background:#7a1f35;color:#fff;border-color:#7a1f35`;
+    const botonesInicial = conEnvio
+      ? `<button type="button" data-acc="seguinte" style="${pri}">${T.seguinte}</button>`
+      : `<button type="button" data-acc="firmada" style="${pri}">${T.firmada}</button><button type="button" data-acc="sin" style="${btn}">${T.sin}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`;
     ov.innerHTML = `<div style="background:#fff;color:#111;border-radius:14px;padding:14px;max-width:560px;width:100%;font:15px system-ui,-apple-system,sans-serif">
       <h3 style="margin:0 0 4px;font-size:18px">${T.titulo}</h3>
       <p style="margin:0 0 6px;font-size:13px;color:#555">${T.ayuda}</p>
       ${[T.loc, T.vis].map((tit, i) => `<div style="margin:10px 0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:14px">${tit}</b><button type="button" data-borrar="${i}" style="${btn};padding:6px 12px">${T.borrar}</button></div>
         <canvas data-firma="${i}" style="width:100%;height:150px;border:2px dashed #999;border-radius:10px;background:#fff;touch-action:none;display:block"></canvas></div>`).join('')}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-        <button type="button" data-acc="firmada" style="${btn};background:#7a1f35;color:#fff;border-color:#7a1f35">${T.firmada}</button>
-        <button type="button" data-acc="sin" style="${btn}">${T.sin}</button>
-        <button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>
-      </div></div>`;
+      <div data-botones style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${botonesInicial}</div></div>`;
     document.body.append(ov);
     const lienzos = [...ov.querySelectorAll('canvas')], tiene = [false, false];
     const dpr = window.devicePixelRatio || 1;
@@ -430,14 +446,22 @@ function actaPedirFirmas(idioma){
       cv.addEventListener('pointermove', ev => { if (!dibujando) return; const [x, y] = pos(ev); cx.lineTo(x, y); cx.stroke(); cx.beginPath(); cx.moveTo(x, y); ev.preventDefault(); });
       ['pointerup', 'pointercancel', 'pointerleave'].forEach(n => cv.addEventListener(n, () => { dibujando = false; }));
     });
+    const firma = i => (tiene[i] ? { data: lienzos[i].toDataURL('image/png'), w: lienzos[i].width, h: lienzos[i].height } : null);
     const cerrar = v => { ov.remove(); resolve(v); };
     ov.addEventListener('click', ev => {
       const b = ev.target.closest('button'); if (!b) return;
       if (b.dataset.borrar != null) { const i = Number(b.dataset.borrar), cv = lienzos[i]; cv.getContext('2d').clearRect(0, 0, cv.width / dpr, cv.height / dpr); tiene[i] = false; return; }
-      if (b.dataset.acc === 'cancelar') return cerrar(null);
-      if (b.dataset.acc === 'sin') return cerrar({ local: null, visitante: null });
-      const f = i => (tiene[i] ? { data: lienzos[i].toDataURL('image/png'), w: lienzos[i].width, h: lienzos[i].height } : null);
-      cerrar({ local: f(0), visitante: f(1) });
+      const acc = b.dataset.acc;
+      if (acc === 'seguinte') {                       // paso 2: las firmas quedan fijas y aparecen las tres acciones
+        lienzos.forEach(cv => { cv.style.pointerEvents = 'none'; cv.style.borderStyle = 'solid'; });
+        ov.querySelectorAll('[data-borrar]').forEach(x => { x.style.display = 'none'; });
+        ov.querySelector('[data-botones]').innerHTML = `<button type="button" data-acc="enviar" style="${pri}">${T.enviar}</button><button type="button" data-acc="xerar" style="${btn}">${T.xerar}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`;
+        return;
+      }
+      if (acc === 'cancelar') return cerrar(conEnvio ? { accion: 'cancelar', local: null, visitante: null } : null);
+      if (acc === 'sin') return cerrar({ local: null, visitante: null });
+      if (acc === 'firmada') return cerrar({ local: firma(0), visitante: firma(1) });
+      cerrar({ accion: acc, local: firma(0), visitante: firma(1) });   // enviar | xerar
     });
   });
 }

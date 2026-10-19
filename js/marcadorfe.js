@@ -68,6 +68,15 @@ function actaBotonsPermitidos(td){
   Object.keys(td.ch).forEach(k => {
     out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': vacia || td.ch[k] > 0 };
   });
+  // Participantes: o xogador i dun equipo enfróntase sempre ao xogador i do outro (A1-B1, A2-B2). Se un xogador deu
+  // unha chave, o xogador do equipo contrario co outro número non participa na tirada: bloquéanse as súas chaves.
+  // O compañeiro de equipo queda aberto (por se tamén deu chave).
+  const deuChave = { a: [], b: [] };
+  ['a', 'b'].forEach(eq => [1, 2].forEach(i => { if (td.ch[eq + i] > 0) deuChave[eq].push(i); }));
+  Object.keys(td.ch).forEach(k => {
+    const q = deuChave[k[0] === 'a' ? 'b' : 'a'];
+    if (q.length && !q.includes(Number(k[1]))) { out.chaves[k][1] = false; out.chaves[k][2] = false; }
+  });
   return out;
 }
 
@@ -159,8 +168,6 @@ function actaEvaluarTirada(td){
   const cA = td.ch.a1 + td.ch.a2, cB = td.ch.b1 + td.ch.b2;
   const problemas = [];
   if (td.pa > 0 && td.pb > 0) problemas.push('puntúan os dous equipos na mesma tirada');
-  if (td.ch.a1 > 0 && td.ch.a2 > 0) problemas.push('hai chaves dos dous xogadores do equipo local');
-  if (td.ch.b1 > 0 && td.ch.b2 > 0) problemas.push('hai chaves dos dous xogadores do equipo visitante');
   const n = Math.max(td.pa, td.pb), S = td.pa >= td.pb ? 'a' : 'b';
   let cls = n === 0 ? actaClasificar(0, cA, cB) : (S === 'a' ? actaClasificar(n, cA, cB) : actaClasificar(n, cB, cA));
   if (problemas.length) cls = 'invalida';

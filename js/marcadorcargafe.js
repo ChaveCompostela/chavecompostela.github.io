@@ -210,10 +210,9 @@ function configurarEquipoCargado(idEquipo, nomeClub, idsXogadores, d, chaveDe, m
 }
 
 // ---------- Enviar resultado ----------
-$mk('#mk-enviar-confirmar').addEventListener('click', async () => {
-  if (!partidaCargada) return;
-  // A tirada aberta péchase (e avalíase) antes de enviar
-  if (!(await actaCerrarTirada())) { alert('Corrixe a tirada aberta e volve premer «Enviar resultado».'); return; }
+// Envía o resultado e as chaves de cada xogador (e, con conActa, tamén as tiradas da acta).
+// Devolve { ok, avisoActa }; se falla, amosa o erro e devolve { ok: false }.
+async function enviarResultadoMarcador(conActa){
   const chaves = [];
   ['mk-a', 'mk-b'].forEach(idEquipo => {
     document.getElementById(idEquipo).querySelectorAll('.marcador-xog[data-id-jugador]').forEach(fila => {
@@ -225,9 +224,6 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
   });
   const marcadorLocal = Number(document.querySelector('#mk-a .marcador-puntos').textContent) || 0;
   const marcadorVisitante = Number(document.querySelector('#mk-b .marcador-puntos').textContent) || 0;
-
-  const btn = $mk('#mk-enviar-confirmar');
-  btn.disabled = true; btn.textContent = 'Enviando…';
   try {
     const { error } = await sbfe.rpc('enviar_resultado_marcador', {
       p_id_enfrentamiento: partidaCargada.idEnfrentamiento,
@@ -237,33 +233,44 @@ $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
       p_clave: claveMarcador,
     });
     if (error) throw new Error(error.message);
-    // Tiradas da acta (se falla, o resultado xa está enviado e pódense engadir despois dende o panel)
     let avisoActa = '';
-    try {
-      actaLeerPanelSeAberto();
-      const tiradasChaves = {};
-      const der = actaDerivar();
-      Object.entries(partidaCargada.xog).forEach(([k, id]) => { tiradasChaves[String(id)] = actaChavesTexto(der.chaves[k]); });
-      const pd = der.puntos;
-      const { error: errActa } = await sbfe.rpc('enviar_acta_marcador', {
-        p_id_enfrentamiento: partidaCargada.idEnfrentamiento,
-        p_puntos_local: pd.a.join('+'),
-        p_puntos_visitante: pd.b.join('+'),
-        p_tiradas_chaves: tiradasChaves,
-        p_clave: claveMarcador,
-      });
-      if (errActa) throw new Error(errActa.message);
-    } catch (errActa) {
-      avisoActa = '\n\nAtención: as tiradas da acta non se puideron gardar (' + erroGl(errActa.message) + '). Pódense escribir despois no panel de administración.';
+    if (conActa) {
+      // Tiradas da acta (se falla, o resultado xa está enviado e pódense engadir despois dende o panel)
+      try {
+        actaLeerPanelSeAberto();
+        const tiradasChaves = {};
+        const der = actaDerivar();
+        Object.entries(partidaCargada.xog).forEach(([k, id]) => { tiradasChaves[String(id)] = actaChavesTexto(der.chaves[k]); });
+        const { error: errActa } = await sbfe.rpc('enviar_acta_marcador', {
+          p_id_enfrentamiento: partidaCargada.idEnfrentamiento,
+          p_puntos_local: der.puntos.a.join('+'),
+          p_puntos_visitante: der.puntos.b.join('+'),
+          p_tiradas_chaves: tiradasChaves,
+          p_clave: claveMarcador,
+        });
+        if (errActa) throw new Error(errActa.message);
+      } catch (errActa) {
+        avisoActa = '\n\nAtención: as tiradas da acta non se puideron gardar (' + erroGl(errActa.message) + '). Pódense escribir despois no panel de administración.';
+      }
     }
-    alert('Resultado enviado. Quedará pendente de validación no panel de administración.' + avisoActa);
-    rematarCargaPartida();
+    return { ok: true, avisoActa };
   } catch (e) {
     alert('Non se puido enviar: ' + erroGl(e.message) + '\n\nSe o contrasinal caducou, vólvese pedir ao premer "Cargar partido" de novo.');
     claveMarcador = null;
-  } finally {
-    btn.disabled = false; btn.textContent = 'Enviar resultado';
+    return { ok: false };
   }
+}
+
+// «Enviar resultado sen acta»: envía só o resultado e as chaves de cada xogador e remata o proceso
+$mk('#mk-enviar-confirmar').addEventListener('click', async () => {
+  if (!partidaCargada) return;
+  const btn = $mk('#mk-enviar-confirmar');
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  const r = await enviarResultadoMarcador(false);
+  btn.disabled = false; btn.textContent = 'Enviar resultado sen acta';
+  if (!r.ok) return;
+  alert('Resultado enviado sen acta. Quedará pendente de validación no panel de administración.');
+  rematarCargaPartida();
 });
 
 $mk('#mk-enviar-cancelar').addEventListener('click', rematarCargaPartida);
@@ -432,12 +439,25 @@ async function xerarActaMarcador(incidencias){
       chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: actaChavesTexto(der.chaves[k]) })),
     }],
   };
-  const firmas = await actaPedirFirmas('gl');      // dous recuadros para asinar co dedo ou lapis táctil
-  if (firmas === null) return;
-  datos.firmas = firmas;
+  // Firmas (dous recuadros) e, despois de «Seguinte», as tres accións
+  const f = await actaPedirFirmas('gl', true);
+  if (!f || f.accion === 'cancelar') return;         // volve ao marcador para revisar ou corrixir
+  datos.firmas = { local: f.local, visitante: f.visitante };
   const botones = [$mk('#ak-inc-non'), $mk('#ak-inc-xerar')];
   botones.forEach(b => { b.disabled = true; });
-  try { await generarActaPdf(datos); $mk('#ak-inc').hidden = true; }
-  catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
-  finally { botones.forEach(b => { b.disabled = false; }); }
+  try {
+    let aviso = '';
+    if (f.accion === 'enviar') {                      // envía o resultado, xera a acta e remata
+      const r = await enviarResultadoMarcador(true);
+      if (!r.ok) return;
+      aviso = r.avisoActa;
+    }
+    try { await generarActaPdf(datos); }
+    catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
+    $mk('#ak-inc').hidden = true;
+    if (f.accion === 'enviar') {
+      alert('Resultado enviado con acta. Quedará pendente de validación no panel de administración.' + aviso);
+      rematarCargaPartida();
+    }                                                 // «Xerar acta»: queda na pantalla do marcador para repetir
+  } finally { botones.forEach(b => { b.disabled = false; }); }
 }
