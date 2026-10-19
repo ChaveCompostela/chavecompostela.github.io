@@ -47,8 +47,47 @@ function actaFixar(pa, pb, ch){
   actaPintarTirada();
 }
 
+// ---- Botóns permitidos segundo o estado da tirada aberta (só con partida real cargada) ----
+// Un botón actívase se, despois de premelo, a tirada aínda pode acabar nunha combinación válida
+// (actaEvaluarTirada ≠ 'invalida'). Exemplos: tras +1 do local quedan bloqueados todos os + do local e todos os
+// + e − do visitante (e os − do local salvo o −1), pero as chaves seguen para poder matar chaves; tras 9 puntos e
+// 1 chave do que puntúa, bloqúeanse as chaves do outro equipo; tras +1 chave bloquéase o +2 do mesmo xogador.
+// Todo se volve habilitar cando a tirada queda baleira (nova tirada ou corrixida ao momento).
+const ACTA_VALORES = [1, 2, 8, 9, 16];
+function actaBotonsPermitidos(td){
+  const vacia = actaVacia(td);
+  const posible = mod => { const t2 = { pa: td.pa, pb: td.pb, ch: { ...td.ch } }; mod(t2); return actaEvaluarTirada(t2).cls !== 'invalida'; };
+  const out = { puntos: { a: {}, b: {} }, chaves: {} };
+  ['a', 'b'].forEach(eq => {
+    const campo = eq === 'a' ? 'pa' : 'pb', outro = eq === 'a' ? 'pb' : 'pa';
+    ACTA_VALORES.forEach(v => {
+      out.puntos[eq][v] = td[campo] === 0 && td[outro] === 0 && posible(t2 => { t2[campo] += v; });
+      out.puntos[eq][-v] = vacia ? true : (td[campo] > 0 && (v === td[campo] || !ACTA_VALORES.includes(td[campo])));
+    });
+  });
+  Object.keys(td.ch).forEach(k => {
+    out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': vacia || td.ch[k] > 0 };
+  });
+  return out;
+}
+
+function actaActualizarBotones(){
+  if (typeof document === 'undefined' || !document.querySelectorAll) return;
+  const todos = document.querySelectorAll('#vista-marcador [data-add], #vista-marcador .mk-chb');
+  if (!ACTA.activa) { todos.forEach(b => { b.disabled = false; }); return; }
+  const p = actaBotonsPermitidos(ACTA.actual);
+  ['a', 'b'].forEach(eq => {
+    document.querySelectorAll(`#mk-${eq} [data-add]`).forEach(b => { b.disabled = !p.puntos[eq][Number(b.dataset.add)]; });
+    [...document.querySelectorAll(`#mk-${eq} .marcador-xog`)].forEach((fila, i) => {
+      const k = eq + (i + 1);
+      fila.querySelectorAll('.mk-chb').forEach(b => { b.disabled = !p.chaves[k][b.dataset.chaves]; });
+    });
+  });
+}
+
 // Barra «Tirada N · pecha en X s» (só visible coa acta activa)
 function actaPintarTirada(){
+  actaActualizarBotones();
   const barra = document.getElementById('mk-tirada'), txt = document.getElementById('mk-tirada-txt');
   if (!barra || !txt) return;
   barra.hidden = !ACTA.activa;
@@ -73,8 +112,8 @@ function actaPuntoPulsado(eq, n){        // n > 0
   ACTA.actual[eq === 'a' ? 'pa' : 'pb'] += n;
   actaMarcar();
 }
-function actaChavePulsada(clave){        // +1 de chave dun xogador (a1, a2, b1, b2)
-  ACTA.actual.ch[clave]++;
+function actaChavePulsada(clave, n){     // +1 ou +2 chaves dun xogador (a1, a2, b1, b2)
+  ACTA.actual.ch[clave] += n || 1;
   actaMarcar();
 }
 
@@ -265,7 +304,7 @@ document.addEventListener('click', e => {
     const delta = Number(botonChave.dataset.chaves);
     contador.textContent = clamp0((Number(contador.textContent) || 0) + delta);
     const k = ACTA.activa ? claveXogador(fila) : null;
-    if (k) { if (delta > 0) actaChavePulsada(k); else actaChaves(k, delta); }
+    if (k) { if (delta > 0) actaChavePulsada(k, delta); else actaChaves(k, delta); }
     actualizarLideres();
     return;
   }
