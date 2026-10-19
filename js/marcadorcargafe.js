@@ -322,7 +322,6 @@ function nomeXogActa(k){ return nomeXogadorP(partidaCargada.xog[k], datosCargaMa
 function actaPanelReiniciado(){
   $mk('#ak-inc-area').value = '';
   $mk('#ak-inc-texto').hidden = true;
-  $mk('#ak-inc').hidden = true;
   if (partidaCargada && !$mk('#mk-acta-panel').hidden) actaAbrirPanel();
 }
 
@@ -378,7 +377,6 @@ $mk('#mk-tirada-cerrar').addEventListener('click', () => { actaCerrarTirada(); }
 function actaPecharPanel(){
   try { actaLeerPanel(); } catch (err) { if (!confirm(err.message + '\n\nPechar igualmente sen gardar os cambios das tiradas?')) return; }
   $mk('#mk-acta-panel').hidden = true;
-  $mk('#ak-inc').hidden = true;
 }
 $mk('#ak-pechar').addEventListener('click', actaPecharPanel);
 ['#ak-pl', '#ak-pv'].forEach(s => $mk(s).addEventListener('input', actaRevisarPanel));
@@ -399,20 +397,21 @@ function actaCategoriaMk(){
   return d.categorias.find(c => c.id === liga?.id_categoria)?.nombre;
 }
 
-// 1.º paso: comprobar as tiradas e preguntar se houbo incidencias
+// Botón «Incidencias»: amosa / agocha o cadro de texto (o que se escriba vai na acta)
+$mk('#ak-inc-btn').addEventListener('click', () => {
+  const caixa = $mk('#ak-inc-texto');
+  caixa.hidden = !caixa.hidden;
+  if (!caixa.hidden) $mk('#ak-inc-area').focus();
+});
+
+// «Xerar acta (PDF)»: comproba as tiradas e abre directamente o panel de firmas
 $mk('#ak-pdf').addEventListener('click', () => {
   if (!partidaCargada) return;
   try { actaLeerPanel(); } catch (err) { alert(err.message); return; }
   if (actaCategoriaMk() === 'masculina') return alert('A acta da liga masculina aínda non está dispoñible.');
   if (!actaRevisarPanel() && !confirm('As tiradas non cadran. Seguir igualmente coa acta?')) return;
-  $mk('#ak-inc-texto').hidden = true;
-  $mk('#ak-inc').hidden = false;
-  $mk('#ak-inc').scrollIntoView({ block: 'nearest' });
+  xerarActaMarcador($mk('#ak-inc-area').value);
 });
-$mk('#ak-inc-non').addEventListener('click', () => xerarActaMarcador(''));
-$mk('#ak-inc-si').addEventListener('click', () => { $mk('#ak-inc-texto').hidden = false; $mk('#ak-inc-area').focus(); });
-$mk('#ak-inc-xerar').addEventListener('click', () => xerarActaMarcador($mk('#ak-inc-area').value));
-$mk('#ak-inc-volver').addEventListener('click', () => { $mk('#ak-inc').hidden = true; });
 
 // 2.º paso: xerar o PDF (cos puntos, as chaves e, se as houbo, as incidencias)
 async function xerarActaMarcador(incidencias){
@@ -443,7 +442,7 @@ async function xerarActaMarcador(incidencias){
   const f = await actaPedirFirmas('gl', true);
   if (!f || f.accion === 'cancelar') return;         // volve ao marcador para revisar ou corrixir
   datos.firmas = { local: f.local, visitante: f.visitante };
-  const botones = [$mk('#ak-inc-non'), $mk('#ak-inc-xerar')];
+  const botones = [$mk('#ak-pdf')];
   botones.forEach(b => { b.disabled = true; });
   try {
     let aviso = '';
@@ -454,7 +453,6 @@ async function xerarActaMarcador(incidencias){
     }
     try { await generarActaPdf(datos); }
     catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
-    $mk('#ak-inc').hidden = true;
     if (f.accion === 'enviar') {
       alert('Resultado enviado con acta. Quedará pendente de validación no panel de administración.' + aviso);
       rematarCargaPartida();

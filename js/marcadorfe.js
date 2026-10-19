@@ -7,7 +7,7 @@ const clamp0 = n => (n < 0 ? 0 : n);
 
 // ---------- Rexistro das tiradas para a acta ----------
 // Só actúa cando hai unha partida real cargada (ACTA.activa) e só nos equipos A e B.
-// Unha TIRADA péchase soa cando pasan ACTA_SEGUNDOS segundos sen anotar nada (ou co botón «Pechar tirada»).
+// Unha TIRADA péchase soa cando pasan ACTA_SEGUNDOS segundos sen anotar nada (ou co botón «Seguinte tirada»).
 // Dentro dunha tirada anótase en calquera orde (puntos e chaves, de calquera equipo). Ao pecharse avalíase:
 //  · en cada tirada só puntúa un equipo (a suma dos seus puntos), e cada equipo lanza un xogador con 2 pesos;
 //  · combinacións posibles (puntos · chaves do que puntúa-do outro): 1 ou 2 · 0-0 · 8 ou 9 · 1-0 · 16 · 2-0 ·
@@ -53,6 +53,48 @@ function actaFixar(pa, pb, ch){
 // + e − do visitante (e os − do local salvo o −1), pero as chaves seguen para poder matar chaves; tras 9 puntos e
 // 1 chave do que puntúa, bloqúeanse as chaves do outro equipo; tras +1 chave bloquéase o +2 do mesmo xogador.
 // Todo se volve habilitar cando a tirada queda baleira (nova tirada ou corrixida ao momento).
+// ---- Emparellamento dos xogadores, deducido do que xa pasou ----
+// Cada equipo ten 2 xogadores e en cada tirada só lanza un por equipo; os xogadores xógase sempre contra o mesmo
+// contrario (pode ser A1-B1/A2-B2 ou A1-B2/A2-B1: non se asume) e as tiradas ALTERNAN as dúas parellas: a parella
+// que xoga nas tiradas impares non xoga nas pares. Así, o que deu chave na tirada t xoga nas tiradas coa
+// mesma paridade que t; o seu compañeiro, nas da outra; e dous xogadores de equipos distintos con chaves en tiradas
+// da mesma paridade (ou na mesma tirada, p. ex. chaves matadas) enfróntanse entre si.
+// Devolve a paridade (0/1) da parella de cada xogador, ou null se aínda non se sabe.
+function actaConocimiento(){
+  const obs = { a1: new Set(), a2: new Set(), b1: new Set(), b2: new Set() };
+  Object.keys(obs).forEach(k => ACTA.base.ch[k].forEach(e => { if (e.t != null) obs[k].add(e.t % 2); }));
+  const desde = Math.max(ACTA.base.a.length, ACTA.base.b.length);
+  ACTA.tiradas.forEach((td, i) => Object.keys(obs).forEach(k => { if (td.ch[k] > 0) obs[k].add((desde + i + 1) % 2); }));
+  const cl = { a1: null, a2: null, b1: null, b2: null };
+  for (const k of Object.keys(obs)) {
+    if (obs[k].size > 1) return { a1: null, a2: null, b1: null, b2: null };   // incoherente: non se deduce nada
+    if (obs[k].size === 1) cl[k] = [...obs[k]][0];
+  }
+  ['a', 'b'].forEach(eq => {                                               // o compañeiro xoga nas tiradas da outra paridade
+    if (cl[eq + '1'] != null && cl[eq + '2'] == null) cl[eq + '2'] = 1 - cl[eq + '1'];
+    if (cl[eq + '2'] != null && cl[eq + '1'] == null) cl[eq + '1'] = 1 - cl[eq + '2'];
+  });
+  return cl;
+}
+
+// Xogadores de cada equipo que poden participar na tirada aberta: {a: [1], b: [1, 2]}
+//  · se un xogador xa deu chave nesta tirada, só el (o seu compañeiro non participa);
+//  · se non, e se se sabe a paridade da súa parella, só o que xoga nesta tirada;
+//  · se aínda non se sabe, os dous.
+function actaParticipantes(td){
+  const cl = actaConocimiento(), par = actaNumeroTirada() % 2;
+  const S = { a: [1, 2], b: [1, 2] };
+  ['a', 'b'].forEach(eq => {
+    const con = [1, 2].filter(i => td.ch[eq + i] > 0);
+    if (con.length === 1) S[eq] = con;
+    else if (con.length === 0) {
+      const dePar = [1, 2].filter(i => cl[eq + i] === par);
+      if (dePar.length === 1) S[eq] = dePar;
+    }
+  });
+  return S;
+}
+
 const ACTA_VALORES = [1, 2, 8, 9, 16];
 function actaBotonsPermitidos(td){
   const vacia = actaVacia(td);
@@ -68,14 +110,10 @@ function actaBotonsPermitidos(td){
   Object.keys(td.ch).forEach(k => {
     out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': vacia || td.ch[k] > 0 };
   });
-  // Participantes: o xogador i dun equipo enfróntase sempre ao xogador i do outro (A1-B1, A2-B2). Se un xogador deu
-  // unha chave, o xogador do equipo contrario co outro número non participa na tirada: bloquéanse as súas chaves.
-  // O compañeiro de equipo queda aberto (por se tamén deu chave).
-  const deuChave = { a: [], b: [] };
-  ['a', 'b'].forEach(eq => [1, 2].forEach(i => { if (td.ch[eq + i] > 0) deuChave[eq].push(i); }));
+  // Participantes na tirada (ver actaParticipantes): as chaves dos que non participan quedan bloqueadas
+  const S = actaParticipantes(td);
   Object.keys(td.ch).forEach(k => {
-    const q = deuChave[k[0] === 'a' ? 'b' : 'a'];
-    if (q.length && !q.includes(Number(k[1]))) { out.chaves[k][1] = false; out.chaves[k][2] = false; }
+    if (!S[k[0]].includes(Number(k[1]))) { out.chaves[k][1] = false; out.chaves[k][2] = false; }
   });
   return out;
 }
