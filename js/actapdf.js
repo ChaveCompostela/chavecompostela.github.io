@@ -412,19 +412,19 @@ function actaNombreArchivo(local, visitante, fecha){
 // ---- Panel de firmas: dos recuadros para firmar con el dedo o un lápiz táctil ----
 // Sin conEnvio (panel de administración): botones «Generar acta firmada» / «Generar sin firmas» / «Cancelar»;
 //   devuelve {local, visitante} (cada uno {data, w, h} o null si se dejó en blanco) o null si se cancela.
-// Con conEnvio (Marcador): primero solo «Seguinte»; al pulsarlo, los recuadros quedan fijos y aparecen
-//   «Enviar resultado con acta» / «Xerar acta» / «Cancelar»; devuelve {accion: 'enviar'|'xerar'|'cancelar', local, visitante}.
+// Con conEnvio (Marcador): directamente «Enviar resultado con acta» / «Xerar acta» / «Cancelar»;
+//   devuelve {accion: 'enviar'|'xerar'|'cancelar', local, visitante}.
 function actaPedirFirmas(idioma, conEnvio){
   const T = idioma === 'gl'
-    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', seguinte: 'Seguinte', enviar: 'Enviar resultado con acta', xerar: 'Xerar acta' }
-    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar', seguinte: 'Siguiente', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
+    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Xerar acta' }
+    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:10px;overflow:auto;-webkit-overflow-scrolling:touch';
     const btn = 'font:inherit;font-size:14px;padding:10px 14px;border:1px solid #bbb;border-radius:10px;background:#f4f4f4;color:#111';
     const pri = `${btn};background:#7a1f35;color:#fff;border-color:#7a1f35`;
     const botonesInicial = conEnvio
-      ? `<button type="button" data-acc="seguinte" style="${pri}">${T.seguinte}</button>`
+      ? `<button type="button" data-acc="enviar" style="${pri}">${T.enviar}</button><button type="button" data-acc="xerar" style="${btn}">${T.xerar}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`
       : `<button type="button" data-acc="firmada" style="${pri}">${T.firmada}</button><button type="button" data-acc="sin" style="${btn}">${T.sin}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`;
     ov.innerHTML = `<div style="background:#fff;color:#111;border-radius:14px;padding:14px;max-width:560px;width:100%;font:15px system-ui,-apple-system,sans-serif">
       <h3 style="margin:0 0 4px;font-size:18px">${T.titulo}</h3>
@@ -452,12 +452,6 @@ function actaPedirFirmas(idioma, conEnvio){
       const b = ev.target.closest('button'); if (!b) return;
       if (b.dataset.borrar != null) { const i = Number(b.dataset.borrar), cv = lienzos[i]; cv.getContext('2d').clearRect(0, 0, cv.width / dpr, cv.height / dpr); tiene[i] = false; return; }
       const acc = b.dataset.acc;
-      if (acc === 'seguinte') {                       // paso 2: las firmas quedan fijas y aparecen las tres acciones
-        lienzos.forEach(cv => { cv.style.pointerEvents = 'none'; cv.style.borderStyle = 'solid'; });
-        ov.querySelectorAll('[data-borrar]').forEach(x => { x.style.display = 'none'; });
-        ov.querySelector('[data-botones]').innerHTML = `<button type="button" data-acc="enviar" style="${pri}">${T.enviar}</button><button type="button" data-acc="xerar" style="${btn}">${T.xerar}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`;
-        return;
-      }
       if (acc === 'cancelar') return cerrar(conEnvio ? { accion: 'cancelar', local: null, visitante: null } : null);
       if (acc === 'sin') return cerrar({ local: null, visitante: null });
       if (acc === 'firmada') return cerrar({ local: firma(0), visitante: firma(1) });
