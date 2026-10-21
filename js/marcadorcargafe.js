@@ -408,20 +408,84 @@ $mk('#ak-inc-btn').addEventListener('click', () => {
 $mk('#ak-pdf').addEventListener('click', () => {
   if (!partidaCargada) return;
   try { actaLeerPanel(); } catch (err) { alert(err.message); return; }
-  if (actaCategoriaMk() === 'masculina') return alert('A acta da liga masculina aínda non está dispoñible.');
   if (!actaRevisarPanel() && !confirm('As tiradas non cadran. Seguir igualmente coa acta?')) return;
   xerarActaMarcador($mk('#ak-inc-area').value);
 });
 
-// 2.º paso: xerar o PDF (cos puntos, as chaves e, se as houbo, as incidencias)
-async function xerarActaMarcador(incidencias){
+// ---- Datos da acta ----
+// Liga masculina: o encontro ten 4 partidas que poden acabar en calquera orde. A acta leva as xogadas: a que está
+// cargada (en directo), as enviadas e pendentes de validar (función leer_pendientes_partido) e as xa validadas.
+const PARTIDAS_MASC = 4;
+
+async function leerPendientesPartido(idPartido){
+  try {
+    const { data, error } = await sbfe.rpc('leer_pendientes_partido', { p_id_partido: idPartido, p_clave: claveMarcador });
+    if (error) throw new Error(error.message);
+    const por = {};
+    (data || []).forEach(r => { por[r.r_id_enfrentamiento] = r; });
+    return por;
+  } catch (e) { return {}; }            // sen a función (aínda non instalada) só se usan as partidas validadas
+}
+
+function xogadoresDaPartida(e, d){
+  const par = lado => { const x = d.enfrentamiento_parejas.find(y => y.id_enfrentamiento === e.id && y.lado === lado); return x ? d.parejas.find(y => y.id === x.id_pareja) : null; };
+  const pl = par('local'), pv = par('visitante');
+  return [pl?.id_jugador_a, pl?.id_jugador_b, pv?.id_jugador_a, pv?.id_jugador_b];
+}
+
+async function datosActaMasculina(partido, incidencias){
+  const d = datosCargaMarcador;
+  const pend = await leerPendientesPartido(partido.id);
+  const nome = id => (id ? nomeXogadorP(id, d) : '');
+  const der = actaDerivar();
+  const partidas = [];
+  d.enfrentamientos.filter(x => x.id_partido === partido.id).sort((a, b) => a.numero - b.numero).forEach(e => {
+    const ids = xogadoresDaPartida(e, d);
+    const p = { numero: e.numero, jugadoresLocal: [nome(ids[0]), nome(ids[1])], jugadoresVisit: [nome(ids[2]), nome(ids[3])] };
+    if (e.id === partidaCargada.idEnfrentamiento) {                       // en directo
+      const hai = puntosDe('a') + puntosDe('b') > 0 || der.puntos.a.some(v => v > 0) || der.puntos.b.some(v => v > 0);
+      if (!hai) return;
+      Object.assign(p, {
+        puntosLocal: puntosDe('a'), puntosVisit: puntosDe('b'),
+        tiradasLocal: der.puntos.a.join('+'), tiradasVisit: der.puntos.b.join('+'),
+        chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: actaChavesTexto(der.chaves[k]) })),
+      });
+    } else if (pend[e.id]) {                                              // enviada, pendente de validar
+      const r = pend[e.id], porId = id => (r.r_chaves || []).find(c => c.id_jugador === id) || {};
+      Object.assign(p, {
+        puntosLocal: r.r_marcador_local, puntosVisit: r.r_marcador_visitante,
+        tiradasLocal: r.r_puntos_tiradas_local || '', tiradasVisit: r.r_puntos_tiradas_visitante || '',
+        chaves: ids.map(id => ({ total: porId(id).chaves || 0, tiradas: porId(id).tiradas || '' })),
+      });
+    } else if (e.marcador_local != null && e.marcador_visitante != null) {  // xa validada
+      Object.assign(p, {
+        puntosLocal: e.marcador_local, puntosVisit: e.marcador_visitante,
+        tiradasLocal: e.puntos_tiradas_local || '', tiradasVisit: e.puntos_tiradas_visitante || '',
+        chaves: ids.map(id => { const c = d.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id); return { total: c ? c.chaves : 0, tiradas: c?.tiradas || '' }; }),
+      });
+    } else return;                                                        // sen xogar: queda en branco
+    partidas.push(p);
+  });
+  return {
+    liga: 'masculina',
+    fecha: fechaActaMk(partido),
+    campo: d.instalaciones?.find(i => i.id === partido.id_instalacion)?.nombre || '',
+    local: partidaCargada.nomeLocal, visitante: partidaCargada.nomeVisitante,
+    totalLocal: partidas.length ? partidas.reduce((s, p) => s + (p.puntosLocal || 0), 0) : null,
+    totalVisit: partidas.length ? partidas.reduce((s, p) => s + (p.puntosVisit || 0), 0) : null,
+    incidencias: String(incidencias || '').trim(),
+    nombreArchivo: actaNombreArchivo(partidaCargada.nomeLocal, partidaCargada.nomeVisitante, partido.fecha_hora ? String(partido.fecha_hora).slice(0, 10) : ''),
+    partidas,
+  };
+}
+
+function datosActaFeminina(partido, incidencias){
   const d = datosCargaMarcador;
   const e = d.enfrentamientos.find(x => x.id === partidaCargada.idEnfrentamiento);
-  const partido = d.partidos.find(p => p.id === partidaCargada.idPartido);
   const ptsL = puntosDe('a'), ptsV = puntosDe('b');
   const outras = d.enfrentamientos.filter(x => x.id_partido === partido.id && x.id !== e.id && x.marcador_local != null && x.marcador_visitante != null);
   const der = actaDerivar(), pd = der.puntos;
-  const datos = {
+  return {
     fecha: fechaActaMk(partido),
     campo: d.instalaciones?.find(i => i.id === partido.id_instalacion)?.nombre || '',
     local: partidaCargada.nomeLocal, visitante: partidaCargada.nomeVisitante,
@@ -438,12 +502,35 @@ async function xerarActaMarcador(incidencias){
       chaves: CLAVES_XOG.map(k => ({ total: chavesDe(k), tiradas: actaChavesTexto(der.chaves[k]) })),
     }],
   };
-  // Firmas (dous recuadros) e, despois de «Seguinte», as tres accións
+}
+
+// 2.º paso: xerar o PDF (cos puntos, as chaves e, se as houbo, as incidencias)
+async function xerarActaMarcador(incidencias){
+  const partido = datosCargaMarcador.partidos.find(p => p.id === partidaCargada.idPartido);
+  const masc = actaCategoriaMk() === 'masculina';
+  const btnPdf = $mk('#ak-pdf');
+  btnPdf.disabled = true;
+  let datos;
+  try { datos = masc ? await datosActaMasculina(partido, incidencias) : datosActaFeminina(partido, incidencias); }
+  finally { btnPdf.disabled = false; }
+
+  // Firmas (dous recuadros) e as tres accións
   const f = await actaPedirFirmas('gl', true);
   if (!f || f.accion === 'cancelar') return;         // volve ao marcador para revisar ou corrixir
   datos.firmas = { local: f.local, visitante: f.visitante };
-  const botones = [$mk('#ak-pdf')];
-  botones.forEach(b => { b.disabled = true; });
+
+  // «Pechar acta» na liga masculina: avisa das partidas que quedan por xogar (e xera a acta coas xogadas, ou sen ningunha)
+  if (masc && f.accion === 'xerar') {
+    const quedan = PARTIDAS_MASC - datos.partidas.length;
+    if (quedan > 0) {
+      const op = await actaOpciones('Quedan partidas por xogar',
+        `${quedan === 1 ? 'Queda 1 partida' : 'Quedan ' + quedan + ' partidas'} por xogar. A acta xerarase ${datos.partidas.length ? 'coas partidas xogadas' : 'sen ningunha partida'}.`,
+        ['Pechar acta igualmente', 'Cancelar']);
+      if (op !== 0) return;
+    }
+  }
+
+  btnPdf.disabled = true;
   try {
     let aviso = '';
     if (f.accion === 'enviar') {                      // envía o resultado, xera a acta e remata
@@ -456,6 +543,6 @@ async function xerarActaMarcador(incidencias){
     if (f.accion === 'enviar') {
       alert('Resultado enviado con acta. Quedará pendente de validación no panel de administración.' + aviso);
       rematarCargaPartida();
-    }                                                 // «Xerar acta»: queda na pantalla do marcador para repetir
-  } finally { botones.forEach(b => { b.disabled = false; }); }
+    }                                                 // «Pechar acta»: queda na pantalla do marcador para repetir
+  } finally { btnPdf.disabled = false; }
 }

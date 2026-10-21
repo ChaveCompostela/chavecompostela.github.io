@@ -159,6 +159,16 @@ function _actaChavesCeldas(doc, ch, x, yTop, w, hCelda, tamMax){
   } else _actaDibujarSegs(doc, _actaSegChaves(entries, s, true), x, y1);
 }
 
+// Firmas de las delegadas/os (imágenes dibujadas a mano en el móvil), en el hueco sobre «Fdo:»
+function _actaFirmas(doc, c, by, bh){
+  [[c.firmas && c.firmas.local, 18.5], [c.firmas && c.firmas.visitante, 108.4]].forEach(([f, bx]) => {
+    if (!f || !f.data) return;
+    const bw = 84;
+    const k = Math.min(bw / f.w, bh / f.h), w = f.w * k, h = f.h * k;
+    try { doc.addImage(f.data, 'PNG', bx + (bw - w) / 2, by + (bh - h) / 2, w, h); } catch (err) {}
+  });
+}
+
 // Texto de incidencias sobre las 4 líneas del formulario (la primera es más corta: va tras el rótulo)
 function _actaEnvolver(doc, texto, anchos){
   const lineas = [];
@@ -172,8 +182,8 @@ function _actaEnvolver(doc, texto, anchos){
   });
   return lineas;
 }
-function _actaIncidencias(doc, texto){
-  const ys = [250.2, 260.7, 269.9, 279.2], xs = [76.5, 18.5, 18.5, 18.5], ws = [115, 173, 173, 173];
+function _actaIncidencias(doc, texto, cfg){
+  const ys = (cfg && cfg.ys) || [250.2, 260.7, 269.9, 279.2], xs = (cfg && cfg.xs) || [76.5, 18.5, 18.5, 18.5], ws = (cfg && cfg.ws) || [115, 173, 173, 173];
   doc.setFont('helvetica', 'normal');
   for (let s = 9; s >= 7; s -= 0.5) {
     doc.setFontSize(s);
@@ -200,7 +210,7 @@ function _actaPagina(doc, c, p){
 
   // Cabecera
   rect(18.3, 16, 174.7, 25.6);
-  if (c.logo) { try { doc.addImage(c.logo, 'PNG', 22.4, 19.4, 19, 19); } catch (err) {} }
+  if (c.logo) { try { doc.addImage(c.logo, c.logoFmt || 'PNG', 22.4, 19.4, 19, 19); } catch (err) {} }
   neg('ASOCIACIÓN DE XOGADORAS DA CHAVE DE SANTIAGO', 46.5, 24.2, 13);
   neg('ACTA do encontro celebrado o día:', 46.5, 30.2, 9.5);
   linea(107.3, 31.5, 189, 31.5);
@@ -289,20 +299,145 @@ function _actaPagina(doc, c, p){
   [261.6, 270.8, 280.1].forEach(y => linea(18, y, 193.2, y));
   if (c.incidencias) _actaIncidencias(doc, c.incidencias);
 
-  // Firmas de las delegadas (imágenes dibujadas a mano en el móvil), en el hueco sobre «Fdo:»
-  [[c.firmas && c.firmas.local, 18.5], [c.firmas && c.firmas.visitante, 108.4]].forEach(([f, bx]) => {
-    if (!f || !f.data) return;
-    const bw = 84, bh = 27, by = 208;
-    const k = Math.min(bw / f.w, bh / f.h), w = f.w * k, h = f.h * k;
-    try { doc.addImage(f.data, 'PNG', bx + (bw - w) / 2, by + (bh - h) / 2, w, h); } catch (err) {}
+  _actaFirmas(doc, c, 208, 27);
+}
+
+// ---- Liga MASCULINA: acta de 2 páginas (4 partidas por encuentro, que pueden acabar en cualquier orden) ----
+// Página 1: resultados generales (nombres y puntos de cada partida, resultado global, delegados, incidencias).
+// Página 2: desglose de tiradas y chaves de cada partida. Medidas tomadas de la plantilla oficial.
+const _MASC_BLOQUES = [56.9, 95.2, 133.6, 171.7];     // y de la cabecera de cada «n.ª PARTIDA» de la página 1
+const _MASC_TABLAS = [27.5, 92.1, 156.7, 221.4];      // y de cada tabla «n.ª PARTIDA» de la página 2
+
+function _actaHerr(doc){
+  return {
+    rect: (x, y, w, h) => doc.rect(x, y, w, h),
+    linea: (x1, y1, x2, y2) => doc.line(x1, y1, x2, y2 ?? y1),
+    neg: (t, x, y, tam, opts) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(tam); doc.text(t, x, y, opts); },
+    dato: (t, x, y, ancho, tam, opts) => { doc.setFont('helvetica', 'normal'); _actaTexto(doc, String(t ?? ''), x, y, ancho, tam, opts); },
+  };
+}
+
+function _actaPaginaMasc1(doc, c){
+  const { rect, linea, neg, dato } = _actaHerr(doc);
+  const P = {}; (c.partidas || []).forEach(p => { P[p.numero] = p; });
+  const num = v => (v == null ? '' : String(v));
+  doc.setDrawColor(...ACTA_ROJO); doc.setLineWidth(0.3); doc.setTextColor(0, 0, 0);
+
+  // Cabecera
+  rect(18.0, 15.9, 174.4, 25.7);
+  if (c.logo) { try { doc.addImage(c.logo, c.logoFmt || 'PNG', 22.0, 18.8, 19.8, 19.8); } catch (err) {} }
+  neg('ASOCIACIÓN DE XOGADORES DA CHAVE DE SANTIAGO', 46.0, 23.8, 13);
+  neg('ACTA do encontro celebrado o día:', 46.0, 30.7, 10);
+  linea(106.9, 31.35, 188.4, 31.35);
+  dato(c.fecha, 108, 30.5, 79, 10);
+  neg('Campo de xogo:', 46.0, 37.0, 10);
+  linea(75.7, 37.75, 188.4, 37.75);
+  dato(c.campo, 77, 36.9, 111, 10);
+
+  // Equipos
+  rect(18.1, 44.8, 174.1, 8.7);
+  linea(105.1, 44.8, 105.1, 53.5);
+  neg('Equipo Local:', 21.4, 50.5, 10);
+  linea(46.8, 51.25, 101.8, 51.25);
+  dato(c.local, 47.8, 50.4, 53, 10);
+  neg('Equipo Visitante:', 108.3, 50.5, 10);
+  linea(139.2, 51.25, 188.9, 51.25);
+  dato(c.visitante, 140.2, 50.4, 48, 10);
+
+  // Las 4 partidas (pueden estar sin jugar: quedan en blanco)
+  _MASC_BLOQUES.forEach((y0, i) => {
+    const n = i + 1, p = P[n] || {};
+    rect(18.0, y0, 174.4, 6.1);
+    neg(`${n}.ª PARTIDA`, 105.6, y0 + 4.0, 9.5, { align: 'center' });
+    rect(18.0, y0 + 6.1, 174.4, 32.2);
+    linea(105.1, y0 + 6.1, 105.1, y0 + 38.3);
+    neg('Nome Xogadores', 61.8, y0 + 10.6, 8.5, { align: 'center' });
+    neg('Nome Xogadores', 149.0, y0 + 10.6, 8.5, { align: 'center' });
+    [[p.jugadoresLocal || [], 20.9, 102.4], [p.jugadoresVisit || [], 107.9, 189.4]].forEach(([js, x1, x2]) => {
+      [y0 + 17.7, y0 + 25.1].forEach((y, k) => {
+        linea(x1, y, x2);
+        dato(js[k] || '', x1 + 0.7, y - 1, x2 - x1 - 1.4, 10);
+      });
+    });
+    neg(`Puntos ${n}.ª Partida:`, 20.9, y0 + 33.6, 9);
+    linea(82.5, y0 + 34.15, 102.3, y0 + 34.15);
+    neg(`Puntos ${n}.ª Partida:`, 107.9, y0 + 33.6, 9);
+    linea(169.6, y0 + 34.15, 189.4, y0 + 34.15);
+    const g = p.puntosLocal != null && p.puntosVisit != null ? Math.sign(p.puntosLocal - p.puntosVisit) : 0;   // gana: negrita
+    doc.setFont('helvetica', g > 0 ? 'bold' : 'normal'); _actaTexto(doc, num(p.puntosLocal), 92.4, y0 + 33.5, 19, 11, { align: 'center' });
+    doc.setFont('helvetica', g < 0 ? 'bold' : 'normal'); _actaTexto(doc, num(p.puntosVisit), 179.5, y0 + 33.5, 19, 11, { align: 'center' });
+  });
+
+  // Resultado global
+  rect(18.0, 213.5, 174.4, 9.5);
+  neg('RESULTADO GLOBAL POR PUNTOS:', 23.0, 219.6, 10.5);
+  neg('Local:', 96.3, 219.6, 10.5);
+  linea(109.5, 220.55, 136.0, 220.55);
+  neg('Visitante:', 141.3, 219.6, 10.5);
+  linea(160.9, 220.55, 187.4, 220.55);
+  const gg = c.totalLocal != null && c.totalVisit != null ? Math.sign(c.totalLocal - c.totalVisit) : 0;
+  doc.setFont('helvetica', gg > 0 ? 'bold' : 'normal'); _actaTexto(doc, num(c.totalLocal), 122.8, 219.7, 24, 11, { align: 'center' });
+  doc.setFont('helvetica', gg < 0 ? 'bold' : 'normal'); _actaTexto(doc, num(c.totalVisit), 174.2, 219.7, 24, 11, { align: 'center' });
+
+  // Delegados, firmas e incidencias
+  neg('Delegado equipo local:', 18.0, 231.2, 9.5);
+  neg('Delegado equipo visitante:', 107.8, 231.2, 9.5);
+  neg('Fdo:____________________', 18.0, 251.6, 9.5);
+  neg('Fdo:____________________', 107.8, 251.6, 9.5);
+  neg('INCIDENCIAS / OBSERVACIÓNS:', 18.0, 260.1, 10);
+  linea(75.4, 260.75, 192.3, 260.75);
+  [267.15, 275.05, 282.95].forEach(y => linea(18.0, y, 192.4, y));
+  if (c.incidencias) _actaIncidencias(doc, c.incidencias, { ys: [259.6, 266.1, 274.0, 281.9], xs: [76.4, 18.6, 18.6, 18.6], ws: [115, 173, 173, 173] });
+  _actaFirmas(doc, c, 233, 17.5);
+}
+
+function _actaPaginaMasc2(doc, c){
+  const { rect, linea, neg, dato } = _actaHerr(doc);
+  const P = {}; (c.partidas || []).forEach(p => { P[p.numero] = p; });
+  doc.setDrawColor(...ACTA_ROJO); doc.setLineWidth(0.3); doc.setTextColor(0, 0, 0);
+  rect(18.0, 15.9, 174.4, 7.9);
+  neg('ANOTACIÓN INDIVIDUAL DE TIRADAS', 105.2, 21.2, 11, { align: 'center' });
+
+  _MASC_TABLAS.forEach((T, i) => {
+    const n = i + 1, p = P[n] || {};
+    rect(18.0, T, 174.4, 60.6);
+    rect(18.0, T, 174.4, 6.3);
+    neg(`${n}.ª PARTIDA`, 105.6, T + 4.2, 9.5, { align: 'center' });
+    rect(18.0, T + 6.4, 174.4, 5.6);                                   // fila de títulos
+    neg('Equipo', 19.9, T + 10.1, 8.5);
+    neg('Nome Xogadores', 39.5, T + 10.1, 8.5);
+    neg('Chaves', 101.75, T + 10.1, 8.5, { align: 'center' });
+    neg('Puntos', 155.6, T + 10.1, 8.5, { align: 'center' });
+    [37.0, 84.1, 119.1].forEach(x => linea(x, T + 6.4, x, T + 60.6));  // columnas
+    const filas = [T + 11.9, T + 24.1, T + 36.3, T + 48.4];             // arriba de cada jugador
+    linea(18.0, T + 11.85, 192.4, T + 11.85);
+    linea(37.3, T + 24.0, 119.3, T + 24.0);
+    linea(18.0, T + 36.1, 192.4, T + 36.1);                              // separa local / visitante
+    linea(37.3, T + 48.3, 119.3, T + 48.3);
+    filas.forEach(y => linea(84.4, y + 5.85, 119.1, y + 5.85));          // dos casillas de chaves por jugador
+    neg('Local', 19.9, T + 25.2, 8.5);
+    neg('Visitante', 19.9, T + 49.2, 8.5);
+    const nombres = [(p.jugadoresLocal || [])[0], (p.jugadoresLocal || [])[1], (p.jugadoresVisit || [])[0], (p.jugadoresVisit || [])[1]];
+    filas.forEach((y, k) => {
+      dato(nombres[k] ? `${(k % 2) + 1}. ${nombres[k]}` : `${(k % 2) + 1}.`, 39.5, y + 7.2, 44, 9.5);
+      _actaChavesCeldas(doc, (p.chaves || [])[k] || {}, 85.6, y, 32, 6.0, 9);
+    });
+    _actaSecuenciaCaja(doc, p.tiradasLocal || (p.puntosLocal != null ? String(p.puntosLocal) : ''), 121, T + 12.6, 69.5, 22.6, 10);
+    _actaSecuenciaCaja(doc, p.tiradasVisit || (p.puntosVisit != null ? String(p.puntosVisit) : ''), 121, T + 37.0, 69.5, 22.6, 10);
   });
 }
 
 async function generarActaPdf(c){
   await _actaCargarJsPdf();
-  c.logo = c.logo || await _actaLogoSvg();
+  const masc = c.liga === 'masculina';
+  if (!c.logo) {
+    // Femenina: escudo-axc.svg (convertido a PNG). Masculina: escudo-axc.jpg. Si falla, el otro formato.
+    if (masc) { c.logo = await _actaImagen('icons/escudo-axc.jpg'); c.logoFmt = 'JPEG'; }
+    if (!c.logo) { c.logo = await _actaLogoSvg(); c.logoFmt = 'PNG'; }
+  }
   const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4' });
-  c.partidas.forEach((p, i) => { if (i) doc.addPage(); _actaPagina(doc, c, p); });
+  if (masc) { _actaPaginaMasc1(doc, c); doc.addPage(); _actaPaginaMasc2(doc, c); }
+  else c.partidas.forEach((p, i) => { if (i) doc.addPage(); _actaPagina(doc, c, p); });
   await _actaEntregar(doc, (c.nombreArchivo || 'acta') + '.pdf');
 }
 
@@ -416,7 +551,7 @@ function actaNombreArchivo(local, visitante, fecha){
 //   devuelve {accion: 'enviar'|'xerar'|'cancelar', local, visitante}.
 function actaPedirFirmas(idioma, conEnvio){
   const T = idioma === 'gl'
-    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Xerar acta' }
+    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Pechar acta' }
     : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
   return new Promise(resolve => {
     const ov = document.createElement('div');

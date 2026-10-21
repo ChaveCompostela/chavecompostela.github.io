@@ -39,19 +39,20 @@ function datosActaDePartido(idPartido){
   const jornada = D.jornadas.find(j => j.id === p.id_jornada);
   const liga = jornada && D.ligas.find(l => l.id === jornada.id_liga);
   const cat = liga && D.categorias.find(k => k.id === liga.id_categoria);
-  if (cat?.nombre === 'masculina') { alert('El acta de la liga masculina todavía no está disponible (tiene otro formulario).'); return null; }
+  const masc = cat?.nombre === 'masculina';   // plantilla de 2 páginas con las 4 partidas (solo las ya jugadas llevan datos)
 
   const nombre = id => (id ? lab('jugadores', id) : '');
   const jugadas = partidas.filter(e => e.marcador_local != null && e.marcador_visitante != null);
   const local = _nomeBandoActa(p, 'local', partidas), visitante = _nomeBandoActa(p, 'visitante', partidas);
   return {
+    liga: masc ? 'masculina' : 'femenina',
     fecha: _fechaActa(p),
     campo: p.id_instalacion ? lab('instalaciones', p.id_instalacion) : '',
     local, visitante,
     totalLocal: jugadas.length ? jugadas.reduce((s, e) => s + e.marcador_local, 0) : null,
     totalVisit: jugadas.length ? jugadas.reduce((s, e) => s + e.marcador_visitante, 0) : null,
     nombreArchivo: actaNombreArchivo(local, visitante, p.fecha_hora ? String(p.fecha_hora).slice(0, 10) : ''),
-    partidas: partidas.map(e => {
+    partidas: partidas.filter(e => !masc || (e.marcador_local != null && e.marcador_visitante != null)).map(e => {
       const pl = _parejaDeLado(e, 'local'), pv = _parejaDeLado(e, 'visitante');
       const ids = [pl?.id_jugador_a, pl?.id_jugador_b, pv?.id_jugador_a, pv?.id_jugador_b];
       return {
