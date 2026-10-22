@@ -8,6 +8,21 @@ let datosCargaMarcador = null;
 let partidaCargada = null;   // { idEnfrentamiento, xogadores: { a1,a2,b1,b2 } }
 
 const $mk = sel => document.querySelector(sel);
+let modoAnotacion = null;      // null | 'manual' (anotar partida: marcador editable) | 'directo' (marcador intelixente coas tiradas)
+
+// Que se ve en cada paso do Marcador cando se carga unha partida:
+//  libre → marcadores normais · clave → só o contrasinal · carga → só os desplegables de partido e partida ·
+//  modo → só os 3 botóns (Anotar partida / en directo / Deixar de anotar) · anotar → marcador + Enviar resultado / Editar acta
+function mkVista(estado){
+  const v = $mk('#vista-marcador');
+  v.classList.toggle('mk-ocultar-campo', estado !== 'libre' && estado !== 'anotar');
+  $mk('#mk-clave-panel').hidden = estado !== 'clave';
+  $mk('#mk-carga-panel').hidden = estado !== 'carga';
+  $mk('#mk-enviar-panel').hidden = estado !== 'modo';
+  $mk('#mk-acciones').hidden = estado !== 'anotar';
+  if (estado !== 'anotar') $mk('#mk-acta-panel').hidden = true;
+  $mk('#mk-cargar').hidden = estado !== 'libre';
+}
 ACTA_IDIOMA = 'gl';   // os mensaxes da acta (actapdf.js) saen en galego
 
 // Mensaxes de erro do servidor (a base de datos devólveos en castelán)
@@ -19,13 +34,11 @@ const erroGl = m => String(m)
 $mk('#mk-cargar').addEventListener('click', () => {
   $mk('#mk-clave-input').value = '';
   $mk('#mk-clave-msg').hidden = true;
-  $mk('#mk-clave-panel').hidden = false;
+  mkVista('clave');                         // desaparece o marcador: só se pide o contrasinal
   $mk('#mk-clave-input').focus();
 });
 
-$mk('#mk-clave-cancelar').addEventListener('click', () => {
-  $mk('#mk-clave-panel').hidden = true;
-});
+$mk('#mk-clave-cancelar').addEventListener('click', () => mkVista('libre'));
 
 $mk('#mk-clave-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') $mk('#mk-clave-aceptar').click();
@@ -51,7 +64,7 @@ $mk('#mk-clave-aceptar').addEventListener('click', async () => {
   }
 
   claveMarcador = clave;
-  $mk('#mk-clave-panel').hidden = true;
+  mkVista('carga');
   await abrirPanelCarga();
 });
 
@@ -71,20 +84,15 @@ async function abrirPanelCarga(){
     const nomeCat = idCat => d.categorias.find(c => c.id === idCat)?.nombre === 'femenina' ? 'Fem' : 'Masc';
     const catDaLiga = idLiga => d.ligas.find(l => l.id === idLiga)?.id_categoria;
 
-    // Todos os partidos da tempada en curso que teñan partidas creadas e non estean
-    // finalizados nin suspendidos (xa non se limita aos de hoxe). Os sen data van ao final.
+    // Só os partidos da tempada en curso con DATA de xogo, con partidas creadas e que non estean
+    // finalizados nin suspendidos (os que non teñen data non aparecen).
     const idsConPartidas = new Set(d.enfrentamientos.map(e => e.id_partido));
     const partidos = d.partidos
-      .filter(p => idsXorn.has(p.id_jornada) && p.estado !== 'finalizado' && p.estado !== 'suspendido' && idsConPartidas.has(p.id))
-      .sort((a, b) => {
-        if (!a.fecha_hora && !b.fecha_hora) return 0;
-        if (!a.fecha_hora) return 1;
-        if (!b.fecha_hora) return -1;
-        return a.fecha_hora.localeCompare(b.fecha_hora);
-      });
+      .filter(p => p.fecha_hora && idsXorn.has(p.id_jornada) && p.estado !== 'finalizado' && p.estado !== 'suspendido' && idsConPartidas.has(p.id))
+      .sort((a, b) => a.fecha_hora.localeCompare(b.fecha_hora));
 
     if (!partidos.length) {
-      selPartido.innerHTML = '<option value="">Non hai partidos con partidas pendentes de xogar</option>';
+      selPartido.innerHTML = '<option value="">Non hai partidos con data e partidas pendentes de xogar</option>';
       return;
     }
     selPartido.innerHTML = '<option value="">— elixe un partido —</option>' + partidos.map(p => {
@@ -134,9 +142,7 @@ $mk('#mk-sel-partida').addEventListener('change', e => {
   $mk('#mk-carga-confirmar').disabled = !e.target.value;
 });
 
-$mk('#mk-carga-cancelar').addEventListener('click', () => {
-  $mk('#mk-carga-panel').hidden = true;
-});
+$mk('#mk-carga-cancelar').addEventListener('click', () => mkVista('libre'));
 
 // ---------- Confirmar carga: rechea os equipos A/B coa partida real (sen poder editar nomes) ----------
 $mk('#mk-carga-confirmar').addEventListener('click', () => {
@@ -171,23 +177,9 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
     xog: { a1: parL.id_jugador_a, a2: parL.id_jugador_b, b1: parV.id_jugador_a, b2: parV.id_jugador_b },
   };
 
-  // Rexistro de tiradas para a acta: se a partida xa tiña tiradas gardadas, retómanse
-  actaReiniciar();
-  ACTA.activa = true;
-  try {
-    const ch = {};
-    Object.entries(partidaCargada.xog).forEach(([k, id]) => {
-      const c = d.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
-      ch[k] = actaParseChaves(c?.tiradas);
-    });
-    actaFixar(actaParseSecuencia(e.puntos_tiradas_local), actaParseSecuencia(e.puntos_tiradas_visitante), ch);
-  } catch (err) { actaReiniciar(); }
-  actaPintarTirada();                    // barra «Tirada N · pecha en X s»
-
-  $mk('#mk-carga-panel').hidden = true;
-  $mk('#mk-enviar-panel').hidden = false;
+  mkVista('modo');
   $mk('#mk-enviar-info').textContent =
-    `Anotando a Partida ${e.numero} de ${nomeLocalCargado} - ${nomeVisitanteCargado}.`;
+    `Partida ${e.numero} de ${nomeLocalCargado} - ${nomeVisitanteCargado}. Como a queres anotar?`;
 });
 
 function configurarEquipoCargado(idEquipo, nomeClub, idsXogadores, d, chaveDe, marcadorXaGardado){
@@ -261,15 +253,50 @@ async function enviarResultadoMarcador(conActa){
   }
 }
 
-// «Enviar resultado sen acta»: envía só o resultado e as chaves de cada xogador e remata o proceso
+// Se a partida xa tiña tiradas gardadas (p. ex. de antes), retómanse para a acta
+function precargarActa(){
+  const d = datosCargaMarcador;
+  const e = d.enfrentamientos.find(x => x.id === partidaCargada.idEnfrentamiento);
+  actaReiniciar();
+  try {
+    const ch = {};
+    Object.entries(partidaCargada.xog).forEach(([k, id]) => {
+      const c = d.chaves_enfrentamiento.find(z => z.id_enfrentamiento === e.id && z.id_jugador === id);
+      ch[k] = actaParseChaves(c?.tiradas);
+    });
+    actaFixar(actaParseSecuencia(e.puntos_tiradas_local), actaParseSecuencia(e.puntos_tiradas_visitante), ch);
+  } catch (err) { actaReiniciar(); }
+}
+
+// Anotar partida (manual: puntos e chaves finais editables directamente ou cos botóns) ou en directo (marcador intelixente)
+function iniciarModo(modo){
+  modoAnotacion = modo;
+  precargarActa();
+  ACTA.activa = modo === 'directo';
+  const editable = modo === 'manual';
+  ['mk-a', 'mk-b'].forEach(id => document.getElementById(id).querySelectorAll('.marcador-puntos, .marcador-chaves').forEach(el => {
+    if (editable) { el.setAttribute('contenteditable', 'true'); el.setAttribute('inputmode', 'numeric'); el.setAttribute('enterkeyhint', 'done'); }
+    else { el.removeAttribute('contenteditable'); el.removeAttribute('inputmode'); el.removeAttribute('enterkeyhint'); }
+  }));
+  $mk('#vista-marcador').classList.toggle('mk-editable', editable);
+  mkVista('anotar');
+  actaPintarTirada();                    // barra «Tirada N · pecha en X s» (só en directo) e bloqueo de botóns
+  if (typeof actualizarLideres === 'function') actualizarLideres();
+}
+$mk('#mk-modo-manual').addEventListener('click', () => iniciarModo('manual'));
+$mk('#mk-modo-directo').addEventListener('click', () => iniciarModo('directo'));
+
+// «Enviar resultado»: envía o resultado con todos os datos da partida (puntos, chaves e tiradas da acta) e sae ao marcador
 $mk('#mk-enviar-confirmar').addEventListener('click', async () => {
   if (!partidaCargada) return;
+  if (ACTA.activa && !(await actaCerrarTirada())) { alert('Corrixe a tirada aberta e volve premer «Enviar resultado».'); return; }
+  if (puntosDe('a') + puntosDe('b') === 0 && !confirm('O marcador está a 0-0. Enviar o resultado igualmente?')) return;
   const btn = $mk('#mk-enviar-confirmar');
   btn.disabled = true; btn.textContent = 'Enviando…';
-  const r = await enviarResultadoMarcador(false);
-  btn.disabled = false; btn.textContent = 'Enviar resultado sen acta';
+  const r = await enviarResultadoMarcador(true);
+  btn.disabled = false; btn.textContent = 'Enviar resultado';
   if (!r.ok) return;
-  alert('Resultado enviado sen acta. Quedará pendente de validación no panel de administración.');
+  alert('Resultado enviado. Quedará pendente de validación no panel de administración.' + r.avisoActa);
   rematarCargaPartida();
 });
 
@@ -297,12 +324,13 @@ function rematarCargaPartida(){
   ['mk-add-c', 'mk-add-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
 
   partidaCargada = null;
+  modoAnotacion = null;
   ACTA.activa = false;
   actaReiniciar();
-  $mk('#mk-acta-panel').hidden = true;
-  $mk('#mk-clave-panel').hidden = true;
-  $mk('#mk-carga-panel').hidden = true;
-  $mk('#mk-enviar-panel').hidden = true;
+  document.querySelectorAll('#vista-marcador [contenteditable]').forEach(el => { el.removeAttribute('contenteditable'); el.removeAttribute('inputmode'); el.removeAttribute('enterkeyhint'); });
+  $mk('#vista-marcador').classList.remove('mk-editable');
+  $mk('#ak-inc-area').value = ''; $mk('#ak-inc-texto').hidden = true;
+  mkVista('libre');
   if (typeof actualizarLideres === 'function') actualizarLideres();
 }
 
@@ -325,8 +353,16 @@ function actaPanelReiniciado(){
   if (partidaCargada && !$mk('#mk-acta-panel').hidden) actaAbrirPanel();
 }
 
+let actaPanelSucio = false;     // true se se escribiu algo nos campos do panel (non se pisan ao refrescar)
+// O marcador cambiou: se o panel da acta está aberto, reflíctese (e revísase) ao momento
+function actaPanelActualizar(){
+  if (!partidaCargada || $mk('#mk-acta-panel').hidden) return;
+  if (!actaPanelSucio) actaAbrirPanel(); else actaRevisarPanel();
+}
+
 function actaAbrirPanel(){
   if (!partidaCargada) return;
+  actaPanelSucio = false;
   $mk('#ak-nl').textContent = '· ' + partidaCargada.nomeLocal;
   $mk('#ak-nv').textContent = '· ' + partidaCargada.nomeVisitante;
   const der = actaDerivar(), pd = der.puntos;
@@ -356,10 +392,17 @@ function actaRevisarPanel(){
     CLAVES_XOG.forEach(k => { ch[k] = actaParseChaves($mk('#ak-ch-' + k).value); });
   } catch (err) { av.textContent = err.message; av.classList.remove('ok'); av.hidden = false; return false; }
   const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  const dif = actaRevisarTiradas(pl, pv).map(cap).concat(actaRevisarCoherencia(pl, pv, ch).map(cap));
-  if (actaSuma(pl) !== puntosDe('a')) dif.push(`Puntos local: as tiradas suman ${actaSuma(pl)} e o marcador é ${puntosDe('a')}`);
-  if (actaSuma(pv) !== puntosDe('b')) dif.push(`Puntos visitante: as tiradas suman ${actaSuma(pv)} e o marcador é ${puntosDe('b')}`);
-  CLAVES_XOG.forEach(k => { if (actaSumaChaves(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSumaChaves(ch[k])} e o marcador é ${chavesDe(k)}`); });
+  const hayChaves = CLAVES_XOG.some(k => ch[k].length);
+  if (!pl.length && !pv.length && !hayChaves) {      // sen detalle de tiradas: na acta irán só os totais
+    av.classList.add('ok');
+    av.textContent = 'Sen detalle de tiradas: na acta irán só os totais de puntos e de chaves do marcador.';
+    av.hidden = false;
+    return true;
+  }
+  const dif = (pl.length && pv.length ? actaRevisarTiradas(pl, pv).map(cap) : []).concat(actaRevisarCoherencia(pl, pv, ch).map(cap));
+  if (pl.length && actaSuma(pl) !== puntosDe('a')) dif.push(`Puntos local: as tiradas suman ${actaSuma(pl)} e o marcador é ${puntosDe('a')}`);
+  if (pv.length && actaSuma(pv) !== puntosDe('b')) dif.push(`Puntos visitante: as tiradas suman ${actaSuma(pv)} e o marcador é ${puntosDe('b')}`);
+  CLAVES_XOG.forEach(k => { if (ch[k].length && actaSumaChaves(ch[k]) !== chavesDe(k)) dif.push(`Chaves de ${nomeXogActa(k)}: as tiradas suman ${actaSumaChaves(ch[k])} e o marcador é ${chavesDe(k)}`); });
   av.classList.toggle('ok', !dif.length);
   av.textContent = dif.length ? 'Non cadra: ' + dif.join(' · ') : 'As tiradas cadran cos puntos e coas chaves ✓';
   av.hidden = false;
@@ -379,8 +422,8 @@ function actaPecharPanel(){
   $mk('#mk-acta-panel').hidden = true;
 }
 $mk('#ak-pechar').addEventListener('click', actaPecharPanel);
-['#ak-pl', '#ak-pv'].forEach(s => $mk(s).addEventListener('input', actaRevisarPanel));
-$mk('#ak-chaves').addEventListener('input', actaRevisarPanel);
+['#ak-pl', '#ak-pv'].forEach(s => $mk(s).addEventListener('input', () => { actaPanelSucio = true; actaRevisarPanel(); }));
+$mk('#ak-chaves').addEventListener('input', () => { actaPanelSucio = true; actaRevisarPanel(); });
 
 function fechaActaMk(p){
   if (!p.fecha_hora) return '';
@@ -443,8 +486,7 @@ async function datosActaMasculina(partido, incidencias){
     const ids = xogadoresDaPartida(e, d);
     const p = { numero: e.numero, jugadoresLocal: [nome(ids[0]), nome(ids[1])], jugadoresVisit: [nome(ids[2]), nome(ids[3])] };
     if (e.id === partidaCargada.idEnfrentamiento) {                       // en directo
-      const hai = puntosDe('a') + puntosDe('b') > 0 || der.puntos.a.some(v => v > 0) || der.puntos.b.some(v => v > 0);
-      if (!hai) return;
+      if (!partidaActualXogada()) return;
       Object.assign(p, {
         puntosLocal: puntosDe('a'), puntosVisit: puntosDe('b'),
         tiradasLocal: der.puntos.a.join('+'), tiradasVisit: der.puntos.b.join('+'),
@@ -477,6 +519,12 @@ async function datosActaMasculina(partido, incidencias){
     nombreArchivo: actaNombreArchivo(partidaCargada.nomeLocal, partidaCargada.nomeVisitante, partido.fecha_hora ? String(partido.fecha_hora).slice(0, 10) : ''),
     partidas,
   };
+}
+
+// A partida cargada conta como xogada se ten puntos ou tiradas
+function partidaActualXogada(){
+  const der = actaDerivar();
+  return puntosDe('a') + puntosDe('b') > 0 || der.puntos.a.some(v => v > 0) || der.puntos.b.some(v => v > 0);
 }
 
 function datosActaFeminina(partido, incidencias){
@@ -514,35 +562,45 @@ async function xerarActaMarcador(incidencias){
   try { datos = masc ? await datosActaMasculina(partido, incidencias) : datosActaFeminina(partido, incidencias); }
   finally { btnPdf.disabled = false; }
 
-  // Firmas (dous recuadros) e as tres accións
+  // Aviso se non se xogaron todas as partidas do encontro (a acta xérase coas xogadas)
+  const total = masc ? PARTIDAS_MASC : Math.max(1, datosCargaMarcador.enfrentamientos.filter(x => x.id_partido === partido.id).length);
+  const xogadas = masc ? datos.partidas.length : (partidaActualXogada() ? 1 : 0);
+  if (xogadas < total) {
+    const op = await actaOpciones('Acta con partidas sen xogar',
+      `Vaise xerar a acta con ${xogadas} ${xogadas === 1 ? 'partida' : 'partidas'} de ${total} xogadas.`, ['Continuar', 'Cancelar']);
+    if (op !== 0) return;
+  }
+
+  // Panel de firmas (dous recuadros) co botón «Pechar acta»: xera a acta e móstraa para gardala
   const f = await actaPedirFirmas('gl', true);
   if (!f || f.accion === 'cancelar') return;         // volve ao marcador para revisar ou corrixir
   datos.firmas = { local: f.local, visitante: f.visitante };
-
-  // «Pechar acta» na liga masculina: avisa das partidas que quedan por xogar (e xera a acta coas xogadas, ou sen ningunha)
-  if (masc && f.accion === 'xerar') {
-    const quedan = PARTIDAS_MASC - datos.partidas.length;
-    if (quedan > 0) {
-      const op = await actaOpciones('Quedan partidas por xogar',
-        `${quedan === 1 ? 'Queda 1 partida' : 'Quedan ' + quedan + ' partidas'} por xogar. A acta xerarase ${datos.partidas.length ? 'coas partidas xogadas' : 'sen ningunha partida'}.`,
-        ['Pechar acta igualmente', 'Cancelar']);
-      if (op !== 0) return;
-    }
-  }
-
   btnPdf.disabled = true;
-  try {
-    let aviso = '';
-    if (f.accion === 'enviar') {                      // envía o resultado, xera a acta e remata
-      const r = await enviarResultadoMarcador(true);
-      if (!r.ok) return;
-      aviso = r.avisoActa;
-    }
-    try { await generarActaPdf(datos); }
-    catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
-    if (f.accion === 'enviar') {
-      alert('Resultado enviado con acta. Quedará pendente de validación no panel de administración.' + aviso);
-      rematarCargaPartida();
-    }                                                 // «Pechar acta»: queda na pantalla do marcador para repetir
-  } finally { btnPdf.disabled = false; }
+  try { await generarActaPdf(datos); }
+  catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
+  finally { btnPdf.disabled = false; }
 }
+
+// ---- Anotar partida (manual): puntos e chaves finais editables directamente (tamén valen os botóns) ----
+$mk('#vista-marcador').addEventListener('input', e => {
+  const el = e.target.closest && e.target.closest('.marcador-puntos[contenteditable], .marcador-chaves[contenteditable]');
+  if (!el) return;
+  const limpio = el.textContent.replace(/\D/g, '').slice(0, 3);
+  if (limpio !== el.textContent) {
+    el.textContent = limpio;
+    const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+    const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+  if (typeof actualizarLideres === 'function') actualizarLideres();
+  actaPanelActualizar();
+});
+$mk('#vista-marcador').addEventListener('focusout', e => {
+  const el = e.target.closest && e.target.closest('.marcador-puntos[contenteditable], .marcador-chaves[contenteditable]');
+  if (!el) return;
+  if (el.textContent.trim() === '') el.textContent = '0';
+  if (typeof actualizarLideres === 'function') actualizarLideres();
+  actaPanelActualizar();
+});
+$mk('#vista-marcador').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('[contenteditable]')) { e.preventDefault(); e.target.blur(); }
+});

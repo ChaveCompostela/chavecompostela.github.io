@@ -338,6 +338,7 @@ document.addEventListener('click', e => {
     const k = ACTA.activa ? claveEquipo(equipo) : null;
     if (k) { if (delta > 0) actaPuntoPulsado(k, delta); else actaPuntos(k, delta); }
     actualizarLideres();
+    if (typeof actaPanelActualizar === 'function') actaPanelActualizar();
     return;
   }
 
@@ -351,6 +352,7 @@ document.addEventListener('click', e => {
     const k = ACTA.activa ? claveXogador(fila) : null;
     if (k) { if (delta > 0) actaChavePulsada(k, delta); else actaChaves(k, delta); }
     actualizarLideres();
+    if (typeof actaPanelActualizar === 'function') actaPanelActualizar();
     return;
   }
 
