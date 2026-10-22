@@ -16,7 +16,7 @@
 <link rel="manifest" href="manifestfe.webmanifest">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://tlpkxrwwdosrzqcqwybq.supabase.co" crossorigin>
-<link rel="stylesheet" href="css/estilosfe.css?v=42">
+<link rel="stylesheet" href="css/estilosfe.css?v=43">
 </head>
 <body>
 <div id="app">
@@ -219,33 +219,12 @@
     <p id="mk-carga-msg" class="erro" hidden></p>
   </div>
 
-  <!-- Aparece só cando hai unha partida real cargada -->
+  <!-- Partida real cargada: elixir como anotala -->
   <div id="mk-enviar-panel" class="marcador-carga" hidden>
     <p class="baleiro" id="mk-enviar-info"></p>
-    <div class="marcador-carga-bot">
-      <button id="mk-enviar-confirmar" class="marcador-pri">Enviar resultado sen acta</button>
-      <button id="mk-acta-abrir" type="button">📄 Acta</button>
-      <button id="mk-enviar-cancelar">✕ Deixar de anotar esta partida</button>
-    </div>
-  </div>
-
-  <!-- Acta: tiradas en puntos e chaves (editables) e descarga do PDF -->
-  <div id="mk-acta-panel" class="marcador-carga" hidden>
-    <p class="baleiro" style="text-align:left;font-size:12px">Cada número é unha tirada. Nunha tirada só puntúa un equipo e o outro anota 0. Exemplo: local 1+0+8 e visitante 0+2+0 quere dicir que na 1.ª tirada puntuou o local (1), na 2.ª o visitante (2) e na 3.ª o local (8). Chaves: chaves@tirada, por exemplo 1@3+2@7 (unha chave na tirada 3 e dúas na 7); unha «r» detrás marca as chaves matadas, que saen en vermello (1@3r). Unha tirada péchase soa cando pasan 10 segundos sen anotar nada (ou co botón «Seguinte tirada»).</p>
-    <label>Puntos <span id="ak-nl">local</span><input id="ak-pl" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+2+8+0"></label>
-    <label>Puntos <span id="ak-nv">visitante</span><input id="ak-pv" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="0+1+9"></label>
-    <div id="ak-chaves"></div>
-    <p id="ak-aviso" class="erro" hidden></p>
-    <div class="marcador-carga-bot">
-      <button id="ak-inc-btn" type="button">Incidencias</button>
-    </div>
-    <div id="ak-inc-texto" hidden>
-      <label>Incidencias / observacións (irán na acta)<textarea id="ak-inc-area" rows="4" maxlength="400" placeholder="Escribe aquí as incidencias"></textarea></label>
-    </div>
-    <div class="marcador-carga-bot">
-      <button id="ak-pdf" class="marcador-pri" type="button">Xerar acta (PDF)</button>
-      <button id="ak-pechar" type="button">Pechar</button>
-    </div>
+    <button id="mk-modo-manual" class="marcador-pri" type="button">Anotar partida</button>
+    <button id="mk-modo-directo" class="marcador-pri" type="button">Anotar partida en directo</button>
+    <button id="mk-enviar-cancelar" type="button">✕ Deixar de anotar esta partida</button>
   </div>
 
   <div class="marcador-campo">
@@ -414,6 +393,32 @@
 
     <button class="marcador-add" id="mk-add-d" type="button">+ Engadir equipo D</button>
 
+    <!-- Botóns de abaixo do marcador cando hai unha partida cargada -->
+    <div id="mk-acciones" class="marcador-carga-bot marcador-acciones" hidden>
+      <button id="mk-enviar-confirmar" class="marcador-pri" type="button">Enviar resultado</button>
+      <button id="mk-acta-abrir" type="button">Editar acta</button>
+    </div>
+
+    <!-- Acta: tiradas en puntos e chaves (editables) e descarga do PDF -->
+    <div id="mk-acta-panel" class="marcador-carga" hidden>
+      <p class="baleiro" style="text-align:left;font-size:12px">Cada número é unha tirada. Nunha tirada só puntúa un equipo e o outro anota 0. Exemplo: local 1+0+8 e visitante 0+2+0 quere dicir que na 1.ª tirada puntuou o local (1), na 2.ª o visitante (2) e na 3.ª o local (8). Chaves: chaves@tirada, por exemplo 1@3+2@7 (unha chave na tirada 3 e dúas na 7); unha «r» detrás marca as chaves matadas, que saen en vermello (1@3r). Unha tirada péchase soa cando pasan 10 segundos sen anotar nada (ou co botón «Seguinte tirada»).</p>
+      <label>Puntos <span id="ak-nl">local</span><input id="ak-pl" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="1+2+8+0"></label>
+      <label>Puntos <span id="ak-nv">visitante</span><input id="ak-pv" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="0+1+9"></label>
+      <div id="ak-chaves"></div>
+      <p id="ak-aviso" class="erro" hidden></p>
+      <div class="marcador-carga-bot">
+        <button id="ak-inc-btn" type="button">Incidencias</button>
+      </div>
+      <div id="ak-inc-texto" hidden>
+        <label>Incidencias / observacións (irán na acta)<textarea id="ak-inc-area" rows="4" maxlength="400" placeholder="Escribe aquí as incidencias"></textarea></label>
+      </div>
+      <div class="marcador-carga-bot">
+        <button id="ak-pdf" class="marcador-pri" type="button">Xerar acta</button>
+        <button id="ak-pechar" type="button">Pechar</button>
+      </div>
+    </div>
+
+
   </div>
 </section>
 
@@ -471,18 +476,18 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/configfe.js?v=42"></script>
-<script src="js/novasfe.js?v=42"></script>
-<script src="js/calendariofe.js?v=42"></script>
-<script src="js/clasificacionfe.js?v=42"></script>
-<script src="js/equiposfe.js?v=42"></script>
-<script src="js/eirasfe.js?v=42"></script>
-<script src="js/partidosfe.js?v=42"></script>
-<script src="js/marcadorfe.js?v=42"></script>
-<script src="js/actapdf.js?v=42"></script>
-<script src="js/marcadorcargafe.js?v=42"></script>
-<script src="js/pushfe.js?v=42"></script>
-<script src="js/appfe.js?v=42"></script>
+<script src="js/configfe.js?v=43"></script>
+<script src="js/novasfe.js?v=43"></script>
+<script src="js/calendariofe.js?v=43"></script>
+<script src="js/clasificacionfe.js?v=43"></script>
+<script src="js/equiposfe.js?v=43"></script>
+<script src="js/eirasfe.js?v=43"></script>
+<script src="js/partidosfe.js?v=43"></script>
+<script src="js/marcadorfe.js?v=43"></script>
+<script src="js/actapdf.js?v=43"></script>
+<script src="js/marcadorcargafe.js?v=43"></script>
+<script src="js/pushfe.js?v=43"></script>
+<script src="js/appfe.js?v=43"></script>
 
 </body>
 </html>
