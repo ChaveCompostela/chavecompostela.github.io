@@ -502,3 +502,16 @@ a.partido-lugar{color:var(--granate)}
 .mk-bot button:disabled,.mk-chb:disabled{opacity:.28;pointer-events:none}
 .marcador-xog-bot .mk-chb{width:23px}
 .mk-full .marcador-xog-bot .mk-chb{width:44px}
+
+/* Marcador: flujo de carga (só se ve o que toca) e anotación manual editable */
+#vista-marcador.mk-ocultar-campo .marcador-campo,#vista-marcador.mk-ocultar-campo #mk-tirada{display:none}
+.marcador-campo > #mk-acciones,.marcador-campo > #mk-acta-panel{grid-column:1 / -1}
+.marcador-acciones[hidden]{display:none}
+.marcador-acciones{gap:8px}
+.marcador-acciones button{flex:1;padding:10px 0;border-radius:8px;border:1px solid var(--raia);background:var(--fondo);font-size:14px;font-weight:700;color:var(--texto)}
+#mk-enviar-panel button{padding:10px;border-radius:8px;border:1px solid var(--raia);background:var(--fondo);font-size:14px;font-weight:700;color:var(--texto)}
+#mk-enviar-panel button.marcador-pri{background:var(--granate);color:#fff;border-color:var(--granate)}
+@media (prefers-color-scheme:dark){#mk-enviar-panel button.marcador-pri{background:var(--ouro-claro);color:#241e19;border-color:var(--ouro-claro)}}
+.mk-editable .marcador-puntos[contenteditable]{border-bottom:2px dashed var(--granate);min-width:1.2em;outline:none}
+.mk-editable .marcador-chaves[contenteditable]{border-bottom:1px dashed var(--granate);min-width:16px;outline:none}
+@media (prefers-color-scheme:dark){.mk-editable .marcador-puntos[contenteditable],.mk-editable .marcador-chaves[contenteditable]{border-bottom-color:var(--ouro-claro)}}
