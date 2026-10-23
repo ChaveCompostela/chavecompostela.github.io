@@ -96,19 +96,32 @@ function actaParticipantes(td){
 }
 
 const ACTA_VALORES = [1, 2, 8, 9, 16];
+
+// Última tirada ya pechada (a única que se pode corrixir co «−» cando a tirada aberta está baleira)
+function actaTiradaAnterior(){
+  if (ACTA.tiradas.length) return ACTA.tiradas[ACTA.tiradas.length - 1];
+  const n = Math.max(ACTA.base.a.length, ACTA.base.b.length);      // tiradas xa escritas (retomadas ou editadas)
+  if (!n) return null;
+  const ch = {};
+  Object.keys(ACTA.base.ch).forEach(k => { ch[k] = ACTA.base.ch[k].filter(e => e.t === n).reduce((s, e) => s + e.n, 0); });
+  return { pa: ACTA.base.a[n - 1] || 0, pb: ACTA.base.b[n - 1] || 0, ch };
+}
+
 function actaBotonsPermitidos(td){
   const vacia = actaVacia(td);
+  const prev = vacia ? actaTiradaAnterior() : null;
   const posible = mod => { const t2 = { pa: td.pa, pb: td.pb, ch: { ...td.ch } }; mod(t2); return actaEvaluarTirada(t2).cls !== 'invalida'; };
   const out = { puntos: { a: {}, b: {} }, chaves: {} };
   ['a', 'b'].forEach(eq => {
     const campo = eq === 'a' ? 'pa' : 'pb', outro = eq === 'a' ? 'pb' : 'pa';
     ACTA_VALORES.forEach(v => {
       out.puntos[eq][v] = td[campo] === 0 && td[outro] === 0 && posible(t2 => { t2[campo] += v; });
-      out.puntos[eq][-v] = vacia ? true : (td[campo] > 0 && (v === td[campo] || !ACTA_VALORES.includes(td[campo])));
+      out.puntos[eq][-v] = vacia ? (!!prev && prev[campo] === v)                                        // só se corrixe a tirada anterior
+        : (td[campo] > 0 && (v === td[campo] || !ACTA_VALORES.includes(td[campo])));
     });
   });
   Object.keys(td.ch).forEach(k => {
-    out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': vacia || td.ch[k] > 0 };
+    out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': vacia ? (!!prev && prev.ch[k] > 0) : td.ch[k] > 0 };      // «−1» só se esa chave é da tirada aberta ou da anterior
   });
   // Participantes na tirada (ver actaParticipantes): as chaves dos que non participan quedan bloqueadas
   const S = actaParticipantes(td);

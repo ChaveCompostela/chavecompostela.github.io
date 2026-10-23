@@ -547,11 +547,11 @@ function actaNombreArchivo(local, visitante, fecha){
 // ---- Panel de firmas: dos recuadros para firmar con el dedo o un lápiz táctil ----
 // Sin conEnvio (panel de administración): botones «Generar acta firmada» / «Generar sin firmas» / «Cancelar»;
 //   devuelve {local, visitante} (cada uno {data, w, h} o null si se dejó en blanco) o null si se cancela.
-// Con conEnvio (Marcador): directamente «Enviar resultado con acta» / «Xerar acta» / «Cancelar»;
+// Con conEnvio (Marcador): «Enviar resultado e xerar acta» / «Xerar acta» / «Cancelar»;
 //   devuelve {accion: 'enviar'|'xerar'|'cancelar', local, visitante}.
 function actaPedirFirmas(idioma, conEnvio){
   const T = idioma === 'gl'
-    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Pechar acta' }
+    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado e xerar acta', xerar: 'Xerar acta' }
     : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
   return new Promise(resolve => {
     const ov = document.createElement('div');

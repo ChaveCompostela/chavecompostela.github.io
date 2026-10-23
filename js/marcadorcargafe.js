@@ -22,6 +22,9 @@ function mkVista(estado){
   $mk('#mk-acciones').hidden = estado !== 'anotar';
   if (estado !== 'anotar') $mk('#mk-acta-panel').hidden = true;
   $mk('#mk-cargar').hidden = estado !== 'libre';
+  const marcadorVisible = estado === 'libre' || estado === 'anotar';
+  $mk('#mk-full').hidden = !marcadorVisible;      // pantalla completa e reiniciar só con marcador visible
+  $mk('#mk-reset').hidden = !marcadorVisible;
 }
 ACTA_IDIOMA = 'gl';   // os mensaxes da acta (actapdf.js) saen en galego
 
@@ -571,14 +574,28 @@ async function xerarActaMarcador(incidencias){
     if (op !== 0) return;
   }
 
-  // Panel de firmas (dous recuadros) co botón «Pechar acta»: xera a acta e móstraa para gardala
+  // Panel de firmas (dous recuadros):
+  //  · «Enviar resultado e xerar acta»: envía o resultado con todos os datos, xera a acta, móstraa para gardala e remata;
+  //  · «Xerar acta»: xera a acta e móstraa para gardala, pero queda no marcador;
+  //  · «Cancelar»: volve ao marcador para revisar ou corrixir.
   const f = await actaPedirFirmas('gl', true);
-  if (!f || f.accion === 'cancelar') return;         // volve ao marcador para revisar ou corrixir
+  if (!f || f.accion === 'cancelar') return;
   datos.firmas = { local: f.local, visitante: f.visitante };
   btnPdf.disabled = true;
-  try { await generarActaPdf(datos); }
-  catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
-  finally { btnPdf.disabled = false; }
+  try {
+    let aviso = '';
+    if (f.accion === 'enviar') {
+      const r = await enviarResultadoMarcador(true);
+      if (!r.ok) return;                              // se falla o envío, non se xera nin se remata
+      aviso = r.avisoActa;
+    }
+    try { await generarActaPdf(datos); }
+    catch (err) { alert('Non se puido xerar a acta: ' + err.message); }
+    if (f.accion === 'enviar') {
+      alert('Resultado enviado. Quedará pendente de validación no panel de administración.' + aviso);
+      rematarCargaPartida();
+    }
+  } finally { btnPdf.disabled = false; }
 }
 
 // ---- Anotar partida (manual): puntos e chaves finais editables directamente (tamén valen os botóns) ----
