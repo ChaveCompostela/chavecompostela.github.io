@@ -515,3 +515,4 @@ a.partido-lugar{color:var(--granate)}
 .mk-editable .marcador-puntos[contenteditable]{border-bottom:2px dashed var(--granate);min-width:1.2em;outline:none}
 .mk-editable .marcador-chaves[contenteditable]{border-bottom:1px dashed var(--granate);min-width:16px;outline:none}
 @media (prefers-color-scheme:dark){.mk-editable .marcador-puntos[contenteditable],.mk-editable .marcador-chaves[contenteditable]{border-bottom-color:var(--ouro-claro)}}
+.marcador-icon[hidden]{display:none}
