@@ -17,7 +17,7 @@ const clamp0 = n => (n < 0 ? 0 : n);
 // As chaves matadas contan para o total de cada xogador e saen en VERMELLO na acta (a parte anulada).
 // «-n» quita puntos / «-1» quita unha chave da tirada aberta; se esta está baleira, reabre a anterior.
 const ACTA_SEGUNDOS = 10;
-const ACTA = { activa: false, base: null, tiradas: [], actual: null, timer: null, reloxo: null, cerrando: false, desaxuste: false, fin: 0 };
+const ACTA = { activa: false, base: null, tiradas: [], actual: null, timer: null, reloxo: null, cerrando: false, desaxuste: false, fin: 0, volvioAtras: false };
 
 const actaTiradaNova = () => ({ pa: 0, pb: 0, ch: { a1: 0, a2: 0, b1: 0, b2: 0 } });
 const actaVacia = td => !td || (td.pa === 0 && td.pb === 0 && td.ch.a1 + td.ch.a2 + td.ch.b1 + td.ch.b2 === 0);
@@ -35,6 +35,7 @@ function actaReiniciar(){
   ACTA.actual = actaTiradaNova();
   ACTA.cerrando = false;
   ACTA.desaxuste = false;
+  ACTA.volvioAtras = false;
   actaPintarTirada();
 }
 actaReiniciar();
@@ -109,19 +110,17 @@ function actaTiradaAnterior(){
 
 function actaBotonsPermitidos(td){
   const vacia = actaVacia(td);
-  const prev = vacia ? actaTiradaAnterior() : null;
   const posible = mod => { const t2 = { pa: td.pa, pb: td.pb, ch: { ...td.ch } }; mod(t2); return actaEvaluarTirada(t2).cls !== 'invalida'; };
   const out = { puntos: { a: {}, b: {} }, chaves: {} };
   ['a', 'b'].forEach(eq => {
     const campo = eq === 'a' ? 'pa' : 'pb', outro = eq === 'a' ? 'pb' : 'pa';
     ACTA_VALORES.forEach(v => {
       out.puntos[eq][v] = td[campo] === 0 && td[outro] === 0 && posible(t2 => { t2[campo] += v; });
-      out.puntos[eq][-v] = vacia ? (!!prev && prev[campo] === v)                                        // só se corrixe a tirada anterior
-        : (td[campo] > 0 && (v === td[campo] || !ACTA_VALORES.includes(td[campo])));
+      out.puntos[eq][-v] = !vacia && td[campo] > 0 && (v === td[campo] || !ACTA_VALORES.includes(td[campo]));   // só a tirada aberta
     });
   });
   Object.keys(td.ch).forEach(k => {
-    out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': vacia ? (!!prev && prev.ch[k] > 0) : td.ch[k] > 0 };      // «−1» só se esa chave é da tirada aberta ou da anterior
+    out.chaves[k] = { 1: posible(t2 => { t2.ch[k] += 1; }), 2: posible(t2 => { t2.ch[k] += 2; }), '-1': td.ch[k] > 0 };      // «−1» só se ese xogador deu chave nesta tirada
   });
   // Participantes na tirada (ver actaParticipantes): as chaves dos que non participan quedan bloqueadas
   const S = actaParticipantes(td);
@@ -152,6 +151,8 @@ function actaPintarTirada(){
   if (!barra || !txt) return;
   barra.hidden = !ACTA.activa;
   if (!ACTA.activa) return;
+  const ant = document.getElementById('mk-tirada-anterior');
+  if (ant) ant.disabled = ACTA.volvioAtras || !actaTiradaAnterior();   // só se pode volver unha tirada atrás
   const n = actaNumeroTirada();
   if (actaVacia(ACTA.actual)) { txt.textContent = `Tirada ${n} · sen anotacións`; return; }
   const seg = Math.max(0, Math.ceil((ACTA.fin - Date.now()) / 1000));
@@ -177,41 +178,40 @@ function actaChavePulsada(clave, n){     // +1 ou +2 chaves dun xogador (a1, a2,
   actaMarcar();
 }
 
-// Se a tirada aberta está baleira, reabre a anterior (para corrixila) e devólvea como tirada aberta
-function actaReabrirAnterior(){
-  if (!actaVacia(ACTA.actual) || !ACTA.tiradas.length) return false;
-  ACTA.actual = ACTA.tiradas.pop();
-  return true;
-}
-
-function actaPuntos(eq, n){              // n < 0: resta (desfai)
+function actaPuntos(eq, n){              // n < 0: resta da tirada ABERTA (a anterior corríxese con «Tirada anterior»)
   const v = -n, campo = eq === 'a' ? 'pa' : 'pb';
-  if (ACTA.actual[campo] < v) actaReabrirAnterior();
   if (ACTA.actual[campo] >= v) { ACTA.actual[campo] -= v; actaMarcar(); return; }
-  const arr = ACTA.base[eq];             // tiradas xa escritas (retomadas ou editadas)
-  const i = arr.lastIndexOf(v);
-  if (i >= 0) { arr.splice(i, 1); ACTA.base[eq === 'a' ? 'b' : 'a'].splice(i, 1); actaPintarTirada(); return; }
-  ACTA.desaxuste = true;                 // non hai nada que desfacer: as tiradas non cadrarán cos puntos
+  ACTA.desaxuste = true;                 // non hai nada que quitar nesta tirada
 }
 
-function actaChaves(clave, delta){       // delta -1: quita unha chave do xogador
-  if (ACTA.actual.ch[clave] < 1) actaReabrirAnterior();
+function actaChaves(clave, delta){       // delta -1: quita unha chave da tirada ABERTA
   if (ACTA.actual.ch[clave] >= 1) { ACTA.actual.ch[clave]--; actaMarcar(); return; }
-  const arr = ACTA.base.ch[clave];
-  if (!arr.length) { ACTA.desaxuste = true; return; }
-  arr[arr.length - 1].n -= 1;
-  if (arr[arr.length - 1].n <= 0) arr.pop();
+  ACTA.desaxuste = true;
 }
 
-// Describe en breve que falla nunha tirada (só o erro)
-function actaMotivo(ev){
-  if (ev.problemas.length) return ev.problemas.join(', ');
-  const cS = ev.S === 'a' ? ev.cA : ev.cB;
-  if (ev.n === 0) return `hai chaves (${ev.cA}-${ev.cB}) pero ningún punto`;
-  if (ev.n === 8 || ev.n === 9) return cS < 1 ? `${ev.n} puntos sen ningunha chave do equipo que puntúa` : `chaves ${ev.cA}-${ev.cB} con ${ev.n} puntos`;
-  if (ev.n === 16) return cS < 2 ? `16 puntos con só ${cS} chave${cS === 1 ? '' : 's'} do equipo que puntúa` : `chaves ${ev.cA}-${ev.cB} con 16 puntos`;
-  if (ev.n === 1 || ev.n === 2) return `chaves ${ev.cA}-${ev.cB} con ${ev.n} punto${ev.n === 1 ? '' : 's'}`;
-  return `${ev.n} puntos non é unha puntuación posible`;
+// «Tirada anterior»: borra TODO o anotado na última tirada pechada (e o que haxa na aberta) para volver anotala
+// desde cero, coa mesma lóxica de parellas e botóns (que só depende das tiradas anteriores). Só unha tirada atrás.
+// Devolve o que se borrou {pa, pb, ch:{a1..b2}} para restalo dos contadores, ou null se non se pode.
+function actaVolverAtras(){
+  if (ACTA.volvioAtras || !actaTiradaAnterior()) return null;
+  const actual = ACTA.actual;
+  let ant;
+  if (ACTA.tiradas.length) ant = ACTA.tiradas.pop();
+  else {                                  // tiradas xa escritas (retomadas ou editadas): quítase a última
+    const n = Math.max(ACTA.base.a.length, ACTA.base.b.length);
+    ant = { pa: ACTA.base.a.length === n ? ACTA.base.a.pop() : 0, pb: ACTA.base.b.length === n ? ACTA.base.b.pop() : 0, ch: {} };
+    Object.keys(ACTA.base.ch).forEach(k => {
+      ant.ch[k] = ACTA.base.ch[k].filter(e => e.t === n).reduce((s, e) => s + e.n, 0);
+      ACTA.base.ch[k] = ACTA.base.ch[k].filter(e => e.t !== n);
+    });
+  }
+  const out = { pa: ant.pa + actual.pa, pb: ant.pb + actual.pb, ch: {} };
+  Object.keys(actual.ch).forEach(k => { out.ch[k] = (ant.ch[k] || 0) + actual.ch[k]; });
+  ACTA.actual = actaTiradaNova();
+  ACTA.volvioAtras = true;
+  actaDetener();
+  actaPintarTirada();
+  return out;
 }
 
 // Avalía unha tirada: { cls: 'normal'|'matadas'|'incompleta'|'invalida', n, S, cA, cB, problemas }
@@ -253,6 +253,7 @@ async function actaCerrarTirada(){
     }
     ACTA.tiradas.push(td);
     ACTA.actual = actaTiradaNova();
+    ACTA.volvioAtras = false;
     return true;
   } finally {
     ACTA.cerrando = false;
@@ -435,4 +436,23 @@ document.addEventListener('fullscreenchange', () => {
 // O bloqueo de pantalla acesa libérase ao ocultar a páxina: volve pedirse ao volver
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && vistaMk.classList.contains('mk-full') && !bloqueoPantalla) pedirBloqueoPantalla();
+});
+
+// ---- Botón «Tirada anterior»: borra a última tirada pechada e déixaa baleira para anotala de novo ----
+document.getElementById('mk-tirada-anterior')?.addEventListener('click', async () => {
+  if (!ACTA.activa || ACTA.volvioAtras || !actaTiradaAnterior()) return;
+  const hai = !actaVacia(ACTA.actual);
+  const op = await actaOpciones('Tirada anterior',
+    hai ? 'Borrarase todo o anotado na tirada anterior e tamén o da tirada actual, para anotala de novo desde o principio.'
+        : 'Borrarase todo o anotado na tirada anterior para anotala de novo desde o principio.',
+    ['Borrar e volver anotala', 'Cancelar']);
+  if (op !== 0) return;
+  const rem = actaVolverAtras();
+  if (!rem) return;
+  const resta = (el, n) => { if (el) el.textContent = clamp0((Number(el.textContent) || 0) - n); };
+  resta(document.querySelector('#mk-a .marcador-puntos'), rem.pa);
+  resta(document.querySelector('#mk-b .marcador-puntos'), rem.pb);
+  ['a', 'b'].forEach(eq => [...document.querySelectorAll(`#mk-${eq} .marcador-xog`)].forEach((fila, i) => resta(fila.querySelector('.marcador-chaves'), rem.ch[eq + (i + 1)] || 0)));
+  actualizarLideres();
+  if (typeof actaPanelActualizar === 'function') actaPanelActualizar();
 });
