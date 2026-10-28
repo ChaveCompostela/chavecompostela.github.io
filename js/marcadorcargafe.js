@@ -284,6 +284,7 @@ function iniciarModo(modo){
   $mk('#vista-marcador').classList.toggle('mk-editable', editable);
   $mk('#vista-marcador').classList.toggle('mk-directo', modo === 'directo');   // en directo só hai +1/+2/−1/−2: os 8, 9 e 16 saen das chaves
   mkVista('anotar');
+  if (modo === 'directo') precargarSonsChave();   // sons das chaves (icons/chave*.wav), listos para o primeiro toque
   actaPintarTirada();                    // barra «Tirada N · pecha en X s» (só en directo) e bloqueo de botóns
   if (typeof actualizarLideres === 'function') actualizarLideres();
 }

@@ -329,6 +329,24 @@ function actaDerivar(){
   return { puntos: { a: pa, b: pb }, chaves: ch };
 }
 
+// ---------- Sonido ao sumar chaves (só en «Anotar partida en directo») ----------
+// Cada vez que se preme +1 ou +2 nas chaves dun xogador soa ao chou un dos tres sons de icons/.
+const SONS_CHAVE = ['icons/chave.wav', 'icons/chave1.wav', 'icons/chave2.wav'];
+let audiosChave = null;
+function precargarSonsChave(){
+  if (audiosChave) return;
+  audiosChave = SONS_CHAVE.map(ruta => { const a = new Audio(ruta); a.preload = 'auto'; return a; });
+}
+function sonarChave(){
+  try {
+    precargarSonsChave();
+    const a = audiosChave[Math.floor(Math.random() * audiosChave.length)];
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});      // sen permiso ou sen arquivo: non pasa nada
+  } catch (e) {}
+}
+
 const claveEquipo = eq => (eq && eq.id === 'mk-a' ? 'a' : eq && eq.id === 'mk-b' ? 'b' : null);
 function claveXogador(fila){
   const eq = fila.closest('.marcador-equipo');
@@ -415,6 +433,7 @@ document.addEventListener('click', e => {
     contador.textContent = clamp0((Number(contador.textContent) || 0) + delta);
     if (k) {
       if (delta > 0) actaChavePulsada(k, delta); else actaChaves(k, delta);
+      if (delta > 0) sonarChave();            // +1 ou +2: soa un dos 3 sons de chave
       actaAplicarTotales(antes);              // as chaves suman (ou restan, se o rival tamén dá chave) os 8/16 puntos
     }
     actualizarLideres();
