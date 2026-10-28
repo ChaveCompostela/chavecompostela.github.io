@@ -282,6 +282,7 @@ function iniciarModo(modo){
     else { el.removeAttribute('contenteditable'); el.removeAttribute('inputmode'); el.removeAttribute('enterkeyhint'); }
   }));
   $mk('#vista-marcador').classList.toggle('mk-editable', editable);
+  $mk('#vista-marcador').classList.toggle('mk-directo', modo === 'directo');   // en directo só hai +1/+2/−1/−2: os 8, 9 e 16 saen das chaves
   mkVista('anotar');
   actaPintarTirada();                    // barra «Tirada N · pecha en X s» (só en directo) e bloqueo de botóns
   if (typeof actualizarLideres === 'function') actualizarLideres();
@@ -332,6 +333,7 @@ function rematarCargaPartida(){
   actaReiniciar();
   document.querySelectorAll('#vista-marcador [contenteditable]').forEach(el => { el.removeAttribute('contenteditable'); el.removeAttribute('inputmode'); el.removeAttribute('enterkeyhint'); });
   $mk('#vista-marcador').classList.remove('mk-editable');
+  $mk('#vista-marcador').classList.remove('mk-directo');
   $mk('#ak-inc-area').value = ''; $mk('#ak-inc-texto').hidden = true;
   mkVista('libre');
   if (typeof actualizarLideres === 'function') actualizarLideres();
