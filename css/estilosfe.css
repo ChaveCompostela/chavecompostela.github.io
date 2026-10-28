@@ -523,3 +523,8 @@ a.partido-lugar{color:var(--granate)}
 .marcador-tirada .marcador-reset:disabled{opacity:.35}
 /* Pantalla completa: só o marcador e a liña da tirada (sen «Enviar resultado» nin «Editar acta») */
 .mk-full #mk-acciones,.mk-full #mk-acta-panel{display:none !important}
+
+/* Anotar partida en directo: só +1, +2, −1 e −2 (os 8, 9 e 16 saen das chaves) */
+.mk-directo [data-add="8"],.mk-directo [data-add="9"],.mk-directo [data-add="16"],
+.mk-directo [data-add="-8"],.mk-directo [data-add="-9"],.mk-directo [data-add="-16"]{display:none}
+.mk-directo .mk-bot{grid-template-columns:repeat(4,minmax(0,1fr))}
