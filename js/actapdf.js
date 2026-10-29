@@ -545,14 +545,15 @@ function actaNombreArchivo(local, visitante, fecha){
 }
 
 // ---- Panel de firmas: dos recuadros para firmar con el dedo o un lápiz táctil ----
-// Sin conEnvio (panel de administración): botones «Generar acta firmada» / «Generar sin firmas» / «Cancelar»;
-//   devuelve {local, visitante} (cada uno {data, w, h} o null si se dejó en blanco) o null si se cancela.
+// Sin conEnvio (panel de administración): botones «Generar acta» / «Cancelar»; las firmas que se hayan dibujado
+//   van en el acta y los recuadros en blanco quedan en blanco. Devuelve {local, visitante} (cada uno {data, w, h}
+//   o null si se dejó en blanco) o null si se cancela.
 // Con conEnvio (Marcador): «Enviar resultado e xerar acta» / «Xerar acta» / «Cancelar»;
 //   devuelve {accion: 'enviar'|'xerar'|'cancelar', local, visitante}.
 function actaPedirFirmas(idioma, conEnvio){
   const T = idioma === 'gl'
-    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Xerar acta firmada', sin: 'Xerar sen firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado e xerar acta', xerar: 'Xerar acta' }
-    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', firmada: 'Generar acta firmada', sin: 'Generar sin firmas', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
+    ? { titulo: 'Firmas', ayuda: 'Cada delegada pode asinar co dedo ou cun lapis táctil. Se non se asina, a acta xérase cos espazos en branco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', generar: 'Xerar acta', cancelar: 'Cancelar', enviar: 'Enviar resultado e xerar acta', xerar: 'Xerar acta' }
+    : { titulo: 'Firmas', ayuda: 'Cada delegada puede firmar con el dedo o con un lápiz táctil. Si no se firma, el acta se genera con los espacios en blanco.', loc: 'Delegada equipo local', vis: 'Delegada equipo visitante', borrar: 'Borrar', generar: 'Generar acta', cancelar: 'Cancelar', enviar: 'Enviar resultado con acta', xerar: 'Generar acta' };
   return new Promise(resolve => {
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;padding:10px;overflow:auto;-webkit-overflow-scrolling:touch';
@@ -560,7 +561,7 @@ function actaPedirFirmas(idioma, conEnvio){
     const pri = `${btn};background:#7a1f35;color:#fff;border-color:#7a1f35`;
     const botonesInicial = conEnvio
       ? `<button type="button" data-acc="enviar" style="${pri}">${T.enviar}</button><button type="button" data-acc="xerar" style="${btn}">${T.xerar}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`
-      : `<button type="button" data-acc="firmada" style="${pri}">${T.firmada}</button><button type="button" data-acc="sin" style="${btn}">${T.sin}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`;
+      : `<button type="button" data-acc="generar" style="${pri}">${T.generar}</button><button type="button" data-acc="cancelar" style="${btn}">${T.cancelar}</button>`;
     ov.innerHTML = `<div style="background:#fff;color:#111;border-radius:14px;padding:14px;max-width:560px;width:100%;font:15px system-ui,-apple-system,sans-serif">
       <h3 style="margin:0 0 4px;font-size:18px">${T.titulo}</h3>
       <p style="margin:0 0 6px;font-size:13px;color:#555">${T.ayuda}</p>
@@ -588,8 +589,7 @@ function actaPedirFirmas(idioma, conEnvio){
       if (b.dataset.borrar != null) { const i = Number(b.dataset.borrar), cv = lienzos[i]; cv.getContext('2d').clearRect(0, 0, cv.width / dpr, cv.height / dpr); tiene[i] = false; return; }
       const acc = b.dataset.acc;
       if (acc === 'cancelar') return cerrar(conEnvio ? { accion: 'cancelar', local: null, visitante: null } : null);
-      if (acc === 'sin') return cerrar({ local: null, visitante: null });
-      if (acc === 'firmada') return cerrar({ local: firma(0), visitante: firma(1) });
+      if (acc === 'generar') return cerrar({ local: firma(0), visitante: firma(1) });
       cerrar({ accion: acc, local: firma(0), visitante: firma(1) });   // enviar | xerar
     });
   });
