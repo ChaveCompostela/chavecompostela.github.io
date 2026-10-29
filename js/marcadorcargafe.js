@@ -8,7 +8,6 @@ let datosCargaMarcador = null;
 let partidaCargada = null;   // { idEnfrentamiento, xogadores: { a1,a2,b1,b2 } }
 
 const $mk = sel => document.querySelector(sel);
-let modoAnotacion = null;      // null | 'manual' (anotar partida: marcador editable) | 'directo' (marcador intelixente coas tiradas)
 
 // Que se ve en cada paso do Marcador cando se carga unha partida:
 //  libre → marcadores normais · clave → só o contrasinal · carga → só os desplegables de partido e partida ·
@@ -164,7 +163,7 @@ $mk('#mk-carga-confirmar').addEventListener('click', () => {
   const chaveDe = id => d.chaves_enfrentamiento.find(c => c.id_enfrentamiento === e.id && c.id_jugador === id)?.chaves || 0;
   // Nome do bando: o club, se o ten; se non, o nome desta parella concreta xa cargada
   // (máis preciso aquí có xenérico nomeLadoPartido, porque xa sabemos exactamente quen xoga).
-  const nomeBando = (idClub, pareja) => idClub ? nomeClubP(d.clubs, idClub) : (nomeParellaCurta(pareja.id, d) || 'Sen equipo');
+  const nomeBando = (idClub, pareja) => idClub ? nomeClubCal(d.clubs, idClub) : (nomeParellaCurta(pareja.id, d) || 'Sen equipo');
   const nomeLocalCargado = nomeBando(partido.id_club_local, parL);
   const nomeVisitanteCargado = nomeBando(partido.id_club_visitante, parV);
 
@@ -273,7 +272,6 @@ function precargarActa(){
 
 // Anotar partida (manual: puntos e chaves finais editables directamente ou cos botóns) ou en directo (marcador intelixente)
 function iniciarModo(modo){
-  modoAnotacion = modo;
   precargarActa();
   ACTA.activa = modo === 'directo';
   const editable = modo === 'manual';
@@ -329,7 +327,6 @@ function rematarCargaPartida(){
   ['mk-add-c', 'mk-add-d'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = false; });
 
   partidaCargada = null;
-  modoAnotacion = null;
   ACTA.activa = false;
   actaReiniciar();
   document.querySelectorAll('#vista-marcador [contenteditable]').forEach(el => { el.removeAttribute('contenteditable'); el.removeAttribute('inputmode'); el.removeAttribute('enterkeyhint'); });

@@ -21,7 +21,7 @@ const clamp0 = n => (n < 0 ? 0 : n);
 // As chaves matadas contan para o total de cada xogador e saen en VERMELLO na acta (a parte anulada).
 // «−n» quita puntos a man / «−1» quita unha chave da tirada aberta.
 const ACTA_SEGUNDOS = 10;
-const ACTA = { activa: false, base: null, tiradas: [], actual: null, timer: null, reloxo: null, cerrando: false, desaxuste: false, fin: 0, volvioAtras: false };
+const ACTA = { activa: false, base: null, tiradas: [], actual: null, timer: null, reloxo: null, cerrando: false, fin: 0, volvioAtras: false };
 
 // ma/mb: puntos a man (1 ou 2) · pa/pb: puntos totais da tirada (a man + chaves), sempre calculados con actaSync
 const actaTiradaNova = () => ({ ma: 0, mb: 0, pa: 0, pb: 0, ch: { a1: 0, a2: 0, b1: 0, b2: 0 } });
@@ -65,7 +65,6 @@ function actaReiniciar(){
   ACTA.tiradas = [];
   ACTA.actual = actaTiradaNova();
   ACTA.cerrando = false;
-  ACTA.desaxuste = false;
   ACTA.volvioAtras = false;
   actaPintarTirada();
 }
@@ -216,12 +215,11 @@ function actaChavePulsada(clave, n){     // +1 ou +2 chaves dun xogador (a1, a2,
 function actaPuntos(eq, n){              // n < 0: resta puntos a man da tirada ABERTA (a anterior corríxese con «Tirada anterior»)
   const v = -n, campo = eq === 'a' ? 'ma' : 'mb';
   if (ACTA.actual[campo] >= v) { ACTA.actual[campo] -= v; actaSync(ACTA.actual); actaMarcar(); return; }
-  ACTA.desaxuste = true;                 // non hai nada que quitar nesta tirada
+  // se non hai nada que quitar nesta tirada, non pasa nada
 }
 
 function actaChaves(clave, delta){       // delta -1: quita unha chave da tirada ABERTA
   if (ACTA.actual.ch[clave] >= 1) { ACTA.actual.ch[clave]--; actaSync(ACTA.actual); actaMarcar(); return; }
-  ACTA.desaxuste = true;
 }
 
 // «Tirada anterior»: borra TODO o anotado na última tirada pechada (e o que haxa na aberta) para volver anotala

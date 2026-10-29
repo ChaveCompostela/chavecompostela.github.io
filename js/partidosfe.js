@@ -4,7 +4,8 @@
 // Dentro ábrese a lista de partidas (pareja vs pareja), o marcador e as chaves
 // de cada xogador. Só lectura.
 //
-// Depende de: novasfe.js (escFe, horaFe, tituloDia) e calendariofe.js (tempadaActual).
+// Depende de: novasfe.js (escFe, CARGAS_PENDIENTES) e calendariofe.js (tempadaActual,
+// nomeLadoPartido, resultadoConGanador). Tamén o usa marcadorcargafe.js (cargarDatosPartidos, nomeXogadorP, nomeParellaP).
 
 // Mapa clave interna (data-liga do HTML) → nome real na táboa "categorias"
 const CATEGORIAS_PARTIDOS = { feminina: 'femenina', masculina: 'masculina' };
@@ -22,11 +23,6 @@ function dataCurtaP(iso){
   const d = new Date(iso);
   const p = n => String(n).padStart(2, '0');
   return `${p(d.getDate())}/${p(d.getMonth() + 1)}`;
-}
-
-function nomeClubP(clubs, id){
-  if (!id) return 'Sen club';
-  return clubs.find(c => c.id === id)?.nombre || `Club #${id}`;
 }
 
 // Resultado global do partido: móstrase sempre que exista, sen importar o estado
