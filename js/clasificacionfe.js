@@ -5,6 +5,10 @@
 //
 // Puntos: en cada partido, cada equipo suma tantos puntos coma partidas gañou nel.
 // Un partido finalizado 3-1 reparte 3 puntos ao que gañou 3 partidas e 1 ao que gañou 1.
+//
+// Orde da clasificación: 1.º puntos totais · 2.º se empatan a puntos, o +/- acumulado
+// (diferenza entre os puntos anotados e recibidos nas partidas de cada partido, sumada partido a partido:
+// un +20 e despois un -10 deixan un +10) · 3.º se seguen empatados, orde alfabética.
 
 function filaEquipoClas(pos, nome, puntos){
   return `<div class="clas-fila">
@@ -41,9 +45,11 @@ function pintarClasChavistas(cont, filas, etiqueta){
 // o representa (coma "Laura&Carlota"), usando o seu id de parella coma clave estable para
 // que sume sempre na mesma fila aínda que xogue varios partidos. Os clubs da liga aparecen
 // sempre, aínda con 0 puntos; as parellas sen club só aparecen se xa puntuaron algo.
+// Ademais dos puntos vaise acumulando o +/- de cada equipo (desempate): en cada partido, a suma
+// de (marcador propio - marcador rival) das súas partidas xogadas.
 function puntosPorEquipo(partidosLiga, clubsLiga, datos){
-  const puntos = {}, nomes = {};
-  for (const c of clubsLiga) { puntos['c' + c.id] = 0; nomes['c' + c.id] = c.nombre; }
+  const puntos = {}, difs = {}, nomes = {};
+  for (const c of clubsLiga) { puntos['c' + c.id] = 0; difs['c' + c.id] = 0; nomes['c' + c.id] = c.nombre; }
 
   const claveLado = (p, lado) => {
     const idClub = lado === 'local' ? p.id_club_local : p.id_club_visitante;
@@ -52,22 +58,30 @@ function puntosPorEquipo(partidosLiga, clubsLiga, datos){
     return pa ? 'p' + pa.id : null;
   };
 
+  // +/- do partido visto desde o bando local (o visitante leva o mesmo número co signo cambiado)
+  const difLocal = p => (datos.enfrentamentos || [])
+    .filter(e => e.id_partido === p.id && e.marcador_local != null && e.marcador_visitante != null)
+    .reduce((s, e) => s + (e.marcador_local - e.marcador_visitante), 0);
+
   for (const p of partidosLiga) {
+    const dif = difLocal(p);
     const kLocal = claveLado(p, 'local');
     if (kLocal) {
       puntos[kLocal] = (puntos[kLocal] || 0) + p.resultado_local;
+      difs[kLocal] = (difs[kLocal] || 0) + dif;
       if (!(kLocal in nomes)) nomes[kLocal] = nomeLadoPartido(p, 'local', datos);
     }
     const kVisit = claveLado(p, 'visitante');
     if (kVisit) {
       puntos[kVisit] = (puntos[kVisit] || 0) + p.resultado_visitante;
+      difs[kVisit] = (difs[kVisit] || 0) - dif;
       if (!(kVisit in nomes)) nomes[kVisit] = nomeLadoPartido(p, 'visitante', datos);
     }
   }
 
   return Object.keys(puntos)
-    .map(k => ({ nome: nomes[k], puntos: puntos[k] }))
-    .sort((a, b) => b.puntos - a.puntos || a.nome.localeCompare(b.nome));
+    .map(k => ({ nome: nomes[k], puntos: puntos[k], dif: difs[k] || 0 }))
+    .sort((a, b) => b.puntos - a.puntos || b.dif - a.dif || a.nome.localeCompare(b.nome));
 }
 
 function chavesPorXogador(partidosLiga, enfrentamentos, chaves, xogadores, clubs){
@@ -149,7 +163,7 @@ async function cargarClasificacion(){
       sbfe.from('jornadas').select('*'),
       sbfe.from('partidos').select('*'),
       sbfe.from('clubs').select('*').eq('activo', true),
-      sbfe.from('enfrentamientos').select('id,id_partido,numero'),
+      sbfe.from('enfrentamientos').select('id,id_partido,numero,marcador_local,marcador_visitante'),   // os marcadores serven para o +/- do desempate
       sbfe.from('chaves_enfrentamiento').select('*'),
       sbfe.from('jugadores').select('id,nombre,apellidos,id_club').eq('activo', true),
       sbfe.from('enfrentamiento_parejas').select('*'),
