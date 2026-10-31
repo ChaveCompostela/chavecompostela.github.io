@@ -1,5 +1,6 @@
 // Calendario: xornadas e partidos de cada liga da tempada en curso, agrupados primeiro
-// por xornada e despois por data dentro dela. Reutiliza escFe/horaFe/tituloDia/chaveDia de novasfe.js.
+// por xornada e despois por data dentro dela. Reutiliza escFe/horaFe/tituloDia/chaveDia de novasfe.js
+// e cargarBaseFe/cargarDatosTemporada de datosfe.js (só se piden os datos da tempada en curso).
 // Só lectura: esta app non crea, edita nin borra nada.
 
 // A tempada en curso é a que inclúe hoxe entre a súa data de inicio e fin; se ningunha
@@ -164,28 +165,13 @@ async function cargarCalendario(){
   const contMasc = document.getElementById('calendario-masculina');
   if (ERR_CONFIG_FE) { contFem.innerHTML = contMasc.innerHTML = `<p class="erro">${escFe(ERR_CONFIG_FE)}</p>`; return; }
   try {
-    const [
-      { data: categorias, error: e1 }, { data: temporadas, error: e0 }, { data: ligas, error: e2 },
-      { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
-      { data: enfrentamientos, error: e6 }, { data: enfrentamiento_parejas, error: e7 },
-      { data: parejas, error: e8 }, { data: jugadores, error: e9 }, { data: instalaciones, error: e10 },
-    ] = await Promise.all([
-      sbfe.from('categorias').select('*'),
-      sbfe.from('temporadas').select('*'),
-      sbfe.from('ligas').select('*'),
-      sbfe.from('jornadas').select('*'),
-      sbfe.from('partidos').select('*'),
-      sbfe.from('clubs').select('id,nombre'),
-      sbfe.from('enfrentamientos').select('id,id_partido,numero'),
-      sbfe.from('enfrentamiento_parejas').select('*'),
-      sbfe.from('parejas').select('*'),
-      sbfe.from('jugadores').select('id,nombre'),
-      sbfe.from('instalaciones').select('id,nombre,url_localizacion'),
-    ]);
-    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10]) if (err) throw new Error(err.message);
+    // Só os datos da tempada en curso (as chaves dos xogadores non fan falta aquí)
+    const base = await cargarBaseFe();
+    const tempada = tempadaActual(base.temporadas);
+    const d = await cargarDatosTemporada(tempada?.id ?? null, false);
+    const { categorias, ligas, xornadas, partidos, clubs, enfrentamientos, enfrentamiento_parejas, parejas, jugadores, instalaciones } = d;
 
     const datos = { clubs, enfrentamientos, enfrentamiento_parejas, parejas, jugadores, instalaciones };
-    const tempada = tempadaActual(temporadas);
     const idFem = categorias.find(c => c.nombre === 'femenina')?.id;
     const idMasc = categorias.find(c => c.nombre === 'masculina')?.id;
     const ligasDaTempada = ligas.filter(l => l.id_temporada === tempada?.id);

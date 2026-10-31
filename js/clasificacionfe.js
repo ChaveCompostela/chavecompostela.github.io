@@ -1,7 +1,8 @@
 // Clasificación: puntos por equipo e máximos/máximas chavistas, só coa tempada en curso.
 // Un partido cóntase como xogado cando ten resultado (resultado_local/resultado_visitante
 // non nulos), igual có Calendario — non depende de que alguén cambie á man o Estado a "finalizado".
-// Reutiliza escFe e tempadaActual (de novasfe.js/calendariofe.js). Só lectura.
+// Reutiliza escFe e tempadaActual (de novasfe.js/calendariofe.js) e cargarBaseFe/cargarDatosTemporada (datosfe.js:
+// só se piden os datos da tempada escollida). Só lectura.
 //
 // Puntos: en cada partido, cada equipo suma tantos puntos coma partidas gañou nel.
 // Un partido finalizado 3-1 reparte 3 puntos ao que gañou 3 partidas e 1 ao que gañou 1.
@@ -59,7 +60,7 @@ function puntosPorEquipo(partidosLiga, clubsLiga, datos){
   };
 
   // +/- do partido visto desde o bando local (o visitante leva o mesmo número co signo cambiado)
-  const difLocal = p => (datos.enfrentamentos || [])
+  const difLocal = p => (datos.enfrentamientos || [])
     .filter(e => e.id_partido === p.id && e.marcador_local != null && e.marcador_visitante != null)
     .reduce((s, e) => s + (e.marcador_local - e.marcador_visitante), 0);
 
@@ -132,63 +133,61 @@ function pintarClasificacion(){
 
   const partidosFem = partidosConResultado.filter(p => xornFem.has(p.id_jornada));
   const partidosMasc = partidosConResultado.filter(p => xornMasc.has(p.id_jornada));
-  const clubsFem = d.clubs.filter(c => c.id_categoria === idFem);
-  const clubsMasc = d.clubs.filter(c => c.id_categoria === idMasc);
+  const clubsFem = d.clubs.filter(c => c.activo && c.id_categoria === idFem);
+  const clubsMasc = d.clubs.filter(c => c.activo && c.id_categoria === idMasc);
+  const xogadoresActivos = d.jugadores.filter(j => j.activo);   // os máximos chavistas só contan xogadores activos
 
   pintarClasEquipos(els.feminina.equipos, puntosPorEquipo(partidosFem, clubsFem, d));
   pintarClasEquipos(els.masculina.equipos, puntosPorEquipo(partidosMasc, clubsMasc, d));
-  pintarClasChavistas(els.feminina.chavistas, chavesPorXogador(partidosFem, d.enfrentamentos, d.chaves, d.xogadores, d.clubs), 'Xogadora');
-  pintarClasChavistas(els.masculina.chavistas, chavesPorXogador(partidosMasc, d.enfrentamentos, d.chaves, d.xogadores, d.clubs), 'Xogador');
+  pintarClasChavistas(els.feminina.chavistas, chavesPorXogador(partidosFem, d.enfrentamientos, d.chaves_enfrentamiento, xogadoresActivos, d.clubs), 'Xogadora');
+  pintarClasChavistas(els.masculina.chavistas, chavesPorXogador(partidosMasc, d.enfrentamientos, d.chaves_enfrentamiento, xogadoresActivos, d.clubs), 'Xogador');
 }
 
-async function cargarClasificacion(){
-  const els = {
+let pedidoClas = 0;   // evita que unha resposta vella pise a dunha tempada escollida despois
+
+function contedoresClas(){
+  return {
     feminina: { equipos: document.getElementById('clas-equipos-feminina'), chavistas: document.getElementById('clas-chavistas-feminina') },
     masculina: { equipos: document.getElementById('clas-equipos-masculina'), chavistas: document.getElementById('clas-chavistas-masculina') },
   };
+}
+
+// Pide só os datos da tempada escollida (datosfe.js) e pinta a clasificación
+async function amosarClasificacion(){
+  const pedido = ++pedidoClas;
+  const els = contedoresClas();
+  for (const l of Object.values(els)) l.equipos.innerHTML = l.chavistas.innerHTML = '<p class="baleiro">Cargando clasificación…</p>';
+  try {
+    const d = await cargarDatosTemporada(tempadaEscollidaClas, true);
+    if (pedido !== pedidoClas) return;
+    datosClasificacion = d;
+    pintarClasificacion();
+  } catch (e) {
+    if (pedido !== pedidoClas) return;
+    const msg = `<p class="erro">Non se puido cargar a clasificación: ${escFe(e.message)}</p>`;
+    for (const l of Object.values(els)) l.equipos.innerHTML = l.chavistas.innerHTML = msg;
+  }
+}
+
+async function cargarClasificacion(){
+  const els = contedoresClas();
   if (ERR_CONFIG_FE) {
     for (const l of Object.values(els)) l.equipos.innerHTML = l.chavistas.innerHTML = `<p class="erro">${escFe(ERR_CONFIG_FE)}</p>`;
     return;
   }
   try {
-    const [
-      { data: categorias, error: e1 }, { data: temporadas, error: e0 }, { data: ligas, error: e2 },
-      { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
-      { data: enfrentamentos, error: e6 }, { data: chaves, error: e7 }, { data: xogadoresActivos, error: e8 },
-      { data: enfrentamiento_parejas, error: e9 }, { data: parejas, error: e10 }, { data: todosXogadores, error: e11 },
-    ] = await Promise.all([
-      sbfe.from('categorias').select('*'),
-      sbfe.from('temporadas').select('*').order('fecha_inicio', { ascending: false }),
-      sbfe.from('ligas').select('*'),
-      sbfe.from('jornadas').select('*'),
-      sbfe.from('partidos').select('*'),
-      sbfe.from('clubs').select('*').eq('activo', true),
-      sbfe.from('enfrentamientos').select('id,id_partido,numero,marcador_local,marcador_visitante'),   // os marcadores serven para o +/- do desempate
-      sbfe.from('chaves_enfrentamiento').select('*'),
-      sbfe.from('jugadores').select('id,nombre,apellidos,id_club').eq('activo', true),
-      sbfe.from('enfrentamiento_parejas').select('*'),
-      sbfe.from('parejas').select('*'),
-      sbfe.from('jugadores').select('id,nombre'),
-    ]);
-    for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]) if (err) throw new Error(err.message);
-
-    // xogadores: a lista completa (todosXogadores) fai falta para nomear as parellas sen club
-    // aínda que algún dos seus membros estivese dado de baixa; a lista de activos (xogadores)
-    // séguese a usar para os máximos chavistas, coma antes.
-    datosClasificacion = {
-      categorias, temporadas, ligas, xornadas, partidos, clubs, enfrentamentos, chaves,
-      xogadores: xogadoresActivos, enfrentamiento_parejas, parejas, jugadores: todosXogadores,
-    };
-    encherSelectorTempadasClas(temporadas);
+    const base = await cargarBaseFe();
+    encherSelectorTempadasClas(base.temporadas);
     document.getElementById('tempada-clasificacion').addEventListener('change', ev => {
       tempadaEscollidaClas = Number(ev.target.value);
-      pintarClasificacion();
+      amosarClasificacion();
     });
-    pintarClasificacion();
   } catch (e) {
     const msg = `<p class="erro">Non se puido cargar a clasificación: ${escFe(e.message)}</p>`;
     for (const l of Object.values(els)) l.equipos.innerHTML = l.chavistas.innerHTML = msg;
+    return;
   }
+  await amosarClasificacion();
 }
 
 CARGAS_PENDIENTES.clasificacion = cargarClasificacion;   // cárgase a primeira vez que se entra (ver novasfe.js)

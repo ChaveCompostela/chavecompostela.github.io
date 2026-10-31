@@ -17,7 +17,6 @@ const T = {
   enfrentamiento_parejas:{t:'Parejas en partida (avanzado)',f:[['id_enfrentamiento','Partida','r:enfrentamientos'],['id_pareja','Pareja','r:parejas'],['lado','Lado','e:local|visitante']],l:r=>'#'+r.id},
   chaves_enfrentamiento:{t:'Chaves (avanzado)',pk:['id_enfrentamiento','id_jugador'],f:[['id_enfrentamiento','Partida','r:enfrentamientos'],['id_jugador','Jugador','r:jugadores'],['chaves','Chaves','n']],l:r=>lab('jugadores',r.id_jugador)}
 };
-const ORDEN = ['partidos','eventos','jugadores','clubs','parejas','instalaciones','temporadas','ligas','jornadas','enfrentamientos','enfrentamiento_parejas','chaves_enfrentamiento'];
 
 const D = {};
 // Club de una pareja: el de sus jugadores si es el mismo club; si no (sin club u ocasional) → null
@@ -46,9 +45,19 @@ function toLocal(v){
   const d = new Date(v), p = n => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
+// Lee la tabla ENTERA de 1000 en 1000 (Supabase devuelve como máximo 1000 filas por consulta; sin paginar,
+// las tablas grandes —partidas, chaves— quedarían truncadas sin avisar). Se ordena por toda la clave primaria
+// para que las páginas no se solapen.
 async function loadTable(t){
-  const { data, error } = await sb.from(t).select('*').order(pkOf(t)[0]);
-  if (error) return msg(error.message);
-  D[t] = data;
+  let todo = [];
+  for (let desde = 0; ; desde += 1000) {
+    let q = sb.from(t).select('*');
+    pkOf(t).forEach(k => { q = q.order(k); });
+    const { data, error } = await q.range(desde, desde + 999);
+    if (error) return msg(error.message);
+    todo = todo.concat(data);
+    if (data.length < 1000) break;
+  }
+  D[t] = todo;
 }
 const loadAll = () => Promise.all(Object.keys(T).map(loadTable));

@@ -4,8 +4,8 @@
 // Dentro ábrese a lista de partidas (pareja vs pareja), o marcador e as chaves
 // de cada xogador. Só lectura.
 //
-// Depende de: novasfe.js (escFe, CARGAS_PENDIENTES) e calendariofe.js (tempadaActual,
-// nomeLadoPartido, resultadoConGanador). Tamén o usa marcadorcargafe.js (cargarDatosPartidos, nomeXogadorP, nomeParellaP).
+// Depende de: novasfe.js (escFe, CARGAS_PENDIENTES), datosfe.js (cargarBaseFe, cargarDatosTemporada) e
+// calendariofe.js (tempadaActual, nomeLadoPartido, resultadoConGanador). Tamén o usa marcadorcargafe.js (cargarDatosPartidos, nomeXogadorP, nomeParellaP).
 
 // Mapa clave interna (data-liga do HTML) → nome real na táboa "categorias"
 const CATEGORIAS_PARTIDOS = { feminina: 'femenina', masculina: 'masculina' };
@@ -151,30 +151,11 @@ function pintarLista(cont, xornadas, partidos, datos){
 }
 
 // ---------- Carga de datos ----------
-async function cargarDatosPartidos(){
-  const [
-    { data: categorias, error: e1 }, { data: temporadas, error: e0 }, { data: ligas, error: e2 },
-    { data: xornadas, error: e3 }, { data: partidos, error: e4 }, { data: clubs, error: e5 },
-    { data: enfrentamientos, error: e6 }, { data: enfrentamiento_parejas, error: e7 },
-    { data: chaves_enfrentamiento, error: e8 }, { data: parejas, error: e9 },
-    { data: jugadores, error: e10 }, { data: instalaciones, error: e11 },
-  ] = await Promise.all([
-    sbfe.from('categorias').select('*'),
-    sbfe.from('temporadas').select('*').order('fecha_inicio', { ascending: false }),
-    sbfe.from('ligas').select('*'),
-    sbfe.from('jornadas').select('*'),
-    sbfe.from('partidos').select('*'),
-    sbfe.from('clubs').select('id,nombre'),
-    sbfe.from('enfrentamientos').select('*'),
-    sbfe.from('enfrentamiento_parejas').select('*'),
-    sbfe.from('chaves_enfrentamiento').select('*'),
-    sbfe.from('parejas').select('*'),
-    sbfe.from('jugadores').select('id,nombre,apellidos'),
-    sbfe.from('instalaciones').select('id,nombre'),
-  ]);
-  for (const err of [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11]) if (err) throw new Error(err.message);
-  return { categorias, temporadas, ligas, xornadas, partidos, clubs,
-    enfrentamientos, enfrentamiento_parejas, chaves_enfrentamiento, parejas, jugadores, instalaciones };
+// Só se piden os datos dunha tempada (datosfe.js). Sen argumento, a tempada en curso (así o usa o Marcador).
+async function cargarDatosPartidos(idTemp){
+  const base = await cargarBaseFe();
+  const id = idTemp !== undefined ? idTemp : (tempadaActual(base.temporadas)?.id ?? null);
+  return cargarDatosTemporada(id, true);
 }
 
 function encherSelectorTempadas(temporadas){
@@ -225,6 +206,29 @@ document.addEventListener('click', e => {
 });
 
 // ---------- Arranque ----------
+let pedidoPartidos = 0;   // evita que unha resposta vella pise a dunha tempada escollida despois
+
+async function amosarPartidos(){
+  const pedido = ++pedidoPartidos;
+  for (const l of ['feminina','masculina']) {
+    const c = contedorPartidos(l);
+    if (c) c.innerHTML = '<p class="baleiro">Cargando partidos…</p>';
+  }
+  try {
+    const datos = await cargarDatosPartidos(tempadaEscollida);
+    if (pedido !== pedidoPartidos) return;
+    datosPartidos = datos;
+    pintarTodo(datosPartidos);
+  } catch (err) {
+    if (pedido !== pedidoPartidos) return;
+    const m = `<p class="erro">Non se puideron cargar os partidos: ${escFe(err.message)}</p>`;
+    for (const l of ['feminina','masculina']) {
+      const c = contedorPartidos(l);
+      if (c) c.innerHTML = m;
+    }
+  }
+}
+
 async function cargarPartidos(){
   if (typeof ERR_CONFIG_FE !== 'undefined' && ERR_CONFIG_FE) {
     for (const l of ['feminina','masculina']) {
@@ -234,20 +238,21 @@ async function cargarPartidos(){
     return;
   }
   try {
-    datosPartidos = await cargarDatosPartidos();
-    encherSelectorTempadas(datosPartidos.temporadas);
+    const base = await cargarBaseFe();
+    encherSelectorTempadas(base.temporadas);
     document.getElementById('tempada-partidos').addEventListener('change', ev => {
       tempadaEscollida = Number(ev.target.value);
-      pintarTodo(datosPartidos);
+      amosarPartidos();
     });
-    pintarTodo(datosPartidos);
   } catch (err) {
     const m = `<p class="erro">Non se puideron cargar os partidos: ${escFe(err.message)}</p>`;
     for (const l of ['feminina','masculina']) {
       const c = contedorPartidos(l);
       if (c) c.innerHTML = m;
     }
+    return;
   }
+  await amosarPartidos();
 }
 
 CARGAS_PENDIENTES.partidos = cargarPartidos;   // cárgase a primeira vez que se entra (ver novasfe.js)
