@@ -1,5 +1,6 @@
 // Novas: amosa as entradas da táboa "eventos" de Supabase, agrupadas por día
 // (o día máis recente primeiro). Dentro de cada grupo só se amosa a hora.
+// As novas cuxa data xa pasou levan o título en gris.
 // Só lectura: esta app non crea, edita nin borra nada.
 
 const escFe = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -20,6 +21,14 @@ function horaFe(iso){
   catch (e) { return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }); }
 }
 
+// Unha nova está pasada cando xa acabou: conta a data de fin, se a ten, e se non a de inicio.
+// Se é «sen hora» (só se sabe o día), non pasa ata que remata ese día.
+function eventoPasado(ev){
+  const ref = new Date(ev.fecha_fin || ev.fecha_inicio);
+  if (ev.sin_hora) ref.setHours(23, 59, 59, 999);
+  return ref < new Date();
+}
+
 function tarxetaEvento(ev, inst){
   // «Sin hora»: solo se sabe el día, así que non se amosa ningunha hora
   const hora = ev.sin_hora ? '' : horaFe(ev.fecha_inicio) + (ev.fecha_fin ? ' – ' + horaFe(ev.fecha_fin) : '');
@@ -28,7 +37,7 @@ function tarxetaEvento(ev, inst){
   const ligazon = url
     ? `<p class="novas-mapa-fila"><a class="novas-mapa" href="${escFe(url)}" target="_blank" rel="noopener">📍 Ver localización</a></p>` : '';
 
-  return `<article class="novas-card">
+  return `<article class="novas-card${eventoPasado(ev) ? ' novas-pasada' : ''}">
     <h3 class="novas-tit">${escFe(ev.nombre)}</h3>
     ${(hora || nomeInstalacion) ? `<div class="novas-info">
       <span class="novas-hora">${escFe(hora)}</span>
