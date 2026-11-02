@@ -152,6 +152,7 @@ main{flex:1;min-height:0;padding:16px;display:flex;flex-direction:column;overflo
 .novas-card{background:var(--superficie);border:1px solid var(--raia);border-radius:14px;padding:14px 16px;margin-bottom:12px}
 .novas-card:last-child{margin-bottom:0}
 .novas-tit{margin:0 0 4px;font-size:16px;font-weight:700;color:var(--texto)}
+.novas-pasada .novas-tit{color:var(--mut)}   /* nova xa pasada: título en gris */
 .novas-fecha{
   margin:20px 0 10px;padding-left:10px;font-size:13px;font-weight:700;
   text-transform:uppercase;letter-spacing:.04em;color:var(--granate);
